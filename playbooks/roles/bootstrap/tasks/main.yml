@@ -1,6 +1,6 @@
 ---
 - name: "Installs base system using pacstrap"
-  command: /usr/bin/pacstrap /mnt base base-devel linux linux-firmware amd-ucode btrfs-progs dhcpcd iproute2 net-tools dialog wpa_supplicant efibootmgr vim git grub-btrfs ansible 
+  shell: /usr/bin/pacstrap /mnt base base-devel linux linux-firmware amd-ucode btrfs-progs dhcpcd iproute2 net-tools dialog wpa_supplicant efibootmgr vim git grub-btrfs ansible sudo
 
 - name: "Populates base system fstab with configured storage devices"
   shell: /usr/bin/genfstab -U -p /mnt > /mnt/etc/fstab
@@ -34,9 +34,39 @@
 - name: "Set hostname in /etc/hostname"
   shell: arch-chroot /mnt sh -c 'echo "{{ hostname }}" > /etc/hostname'
 
-- name: Set hostname in /etc/hosts
+- name: Configure /etc/hosts
+  block:
+  - name: Add hostname
+    lineinfile:
+      regexp: "^127.0.1.1"
+      line: "127.0.1.1	{{ hostname }}.localdomain {{ hostname }}"
+      state: present
+      path: "/mnt/etc/hosts"
+
+  - name: Add default 127.0.0.1 to localhost
+    lineinfile:
+      line: "127.0.0.1	localhost"
+      state: present
+      path: "/mnt/etc/hosts"
+
+  - name: Add default ::1 to localhost
+    lineinfile:
+      line: "::1		localhost"
+      state: present
+      path: "/mnt/etc/hosts"
+
+- name: Recreate Initramfs
+  shell: arch-chroot /mnt mkinitcpio -P
+
+- name: Create user and add to sudoers
+  shell: arch-chroot /mnt useradd -m -G wheel -s /bin/bash {{ username }}
+  ignore_errors: yes
+
+- name: Allow 'wheel' group to have passwordless sudo
   lineinfile:
-    regexp: "^127.0.1.1"
-    line: "127.0.1.1 {{ hostname }}.localdomain {{ hostname }}"
+    dest: /mnt/etc/sudoers
     state: present
-    path: "/mnt/etc/hosts"
+    regexp: '^%wheel'
+    line: '%wheel ALL=(ALL) ALL'
+    path: "/mnt/etc/sudoers"
+    
