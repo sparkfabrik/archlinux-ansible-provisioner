@@ -1,0 +1,42 @@
+---
+- name: "Installs base system using pacstrap"
+  command: /usr/bin/pacstrap /mnt base base-devel linux linux-firmware amd-ucode btrfs-progs dhcpcd iproute2 net-tools dialog wpa_supplicant efibootmgr vim git grub-btrfs ansible 
+
+- name: "Populates base system fstab with configured storage devices"
+  shell: /usr/bin/genfstab -U -p /mnt > /mnt/etc/fstab
+
+- name: "Remove subvolid from fstab"
+  shell: sed -i 's|,subvolid=||g' /mnt/etc/fstab
+
+- name: "Set default timezone"
+  shell: arch-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime
+
+- name: "Run hwclock to regenerate /etc/adjtime"
+  shell: arch-chroot /mnt hwclock --systohc
+
+- name: Configure locale.gen
+  lineinfile:
+    dest: /mnt/etc/locale.gen
+    regexp: '{{ item.regex }}'
+    line: '{{ item.line }}'
+  loop:
+    - {regex: en_US\.UTF-8 UTF-8, line: en_US.UTF-8 UTF-8}
+    - {regex: en_US ISO-8859-1, line: en_US ISO-8859-1}
+
+- name: Create locale.conf
+  copy:
+    content: "LANG=en_US.UTF-8"
+    dest: /mnt/etc/locale.conf
+
+- name: Generate locales
+  shell: arch-chroot /mnt locale-gen
+
+- name: "Set hostname in /etc/hostname"
+  shell: arch-chroot /mnt sh -c 'echo "{{ hostname }}" > /etc/hostname'
+
+- name: Set hostname in /etc/hosts
+  lineinfile:
+    regexp: "^127.0.1.1"
+    line: "127.0.1.1 {{ hostname }}.localdomain {{ hostname }}"
+    state: present
+    path: "/mnt/etc/hosts"

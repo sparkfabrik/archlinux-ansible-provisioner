@@ -1,10 +1,9 @@
 # Archlinux ansible provisioner
 
-This is a guide and a set of ansible roles to provision an Ansible
-installation, this is made for personal use, use it at your own risk.
+This is a guide and a set of ansible roles to provision an Archlinux
+installation, please be aware this is made just for personal use, use it at your own risk.
 
 ## Pre-requisites (manual steps)
-
 
 #### Activate SSH
 
@@ -12,12 +11,12 @@ I like to install Archlinux using SSH, you can use this guide: https://wiki.arch
 
 #### Install ansible and git
 
-In order to use the provisioner we need to install `ansible` and `git`, as we are going 
+In order to use the provisioner we need to install `ansible` `git` and `make`, as we are going 
 to use the provisioner to bootstrap the entire system.
 
 ```
 mount -o remount,size=1G /run/archiso/cowspace
-pacman -Sy --noconfirm ansible git
+pacman -Sy --noconfirm ansible git make
 ```
 
 The first command is needed because the root partition from live USB is just
@@ -25,22 +24,36 @@ The first command is needed because the root partition from live USB is just
 
 ### Disk layout and partitioning
 
+Let me start by mentioning this guide: https://github.com/egara/arch-btrfs-installation
+which is definetely my main source of truth for the following steps.
+
 I want to use a BTRFS filesystem with the following layout:
 
 ```
 nvme0n1 (Volume)
 |
 |
-- _active (Subvolume)
-|    |
-|    - root (Subvolume - It will be the current /)
-|    - home (Subvolume - it will be the current /home)
-|
-- _snapshots (Subvolume -  It will contain all the snapshots which are subvolumes too)
+- @ (Subvolume - It will be the current /)
+- @home (Subvolume - it will be the current /home)
+- @snapshots (Subvolume -  It will contain the root snaphosts)
+- @home.snapshots (Subvolume -  It will contain the home directories snaphosts)
 ```
+
+I don't know if this is the best choice, but AFAIK this is the simplest
+way to start and most compatible layout with tools like snapper or timeshift.
+
+What i've used as a reference:
+
+* https://forum.manjaro.org/t/default-btrfs-mount-options-and-subvolume-layout/43250/33
+* https://www.reddit.com/r/archlinux/comments/fkcamq/noob_btrfs_subvolume_layout_help/fks5mph/?utm_source=share&utm_medium=web2x&context=3
+* https://btrfs.wiki.kernel.org/index.php/SysadminGuide#Layout
+* https://www.jwillikers.com/btrfs-layout
+* https://en.opensuse.org/SDB:BTRFS#Default_Subvolumes
+* https://wiki.archlinux.org/title/User:M0p/LUKS_Root_on_Btrfs
+
 This is the most flexible way to keep the things well separated and giving me the chance
 to automatically snapshot the root or home volumes separately and using `grub-btrfs` 
-to automatically from snapshots (we'll see that later).
+to automatically from snapshots (TO BE TESTED).
 
 This is my current disk layout (using `cfdisk`):
 
@@ -67,29 +80,49 @@ We are going to create btrfs volumes and subvolumes:
 ```
 mkfs.btrfs -L arch /dev/nvme0n1p4
 mount /dev/nvme0n1p4 /mnt
-cd /mnt
-btrfs subvolume create _active
-btrfs subvolume create _active/root
-btrfs subvolume create _active/home
-btrfs subvolume create _snapshots
+
+# This is a layout made to be compatible with timeshift and similare to the Manjaro one (https://www.reddit.com/r/archlinux/comments/fkcamq/comment/fks5mph/?utm_source=share&utm_medium=web2x&context=3)
+btrfs subvolume create /mnt/@
+btrfs subvolume create /mnt/@home
+btrfs subvolume create /mnt/@snapshots
+btrfs subvolume create /mnt/@home.snapshots
 ```
 
 Next, create all the directories needed and mount all the partitions (/boot/efi included) in order to start the installation:
 
 ```
-cd ..
 umount /mnt
-mount -o compress=zstd,subvol=_active/root /dev/nvme0n1p4 /mnt
+
+# Mount root and create default directories.
+mount -o noatime,compress=zstd,subvol=@ /dev/nvme0n1p4 /mnt
 mkdir /mnt/{home,boot}
 mkdir /mnt/boot/efi
-mkdir -p /mnt/mnt/defvol
+mkdir -p /mnt/mnt/allvolumes
+
+# Mount efi partition.
 mount /dev/nvme0n1p1 /mnt/boot/efi
-mount -o compress=zstd,subvol=_active/home /dev/nvme0n1p4 /mnt/home
-mount -o compress=zstd,subvol=/ /dev/nvme0n1p4 /mnt/mnt/defvol
+
+# Mount the subvolumes
+mount -o noatime,compress=zstd,subvol=@home /dev/nvme0n1p4 /mnt/home
+mount -o noatime,compress=zstd,subvol=/ /dev/nvme0n1p4 /mnt/mnt/allvolumes
 ```
 > Please note that we are mounting btrfs with compression enabled to reduce writes (and ssd lifespan) 
 and performance [here](https://wiki.archlinux.org/title/btrfs#Compression) and [here](https://fedoraproject.org/wiki/Changes/BtrfsByDefault#Compression) some refs.
 
-### 
+Done, we can now run the provisioner.
 
+## Provisioner
 
+Start by cloning the repo:
+
+```bash
+git clone https://github.com/paolomainardi/archlinux-ansible-provisioner.git provisioner
+cd provisioner
+```
+
+Now we run the first part of the installation, which will run `pacstrap`
+and some other installations tasks:
+
+```bash
+make boostrap
+```
