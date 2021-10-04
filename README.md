@@ -39,7 +39,7 @@ nvme0n1 (Volume)
 - @home.snapshots (Subvolume -  It will contain the home directories snaphosts)
 ```
 
-I don't know if this is the best choice, but AFAIK this is the simplest
+I don't know if this layout is the best choice, but AFAIK this is the simplest
 way to start and most compatible layout with tools like snapper or timeshift.
 
 What i've used as a reference:
