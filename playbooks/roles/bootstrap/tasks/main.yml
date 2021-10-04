@@ -1,6 +1,6 @@
 ---
 - name: "Installs base system using pacstrap"
-  shell: /usr/bin/pacstrap /mnt base base-devel linux linux-firmware amd-ucode btrfs-progs dhcpcd iproute2 net-tools dialog wpa_supplicant efibootmgr vim git grub-btrfs ansible sudo
+  shell: /usr/bin/pacstrap /mnt base base-devel linux linux-firmware amd-ucode btrfs-progs efibootmgr vim git grub-btrfs ansible sudo 
 
 - name: "Populates base system fstab with configured storage devices"
   shell: /usr/bin/genfstab -U -p /mnt > /mnt/etc/fstab
@@ -62,11 +62,10 @@
   shell: arch-chroot /mnt useradd -m -G wheel -s /bin/bash {{ username }}
   ignore_errors: yes
 
-- name: Allow 'wheel' group to have passwordless sudo
+- name: Allow 'wheel' group to become sudoer
   lineinfile:
-    dest: /mnt/etc/sudoers
-    state: present
-    regexp: '^%wheel'
+    path: /mnt/etc/sudoers.d/01-wheel-group
     line: '%wheel ALL=(ALL) ALL'
-    path: "/mnt/etc/sudoers"
+    create: yes
+    validate: 'visudo -cf %s'
     

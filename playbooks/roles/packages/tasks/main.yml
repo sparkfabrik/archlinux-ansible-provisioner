@@ -1,0 +1,96 @@
+---
+- name: Create an aur_builder user to install aur packages without password
+  block:
+  - name: Create the `aur_builder` user
+    ansible.builtin.user:
+      name: aur_builder
+      create_home: yes
+      group: wheel
+
+  - name: Allow the `aur_builder` user to run `sudo pacman` without a password
+    ansible.builtin.lineinfile:
+      path: /etc/sudoers.d/11-install-aur_builder
+      line: 'aur_builder ALL=(ALL) NOPASSWD: /usr/bin/pacman'
+      create: yes
+      validate: 'visudo -cf %s'
+
+  - name: Allow the `aur_builder` user to run `sudo makepkg` without a password
+    ansible.builtin.lineinfile:
+      path: /etc/sudoers.d/11-install-aur_builder
+      line: 'aur_builder ALL=(ALL) NOPASSWD: /usr/bin/makepkg'
+      create: yes
+      validate: 'visudo -cf %s'
+
+- name: Install yay
+  block:
+    - name: Checkout yay
+      ansible.builtin.git:
+        repo: 'https://aur.archlinux.org/yay-bin.git'
+        dest: /tmp/yay
+      become: yes
+      become_user: aur_builder
+    - name: Build and install yay
+      shell: makepkg -si --noconfirm
+      args:
+        chdir: /tmp/yay
+      become: yes
+      become_user: aur_builder
+
+- name: Install base packages
+  community.general.pacman:
+    name:
+      - git
+      - base-devel
+      - dhcpcd 
+      - iproute2 
+      - net-tools 
+      - dialog 
+      - wpa_supplicant
+
+- name: Install fonts
+  community.general.pacman:
+    name:
+      - ttf-anonymous-pro
+      - ttf-droid
+      - ttf-fira-code
+      - ttf-fira-mono
+      - ttf-fira-sans 
+      - ttf-jetbrains-mono
+      - ttf-lato
+      - ttf-roboto
+      - ttf-roboto-mono
+      - ttf-ubuntu-font-family
+
+- name: Install gnome 
+  block:
+    - name: Install packages
+      community.general.pacman:
+        name: 
+          - gdm
+          - xorg
+          - gnome
+          - gnome-extra
+          - networkmanager
+          - xorg-server
+        state: present
+        update_cache: yes
+    - name: "Enable gdm"
+      shell: systemctl enable gdm
+
+- name: Install nvidia drivers
+  community.general.pacman:
+    name: 
+      - nvidia
+      - nvidia-settings
+      - nvidia-utils
+    state: present
+    update_cache: yes
+
+- name: Install zoom and slack
+  kewlfft.aur.aur:
+    use: yay
+    name:
+      - zoom
+      - slack-desktop
+  become: yes
+  become_user: aur_builder
