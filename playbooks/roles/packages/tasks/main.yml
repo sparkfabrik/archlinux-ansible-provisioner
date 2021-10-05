@@ -42,6 +42,7 @@
       - git
       - base-devel
       - dhcpcd 
+      - kubectl
       - iproute2 
       - net-tools 
       - dialog 
@@ -71,6 +72,7 @@
           - gnome
           - gnome-extra
           - networkmanager
+          - ntfs-3g
           - xorg-server
         state: present
         update_cache: yes
@@ -89,13 +91,7 @@
 - name: Install pipewire audio
   block:
     - name: Install pipewire packages
-      community.general.pacman:
-        name: 
-          - pipewire-pulse
-        state: present
-        update_cache: yes
-    - name: Enable pipewire service
-      shell: systemctl enable pipewire
+      shell: yes | pacman -Syu pipewire-pulse # there isn't a way to install conflicting packages.
 
 - name: Install zoom and slack
   kewlfft.aur.aur:
@@ -103,6 +99,9 @@
     name:
       - zoom
       - slack-desktop
+      - kind
+      - kubectx
+      - stern
   become: yes
   become_user: aur_builder
 
@@ -120,3 +119,5 @@
     - name: Enable docker service
       shell: systemctl enable docker
 
+- name: Enable sshd.service
+  shell: systemctl enable sshd
