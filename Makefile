@@ -12,4 +12,5 @@ packages:
 	arch-chroot /mnt ansible-playbook /root/provisioner/playbooks/packages.yml -i localhost, -c local 
 
 install-grub:
+	arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 	arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Archlinux

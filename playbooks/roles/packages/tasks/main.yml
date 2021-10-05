@@ -41,7 +41,8 @@
     name:
       - git
       - base-devel
-      - dhcpcd 
+      - dhcpcd
+      - firefox
       - kubectl
       - iproute2 
       - net-tools 
@@ -78,6 +79,8 @@
         update_cache: yes
     - name: "Enable gdm"
       shell: systemctl enable gdm
+    - name: "Enable NetworkManager"
+      shell: systemctl enable NetworkManager
 
 - name: Install nvidia drivers
   community.general.pacman:
@@ -93,15 +96,16 @@
     - name: Install pipewire packages
       shell: yes | pacman -Syu pipewire-pulse # there isn't a way to install conflicting packages.
 
-- name: Install zoom and slack
+- name: Install aur packages
   kewlfft.aur.aur:
-    use: yay
+    use: paru
     name:
       - zoom
       - slack-desktop
       - kind
       - kubectx
       - stern
+      - google-chrome
   become: yes
   become_user: aur_builder
 
