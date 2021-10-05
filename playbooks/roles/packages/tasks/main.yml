@@ -21,18 +21,18 @@
       create: yes
       validate: 'visudo -cf %s'
 
-- name: Install yay
+- name: Install paru
   block:
-    - name: Checkout yay
+    - name: Checkout paru
       ansible.builtin.git:
-        repo: 'https://aur.archlinux.org/yay-bin.git'
-        dest: /tmp/yay
+        repo: 'https://aur.archlinux.org/paru.git'
+        dest: /tmp/paru
       become: yes
       become_user: aur_builder
-    - name: Build and install yay
+    - name: Build and install paru
       shell: makepkg -si --noconfirm
       args:
-        chdir: /tmp/yay
+        chdir: /tmp/paru
       become: yes
       become_user: aur_builder
 
@@ -86,6 +86,17 @@
     state: present
     update_cache: yes
 
+- name: Install pipewire audio
+  block:
+    - name: Install pipewire packages
+      community.general.pacman:
+        name: 
+          - pipewire-pulse
+        state: present
+        update_cache: yes
+    - name: Enable pipewire service
+      shell: systemctl enable pipewire
+
 - name: Install zoom and slack
   kewlfft.aur.aur:
     use: yay
@@ -94,3 +105,18 @@
       - slack-desktop
   become: yes
   become_user: aur_builder
+
+- name: Install docker
+  block:
+    - name: Install docker
+      community.general.pacman:
+        name:
+          - docker
+    - name: Add user paolo to docker group
+      user:
+        name: '{{ username }}'
+        groups: docker
+        append: yes
+    - name: Enable docker service
+      shell: systemctl enable docker
+
