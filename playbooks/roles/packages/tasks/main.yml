@@ -54,6 +54,11 @@
       - wpa_supplicant
       - zsh
 
+- name: Install logitech stuff
+  community.general.pacman:
+    name:
+      - solaar
+
 - name: Install fonts
   community.general.pacman:
     name:
