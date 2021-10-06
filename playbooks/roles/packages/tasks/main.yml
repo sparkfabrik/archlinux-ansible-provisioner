@@ -43,11 +43,13 @@
       - base-devel
       - dhcpcd
       - firefox
+      - guvcview
       - kubectl
       - iproute2 
       - net-tools 
       - dialog 
       - wpa_supplicant
+      - zsh
 
 - name: Install fonts
   community.general.pacman:
