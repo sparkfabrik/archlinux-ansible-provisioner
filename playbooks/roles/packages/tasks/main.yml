@@ -46,9 +46,10 @@
       - guvcview
       - htop
       - kubectl
-      - iproute2 
-      - net-tools 
-      - dialog 
+      - iproute2
+      - neofetch
+      - net-tools
+      - dialog
       - wpa_supplicant
       - zsh
 
