@@ -44,6 +44,7 @@
       - dhcpcd
       - firefox
       - guvcview
+      - htop
       - kubectl
       - iproute2 
       - net-tools 
