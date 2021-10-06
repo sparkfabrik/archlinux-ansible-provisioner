@@ -76,6 +76,7 @@
           - xorg
           - gnome
           - gnome-extra
+          - gnome-shell-extension-appindicator
           - networkmanager
           - ntfs-3g
           - xorg-server
