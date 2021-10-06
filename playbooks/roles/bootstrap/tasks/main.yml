@@ -5,8 +5,8 @@
 - name: "Populates base system fstab with configured storage devices"
   shell: /usr/bin/genfstab -U -p /mnt > /mnt/etc/fstab
 
-- name: "Remove subvolid from fstab"
-  shell: sed -i 's|,subvolid=||g' /mnt/etc/fstab
+#- name: "Remove subvolid from fstab"
+# shell: sed -i 's|,subvolid=||g' /mnt/etc/fstab
 
 - name: "Set default timezone"
   shell: arch-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime
