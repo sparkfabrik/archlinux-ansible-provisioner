@@ -9,6 +9,8 @@ installation, please be aware this is made just for personal use, use it at your
 
 I like to install Archlinux using SSH, you can use this guide: https://wiki.archlinux.org/title/Install_Arch_Linux_via_SSH
 
+Basically it is just `systemctl enable sshd && passwd`.
+
 #### Install ansible and git
 
 In order to use the provisioner we need to install `ansible` `git` and `make`, as we are going 
