@@ -46,6 +46,7 @@
       - firefox
       - guvcview
       - htop
+      - pacman-contrib
       - kubectl
       - iproute2
       - neofetch
