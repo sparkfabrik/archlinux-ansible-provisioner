@@ -126,7 +126,7 @@ Now we run the first part of the installation, which will run `pacstrap`
 and some other installations tasks:
 
 ```bash
-make boostrap install-packages
+make bootstrap install-packages
 ```
 
 Now that the process if finished you can setup the password for the created user:
