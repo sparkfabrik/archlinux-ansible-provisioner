@@ -1,6 +1,6 @@
 ---
 - name: "Installs base system using pacstrap"
-  shell: /usr/bin/pacstrap /mnt base base-devel linux linux-firmware amd-ucode btrfs-progs efibootmgr vim git grub-btrfs ansible sudo 
+  shell: /usr/bin/pacstrap /mnt base base-devel linux linux-firmware amd-ucode intel-ucode btrfs-progs efibootmgr vim git grub-btrfs ansible sudo 
 
 - name: "Populates base system fstab with configured storage devices"
   shell: /usr/bin/genfstab -U -p /mnt > /mnt/etc/fstab
