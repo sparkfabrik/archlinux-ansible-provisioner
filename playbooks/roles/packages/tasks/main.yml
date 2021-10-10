@@ -53,8 +53,8 @@
           - kind
           - kubectx
           - stern
-        become: yes
-        become_user: aur_builder
+      become: yes
+      become_user: aur_builder
     - name: Install docker
       community.general.pacman:
         name:
@@ -112,8 +112,8 @@
       use: paru
       name:
         - logiops
-      become: yes
-      become_user: aur_builder
+    become: yes
+    become_user: aur_builder
   - name: Configure logiops (for MX Master 2S)
     ansible.builtin.copy:
       src: logitech/logid-mx-master2s.cfg
