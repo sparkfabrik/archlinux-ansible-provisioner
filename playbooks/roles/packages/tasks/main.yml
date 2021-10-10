@@ -21,6 +21,9 @@
       create: yes
       validate: 'visudo -cf %s'
 
+- name: Enable sshd.service
+  shell: systemctl enable sshd
+
 - name: Install paru
   block:
     - name: Checkout paru
@@ -36,97 +39,27 @@
       become: yes
       become_user: aur_builder
 
-- name: Install base packages
-  community.general.pacman:
-    name:
-      - git
-      - base-devel
-      - dnsutils
-      - dhcpcd
-      - firefox
-      - guvcview
-      - htop
-      - pacman-contrib
-      - kubectl
-      - iproute2
-      - neofetch
-      - net-tools
-      - dialog
-      - wpa_supplicant
-      - zsh
-
-- name: Install logitech stuff
-  community.general.pacman:
-    name:
-      - solaar
-
-- name: Install fonts
-  community.general.pacman:
-    name:
-      - ttf-anonymous-pro
-      - ttf-droid
-      - ttf-fira-code
-      - ttf-fira-mono
-      - ttf-fira-sans 
-      - ttf-jetbrains-mono
-      - ttf-lato
-      - ttf-roboto
-      - ttf-roboto-mono
-      - ttf-ubuntu-font-family
-
-- name: Install gnome 
+- name: Install cloud native packages
   block:
-    - name: Install packages
+    - name: Install cloud native packages
       community.general.pacman:
-        name: 
-          - gdm
-          - xorg
-          - gnome
-          - gnome-extra
-          - gnome-shell-extension-appindicator
-          - networkmanager
-          - ntfs-3g
-          - xorg-server
-        state: present
-        update_cache: yes
-    - name: "Enable gdm"
-      shell: systemctl enable gdm
-    - name: "Enable NetworkManager"
-      shell: systemctl enable NetworkManager
-
-- name: Install nvidia drivers
-  community.general.pacman:
-    name: 
-      - nvidia
-      - nvidia-settings
-      - nvidia-utils
-    state: present
-    update_cache: yes
-
-- name: Install pipewire audio
-  block:
-    - name: Install pipewire packages
-      shell: yes | pacman -Syu pipewire-pulse # there isn't a way to install conflicting packages.
-
-- name: Install aur packages
-  kewlfft.aur.aur:
-    use: paru
-    name:
-      - zoom
-      - slack-desktop
-      - kind
-      - kubectx
-      - stern
-      - google-chrome
-  become: yes
-  become_user: aur_builder
-
-- name: Install docker
-  block:
+        name:
+          - kubectl
+          - helm
+    - name: Install cloud native packages from aur
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - kind
+          - kubectx
+          - stern
+        become: yes
+        become_user: aur_builder
     - name: Install docker
       community.general.pacman:
         name:
           - docker
+          - docker-compose
     - name: Add user paolo to docker group
       user:
         name: '{{ username }}'
@@ -135,5 +68,111 @@
     - name: Enable docker service
       shell: systemctl enable docker
 
-- name: Enable sshd.service
-  shell: systemctl enable sshd
+- name: Install base packages
+  block:
+  - name: Install base packages
+    community.general.pacman:
+      name:
+        - git
+        - base-devel
+        - dnsutils
+        - dhcpcd
+        - deja-dup
+        - firefox
+        - guvcview
+        - htop
+        - pacman-contrib
+        - iproute2
+        - neofetch
+        - net-tools
+        - dialog
+        - wpa_supplicant
+        - zsh
+        - tmux
+  - name: Install base packages from aur
+    kewlfft.aur.aur:
+      use: paru
+      name:
+        - google-chrome
+        - slack-desktop
+        - timeshift
+        - visual-studio-code-bin
+        - zoom
+    become: yes
+    become_user: aur_builder
+
+- name: Install logitech stuff
+  block:
+  - name: Install logitech packages
+    community.general.pacman:
+      name:
+        - solaar
+  - name: Install logitech packages from aur
+    kewlfft.aur.aur:
+      use: paru
+      name:
+        - logiops
+      become: yes
+      become_user: aur_builder
+  - name: Configure logiops (for MX Master 2S)
+    ansible.builtin.copy:
+      src: logitech/logid-mx-master2s.cfg
+      dest: /etc/logid.cfg
+
+- name: Install fonts
+  community.general.pacman:
+    name:
+      - ttf-anonymous-pro
+      - ttf-droid
+      - ttf-fira-code
+      - ttf-fira-mono
+      - ttf-fira-sans
+      - ttf-jetbrains-mono
+      - ttf-lato
+      - ttf-roboto
+      - ttf-roboto-mono
+      - ttf-ubuntu-font-family
+
+- name: Install gnome
+  block:
+    - name: Install packages
+      community.general.pacman:
+        name:
+          - gdm
+          - xorg
+          - gnome
+          - gnome-extra
+          - gnome-shell-extension-appindicator
+          - power-profiles-daemon
+          - networkmanager
+          - ntfs-3g
+          - xorg-server
+        state: present
+        update_cache: yes
+    - name: Install gnome aur dependencies
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - gnome-shell-extension-just-perfection-desktop-git
+    - name: "Enable gdm"
+      shell: systemctl enable gdm
+    - name: "Enable NetworkManager"
+      shell: systemctl enable NetworkManager
+    - name: "Enable power-profiles-daemon"
+      shell: systemctl enable power-profiles-daemon
+
+- name: Install nvidia drivers
+  community.general.pacman:
+    name:
+      - nvidia
+      - nvidia-settings
+      - nvidia-utils
+    state: present
+    update_cache: yes
+
+- name: Install pipewire audio
+  block:
+    - name: Install pipewire packages (to replace Pulseaudio)
+      shell: yes | pacman -Syu pipewire-pulse # there isn't a way to install conflicting packages.
+
+
