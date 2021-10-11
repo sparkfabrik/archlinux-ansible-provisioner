@@ -154,6 +154,8 @@
         use: paru
         name:
           - gnome-shell-extension-just-perfection-desktop-git
+      become: yes
+      become_user: aur_builder
     - name: "Enable gdm"
       shell: systemctl enable gdm
     - name: "Enable NetworkManager"
