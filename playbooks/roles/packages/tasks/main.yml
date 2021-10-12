@@ -89,6 +89,7 @@
         - wpa_supplicant
         - zsh
         - tmux
+        - telegram-desktop
   - name: Install base packages from aur
     kewlfft.aur.aur:
       use: paru
@@ -178,3 +179,18 @@
       shell: yes | pacman -Syu pipewire-pulse # there isn't a way to install conflicting packages.
 
 
+- name: Configure grub to print OEM logo
+  tags: grub
+  block:
+  - name: "Checking GRUB cmdline"
+    shell: "grep 'GRUB_CMDLINE_LINUX_DEFAULT=.*splash.*' /etc/default/grub"
+    register: grub_cfg_grep
+    changed_when: false
+    failed_when: false
+
+  - name: "Configuring GRUB cmdline"
+    replace:
+      path: '/etc/default/grub'
+      regexp: '^GRUB_CMDLINE_LINUX_DEFAULT="((\w.?)*)"$'
+      replace: 'GRUB_CMDLINE_LINUX_DEFAULT="\1 splash"'
+    when: '"splash" not in grub_cfg_grep'
