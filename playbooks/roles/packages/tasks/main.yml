@@ -21,9 +21,6 @@
       create: yes
       validate: 'visudo -cf %s'
 
-- name: Enable sshd.service
-  shell: systemctl enable sshd
-
 - name: Install paru
   block:
     - name: Checkout paru
@@ -39,13 +36,27 @@
       become: yes
       become_user: aur_builder
 
+- name: Configure system components
+  tags: [ system, bluetooth ]
+  block:
+  - name: Install bluetooth dependencies
+    community.general.pacman:
+      name:
+        - bluez
+        - bluez-utils
+  - name: Activate bluetooth service
+    command: systemctl enable bluetooth
+  - name: Enable sshd.service
+    shell: systemctl enable sshd
+
 - name: Install cloud native packages
+  tags: [ cloudnative, packages ]
   block:
     - name: Install cloud native packages
       community.general.pacman:
         name:
           - aws-cli
-          - google-cloud-sdk        
+          - google-cloud-sdk
           - kubectl
           - helm
     - name: Install cloud native packages from aur
@@ -196,3 +207,31 @@
       regexp: '^GRUB_CMDLINE_LINUX_DEFAULT="((\w.?)*)"$'
       replace: 'GRUB_CMDLINE_LINUX_DEFAULT="\1 splash"'
     when: '"splash" not in grub_cfg_grep'
+
+  - name: "Regenerate GRUB config"
+    command: grub-mkconfig -o /boot/grub/grub.cfg
+
+  - name: Configure security
+    tags: security
+    block:
+    - name: Set unlock_time to 30s after the lock out.
+      community.general.ini_file:
+        path: /etc/security/faillock.conf
+        section: null
+        option: unlock_time
+        value: 30
+        exclusive: yes
+    - name: Set fail_interval to 30s after N fail attempts
+      community.general.ini_file:
+        path: /etc/security/faillock.conf
+        section: null
+        option: fail_interval
+        value: 30
+        exclusive: yes
+    - name: Set deny acesso to 6 consecutive authentication failures
+      community.general.ini_file:
+        path: /etc/security/faillock.conf
+        section: null
+        option: deny
+        value: 6
+        exclusive: yes
