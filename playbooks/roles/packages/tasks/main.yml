@@ -44,6 +44,8 @@
     - name: Install cloud native packages
       community.general.pacman:
         name:
+          - aws-cli
+          - google-cloud-sdk        
           - kubectl
           - helm
     - name: Install cloud native packages from aur
