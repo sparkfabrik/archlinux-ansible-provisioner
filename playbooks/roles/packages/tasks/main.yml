@@ -101,6 +101,7 @@
         - dialog
         - wpa_supplicant
         - zsh
+        - thefuck
         - tmux
         - telegram-desktop
   - name: Install base packages from aur
