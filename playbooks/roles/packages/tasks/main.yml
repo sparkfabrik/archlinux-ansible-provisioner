@@ -179,6 +179,7 @@
       shell: systemctl enable power-profiles-daemon
 
 - name: Install nvidia drivers
+  tags: [system, nvidia]
   community.general.pacman:
     name:
       - nvidia
@@ -192,47 +193,53 @@
     - name: Install pipewire packages (to replace Pulseaudio)
       shell: yes | pacman -Syu pipewire-pulse # there isn't a way to install conflicting packages.
 
+- name: Configure printing system
+  tags: [system, printing]
+  block:
+    - name: Install cups
+      community.general.pacman:
+        name:
+          - cups
+          - cups-pdf
+          - system-config-printer
+    - name: Enable cups socket based
+      shell: systemctl enable cups.socket
 
 - name: Configure grub to print OEM logo
   tags: grub
   block:
-  - name: "Checking GRUB cmdline"
-    shell: "grep 'GRUB_CMDLINE_LINUX_DEFAULT=.*splash.*' /etc/default/grub"
-    register: grub_cfg_grep
-    changed_when: false
-    failed_when: false
-
   - name: "Configuring GRUB cmdline"
-    replace:
-      path: '/etc/default/grub'
-      regexp: '^GRUB_CMDLINE_LINUX_DEFAULT="((\w.?)*)"$'
-      replace: 'GRUB_CMDLINE_LINUX_DEFAULT="\1 splash"'
-    when: '"splash" not in grub_cfg_grep'
+    lineinfile:
+      dest: /etc/default/grub
+      regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
+      line: 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet splash"'
+      mode: 0644
+      backup: yes
 
   - name: "Regenerate GRUB config"
     command: grub-mkconfig -o /boot/grub/grub.cfg
 
-  - name: Configure security
-    tags: security
-    block:
-    - name: Set unlock_time to 30s after the lock out.
-      community.general.ini_file:
-        path: /etc/security/faillock.conf
-        section: null
-        option: unlock_time
-        value: 30
-        exclusive: yes
-    - name: Set fail_interval to 30s after N fail attempts
-      community.general.ini_file:
-        path: /etc/security/faillock.conf
-        section: null
-        option: fail_interval
-        value: 30
-        exclusive: yes
-    - name: Set deny acesso to 6 consecutive authentication failures
-      community.general.ini_file:
-        path: /etc/security/faillock.conf
-        section: null
-        option: deny
-        value: 6
-        exclusive: yes
+- name: Configure security
+  tags: security
+  block:
+  - name: Set unlock_time to 30s after the lock out.
+    community.general.ini_file:
+      path: /etc/security/faillock.conf
+      section: null
+      option: unlock_time
+      value: 30
+      exclusive: yes
+  - name: Set fail_interval to 30s after N fail attempts
+    community.general.ini_file:
+      path: /etc/security/faillock.conf
+      section: null
+      option: fail_interval
+      value: 30
+      exclusive: yes
+  - name: Set deny acesso to 6 consecutive authentication failures
+    community.general.ini_file:
+      path: /etc/security/faillock.conf
+      section: null
+      option: deny
+      value: 6
+      exclusive: yes
