@@ -38,6 +38,7 @@
     community.general.pacman:
       name:
         - git
+        - gparted
         - base-devel
         - dnsutils
         - dhcpcd
