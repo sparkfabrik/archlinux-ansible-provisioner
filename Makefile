@@ -5,7 +5,7 @@ init:
 bootstrap: init
 	ansible-playbook playbooks/bootstrap.yml -i localhost, -c local
 
-base:
+base: bootstrap
 	mkdir -p /mnt/root/provisioner
 	cp -aR . /mnt/root/provisioner
 	arch-chroot /mnt ansible-galaxy collection install -r /root/provisioner/requirements.yml
