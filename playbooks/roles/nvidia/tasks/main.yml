@@ -1,6 +1,12 @@
 ---
+- name: "Detect NVIDIA"
+  shell: "lspci | grep -i vga | grep -i nvidia"
+  ignore_errors: yes
+  register: is_nvidia
+
 - name: Install nvidia drivers
   tags: [system, nvidia]
+  when: is_nvidia.stdout != ""
   community.general.pacman:
     name:
       - nvidia

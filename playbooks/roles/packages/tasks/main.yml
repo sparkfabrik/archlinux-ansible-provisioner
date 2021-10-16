@@ -54,7 +54,10 @@
         - zsh
         - thefuck
         - tmux
+        - vim
         - telegram-desktop
+  - name: Symlink vim to vi
+    command: ln -sf /usr/bin/vim /usr/bin/vi
   - name: Install base packages from aur
     kewlfft.aur.aur:
       use: paru
