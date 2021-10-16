@@ -1,0 +1,30 @@
+---
+- name: Install gnome
+  block:
+    - name: Install packages
+      community.general.pacman:
+        name:
+          - gdm
+          - xorg
+          - gnome
+          - gnome-extra
+          - gnome-shell-extension-appindicator
+          - power-profiles-daemon
+          - networkmanager
+          - ntfs-3g
+          - xorg-server
+        state: present
+        update_cache: yes
+      - name: Install gnome aur dependencies
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - gnome-shell-extension-just-perfection-desktop-git
+      become: yes
+      become_user: aur_builder
+    - name: "Enable gdm"
+      shell: systemctl enable gdm
+    - name: "Enable NetworkManager"
+      shell: systemctl enable NetworkManager
+    - name: "Enable power-profiles-daemon"
+      shell: systemctl enable power-profiles-daemon

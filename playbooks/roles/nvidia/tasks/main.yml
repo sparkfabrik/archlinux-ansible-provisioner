@@ -1,0 +1,10 @@
+---
+- name: Install nvidia drivers
+  tags: [system, nvidia]
+  community.general.pacman:
+    name:
+      - nvidia
+      - nvidia-settings
+      - nvidia-utils
+    state: present
+    update_cache: yes
