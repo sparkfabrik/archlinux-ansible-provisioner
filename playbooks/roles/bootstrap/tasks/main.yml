@@ -75,9 +75,6 @@
       state: present
       path: "/mnt/etc/hosts"
 
-- name: Recreate Initramfs
-  shell: arch-chroot /mnt mkinitcpio -P
-
 - name: Create user and add to sudoers
   shell: arch-chroot /mnt useradd -m -G wheel -s /bin/bash {{ username }}
   ignore_errors: yes
@@ -89,3 +86,8 @@
     create: yes
     validate: 'visudo -cf %s'
 
+- name: Enable time synchronization
+  command: arch-chroot /mnt systemctl enable systemd-timesyncd.service
+
+- name: Recreate Initramfs
+  shell: arch-chroot /mnt mkinitcpio -P

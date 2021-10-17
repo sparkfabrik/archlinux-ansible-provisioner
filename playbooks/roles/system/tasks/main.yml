@@ -24,18 +24,22 @@
 
 - name: Install paru
   block:
+    - stat: path=/usr/bin/paru
+      register: paru
     - name: Checkout paru
       ansible.builtin.git:
         repo: 'https://aur.archlinux.org/paru.git'
         dest: /tmp/paru
       become: yes
       become_user: aur_builder
+      when: paru.stat.exists == false
     - name: Build and install paru
       shell: makepkg -si --noconfirm
       args:
         chdir: /tmp/paru
       become: yes
       become_user: aur_builder
+      when: paru.stat.exists == false
 
 - name: Configure system components
   tags: [system, bluetooth]

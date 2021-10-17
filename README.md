@@ -129,13 +129,15 @@ umount /mnt
 mount -o noatime,compress=zstd,subvol=@ ${LUKS_PARTITION} /mnt
 
 # Mount boot partition.
+mkdir -p /mnt/boot/uefi
 mount ${UEFI_PARTITION} /mnt/boot
-mkdir /mnt/boot/efi
-mkdir /mnt/home
-mkdir -p /mnt/mnt/allvolumes
 
-# Mount the subvolumes
+# Mount home.
+mkdir /mnt/home
 mount -o noatime,compress=zstd,subvol=@home ${LUKS_PARTITION} /mnt/home
+
+# Mount all subvolumes just for convenience.
+mkdir -p /mnt/mnt/allvolumes
 mount -o noatime,compress=zstd,subvol=/ ${LUKS_PARTITION} /mnt/mnt/allvolumes
 ```
 > Please note that we are mounting btrfs with compression enabled to reduce writes (and ssd lifespan)
@@ -157,7 +159,7 @@ Now we run the first part of the installation, which will run `pacstrap`
 and some other installations tasks:
 
 ```bash
-make system install-grub
+make system
 ```
 
 #### Configure GRUB to the encrypted disk
