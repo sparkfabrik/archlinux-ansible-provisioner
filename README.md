@@ -88,7 +88,7 @@ Just to be sure about the partitions, you can always run `lsblk` to see partitio
 
 > ***VERY IMPORTANT***: From now on i'll use `/dev/nvme0n1p4` for the root partition and `/dev/nvme0n1p5` and `/dev/nvme0n1p5` for the swap one. Adjust them according to your setup.
 
-#### Root encryption
+#### ROOT LUKS encryption (optional)
 
 1. Archlinux wiki: https://wiki.archlinux.org/title/Dm-crypt/Encrypting_an_entire_system#LUKS_on_a_partition
 2. Unofficial guide: https://blog.bespinian.io/posts/installing-arch-linux-on-uefi-with-full-disk-encryption/
@@ -100,12 +100,12 @@ We are going to encrypt the entire root filesystem:
 
 #### UEFI Partition
 
-***VERY IMPORTANT***: This step is only required when creating a new EFI partition, if you are installing
+> ***VERY IMPORTANT***: This step is only required when creating a new EFI partition, if you are installing
 beside another Linux distribution or Windows and you already have an EFI partition, you can skip it.
 
 Run this command: `mkfs.fat -F32 ${UEFI_PARTITION}`
 
-#### BTRFS installation
+#### BTRFS Setup with encryption
 
 We are going to create btrfs volumes and subvolumes:
 
@@ -140,7 +140,44 @@ mount -o noatime,compress=zstd,subvol=@home ${LUKS_PARTITION} /mnt/home
 mkdir -p /mnt/mnt/allvolumes
 mount -o noatime,compress=zstd,subvol=/ ${LUKS_PARTITION} /mnt/mnt/allvolumes
 ```
-> Please note that we are mounting btrfs with compression enabled to reduce writes (and ssd lifespan)
+
+#### BTRFS Setup without encryption
+
+We are going to create btrfs volumes and subvolumes:
+
+```
+mkfs.btrfs -L arch ${ROOT_PARTITION}
+mount ${ROOT_PARTITION} /mnt
+
+# This is a layout made to be compatible with timeshift and similare to the Manjaro one (https://www.reddit.com/r/archlinux/comments/fkcamq/comment/fks5mph/?utm_source=share&utm_medium=web2x&context=3)
+btrfs subvolume create /mnt/@
+btrfs subvolume create /mnt/@home
+btrfs subvolume create /mnt/@snapshots
+btrfs subvolume create /mnt/@home.snapshots
+```
+
+Next, create all the directories needed and mount all the partitions (/boot/efi included) in order to start the installation:
+
+```
+umount /mnt
+
+# Mount root and create default directories.
+mount -o noatime,compress=zstd,subvol=@ ${ROOT_PARTITION} /mnt
+
+# Mount boot partition.
+mkdir -p /mnt/boot/uefi
+mount ${UEFI_PARTITION} /mnt/boot/efi
+
+# Mount home.
+mkdir /mnt/home
+mount -o noatime,compress=zstd,subvol=@home ${ROOT_PARTITION} /mnt/home
+
+# Mount all subvolumes just for convenience.
+mkdir -p /mnt/mnt/allvolumes
+mount -o noatime,compress=zstd,subvol=/ ${ROOT_PARTITION} /mnt/mnt/allvolumes
+```
+
+> ***Please note*** that we are mounting btrfs with compression enabled to reduce writes (and ssd lifespan)
 and performance [here](https://wiki.archlinux.org/title/btrfs#Compression) and [here](https://fedoraproject.org/wiki/Changes/BtrfsByDefault#Compression) some refs.
 
 Done, we can now run the provisioner.
@@ -153,19 +190,15 @@ Start by cloning the repo:
 cd /root
 git clone https://github.com/paolomainardi/archlinux-ansible-provisioner.git provisioner
 cd provisioner
-```
-
-Now we run the first part of the installation, which will run `pacstrap`
-and some other installations tasks:
-
-```bash
 make system
 ```
 
-#### Configure GRUB to the encrypted disk
+#### Configure GRUB to the encrypted disk (only for encrypted installations)
 
+1. Run `vim /mnt/etc/mkinitcpio.conf` and, to the `HOOKS` array, add `keyboard` between `autodetect` and `modconf` and add `encrypt` between `block` and `filesystems`
+1. Run `arch-chroot /mnt mkinitcpio -P`
 1. Run `blkid -s UUID -o value ${ROOT_PARTITION}` to get the `UUID` of the device
-1. Run `vim /mnt/etc/default/grub` and set `GRUB_CMDLINE_LINUX="cryptdevice=UUID=xxxx:cryptroot` while replacing “xxxx” with the `UUID` of the `$LUKE_PARTITION` device to tell GRUB about our encrypted file system.
+1. Run `vim /mnt/etc/default/grub` and set `GRUB_CMDLINE_LINUX="cryptdevice=UUID=xxxx:cryptroot` while replacing “xxxx” with the `UUID` of the `$LUKS_PARTITION` device to tell GRUB about our encrypted file system.
 1. Run `make install-grub`
 
 #### Set the user password
