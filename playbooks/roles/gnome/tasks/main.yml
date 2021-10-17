@@ -3,8 +3,9 @@
   block:
     - name: Install xorg
       community.general.pacman:
-        - xorg
-        - xorg-server
+        name:
+          - xorg
+          - xorg-server
     - name: Install gnome packages
       community.general.pacman:
         name:
