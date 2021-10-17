@@ -1,7 +1,7 @@
 - hosts: all
   roles:
     - role: system
-    - role: nvidia
     - role: packages
+    - role: nvidia
     - role: logitech
     - role: gnome
