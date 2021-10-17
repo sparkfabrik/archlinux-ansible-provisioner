@@ -6,7 +6,6 @@
       community.general.pacman:
         name:
           - aws-cli
-          - google-cloud-sdk
           - kubectl
           - helm
     - name: Install cloud native packages from aur
@@ -16,6 +15,7 @@
           - kind
           - kubectx
           - stern
+          - google-cloud-sdk
       become: yes
       become_user: aur_builder
     - name: Install docker
