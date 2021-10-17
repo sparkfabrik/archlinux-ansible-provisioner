@@ -30,6 +30,7 @@
         name:
           - optimus-manager
           - optimus-manager-qt
+          - gdm-prime
     become: yes
     become_user: aur_builder
   - name: Enable optimus-manager
