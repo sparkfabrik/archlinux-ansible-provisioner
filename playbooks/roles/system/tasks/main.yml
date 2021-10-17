@@ -22,9 +22,34 @@
       create: yes
       validate: 'visudo -cf %s'
 
+- name: Install paru
+  block:
+    - name: Checkout paru
+      ansible.builtin.git:
+        repo: 'https://aur.archlinux.org/paru.git'
+        dest: /tmp/paru
+      become: yes
+      become_user: aur_builder
+    - name: Build and install paru
+      shell: makepkg -si --noconfirm
+      args:
+        chdir: /tmp/paru
+      become: yes
+      become_user: aur_builder
+
 - name: Configure system components
   tags: [system, bluetooth]
   block:
+  - name: Install base packages
+    community.general.pacman:
+      name:
+        - ansible
+        - vim
+        - sudo
+        - grub-btrfs
+        - btrfs-progs
+        - efibootmgr
+        - git
   - name: Install bluetooth dependencies
     community.general.pacman:
       name:
