@@ -139,8 +139,18 @@ and some other installations tasks:
 make system install-grub
 ```
 
+#### Configure GRUB to the encrypted disk
+
+1. Run `blkid -s UUID -o value ${LUKE_PARTITION}` to get the `UUID` of the device
+1. Run `vim /mnt/etc/default/grub` and set `GRUB_CMDLINE_LINUX="cryptdevice=UUID=xxxx:cryptroot` while replacing “xxxx” with the `UUID` of the `$LUKE_PARTITION` device to tell GRUB about our encrypted file system.
+1. Run `make install-grub`
+
+#### Set the user password
+
 Now that the process if finished you can setup the password for the created user:
 
 ```
 arch-chroot /mnt passwd <your-user>
 ```
+
+Finished, restart your system and enjoy your brand new Archlinux installation.
