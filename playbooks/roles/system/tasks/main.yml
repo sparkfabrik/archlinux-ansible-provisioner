@@ -69,6 +69,11 @@
   block:
     - name: Install pipewire packages (to replace Pulseaudio)
       shell: yes | pacman -Syu pipewire-pulse # there isn't a way to install conflicting packages.
+    - name: Install audio system dependencies
+      community.general.pacman:
+        name:
+          - sof-firmware
+          - alsa-ucm-conf
 
 - name: Configure printing system
   tags: [system, printing]
