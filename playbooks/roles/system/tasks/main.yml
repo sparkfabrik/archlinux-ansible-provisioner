@@ -40,7 +40,7 @@
 - name: Configure system components
   tags: [system, bluetooth]
   block:
-  - name: Install base packages
+  - name: Install system packages
     community.general.pacman:
       name:
         - ansible
