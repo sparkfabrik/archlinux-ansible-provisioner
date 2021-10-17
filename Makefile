@@ -18,5 +18,3 @@ install-grub:
 local-system:
 	sudo ansible-galaxy collection install -r ./requirements.yml
 	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local
-
-dc3652ed-bb0e-447c-a5ec-920898097e6d
