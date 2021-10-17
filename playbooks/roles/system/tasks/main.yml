@@ -62,10 +62,10 @@
       mode: 0644
       backup: yes
   - stat: path=/boot/grub/grub.cfg
-    register: grub-cfg
+    register: grubcfg
   - name: "Regenerate GRUB config"
     command: grub-mkconfig -o /boot/grub/grub.cfg
-    when: grub-cfg.stat.exists
+    when: grubcfg.stat.exists
 
 - name: Configure security
   tags: [system, security]
