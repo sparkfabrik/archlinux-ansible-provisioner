@@ -1,0 +1,133 @@
+---
+- name: Create an aur_builder user to install aur packages without password
+  tags: [system]
+  block:
+  - name: Create the `aur_builder` user
+    ansible.builtin.user:
+      name: aur_builder
+      create_home: yes
+      group: wheel
+
+  - name: Allow the `aur_builder` user to run `sudo pacman` without a password
+    ansible.builtin.lineinfile:
+      path: /etc/sudoers.d/11-install-aur_builder
+      line: 'aur_builder ALL=(ALL) NOPASSWD: /usr/bin/pacman'
+      create: yes
+      validate: 'visudo -cf %s'
+
+  - name: Allow the `aur_builder` user to run `sudo makepkg` without a password
+    ansible.builtin.lineinfile:
+      path: /etc/sudoers.d/11-install-aur_builder
+      line: 'aur_builder ALL=(ALL) NOPASSWD: /usr/bin/makepkg'
+      create: yes
+      validate: 'visudo -cf %s'
+
+- name: Configure system components
+  tags: [system, bluetooth]
+  block:
+  - name: Install bluetooth dependencies
+    community.general.pacman:
+      name:
+        - bluez
+        - bluez-utils
+  - name: Activate bluetooth service
+    command: systemctl enable bluetooth
+  - name: Enable sshd.service
+    shell: systemctl enable sshd
+
+- name: Install pipewire audio
+  tags: [system, audio]
+  block:
+    - name: Install pipewire packages (to replace Pulseaudio)
+      shell: yes | pacman -Syu pipewire-pulse # there isn't a way to install conflicting packages.
+
+- name: Configure printing system
+  tags: [system, printing]
+  block:
+    - name: Install cups
+      community.general.pacman:
+        name:
+          - cups
+          - cups-pdf
+          - system-config-printer
+    - name: Enable cups socket based
+      shell: systemctl enable cups.socket
+
+- name: Configure grub to print OEM logo
+  tags: [system, grub]
+  block:
+  - name: "Configuring GRUB cmdline"
+    lineinfile:
+      dest: /etc/default/grub
+      regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
+      line: 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet splash"'
+      mode: 0644
+      backup: yes
+  - name: "Regenerate GRUB config"
+    command: grub-mkconfig -o /boot/grub/grub.cfg
+
+- name: Configure security
+  tags: [system, security]
+  tags: security
+  block:
+  - name: Set unlock_time to 30s after the lock out.
+    community.general.ini_file:
+      path: /etc/security/faillock.conf
+      section: null
+      option: unlock_time
+      value: 30
+      exclusive: yes
+  - name: Set fail_interval to 30s after N fail attempts
+    community.general.ini_file:
+      path: /etc/security/faillock.conf
+      section: null
+      option: fail_interval
+      value: 30
+      exclusive: yes
+  - name: Set deny acesso to 6 consecutive authentication failures
+    community.general.ini_file:
+      path: /etc/security/faillock.conf
+      section: null
+      option: deny
+      value: 6
+      exclusive: yes
+
+- name: Configure grub to print OEM logo
+  tags: [system, grub]
+  block:
+  - name: "Configuring GRUB cmdline"
+    lineinfile:
+      dest: /etc/default/grub
+      regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
+      line: 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet splash"'
+      mode: 0644
+      backup: yes
+
+  - name: "Regenerate GRUB config"
+    command: grub-mkconfig -o /boot/grub/grub.cfg
+
+- name: Configure security
+  tags: [system, security]
+  tags: security
+  block:
+  - name: Set unlock_time to 30s after the lock out.
+    community.general.ini_file:
+      path: /etc/security/faillock.conf
+      section: null
+      option: unlock_time
+      value: 30
+      exclusive: yes
+  - name: Set fail_interval to 30s after N fail attempts
+    community.general.ini_file:
+      path: /etc/security/faillock.conf
+      section: null
+      option: fail_interval
+      value: 30
+      exclusive: yes
+  - name: Set deny acesso to 6 consecutive authentication failures
+    community.general.ini_file:
+      path: /etc/security/faillock.conf
+      section: null
+      option: deny
+      value: 6
+      exclusive: yes

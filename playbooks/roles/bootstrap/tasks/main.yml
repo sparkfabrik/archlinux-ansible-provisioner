@@ -1,6 +1,26 @@
 ---
 - name: "Installs base system using pacstrap"
-  shell: /usr/bin/pacstrap /mnt base base-devel linux linux-firmware amd-ucode btrfs-progs efibootmgr vim git grub-btrfs ansible sudo 
+  shell: /usr/bin/pacstrap /mnt base base-devel btrfs-progs efibootmgr vim git grub-btrfs ansible sudo
+
+- name: "Installs linux kernel"
+  shell: /usr/bin/pacstrap /mnt linux linux-firmware
+  when: kernel == "standard"
+
+- name: "Installs linux zen kernel"
+  shell: /usr/bin/pacstrap /mnt linux-zen linux-firmware
+  when: kernel == "zen"
+
+- name: "Get cpu type"
+  shell: "cat /proc/cpuinfo | grep vendor_id | head -n1 | grep AMD | awk '{print $3}'"
+  register: cpu_type
+
+- name: "Installs amd-ucode"
+  shell: /usr/bin/pacstrap /mnt amd-ucode
+  when: cpu_type.stdout == "AuthenticAMD"
+
+- name: "Installs intel-ucode"
+  shell: /usr/bin/pacstrap /mnt intel-ucode
+  when: cpu_type.stdout == "GenuineIntel"
 
 - name: "Populates base system fstab with configured storage devices"
   shell: /usr/bin/genfstab -U -p /mnt > /mnt/etc/fstab
@@ -68,4 +88,4 @@
     line: '%wheel ALL=(ALL) ALL'
     create: yes
     validate: 'visudo -cf %s'
-    
+
