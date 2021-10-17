@@ -3,11 +3,11 @@
   shell: /usr/bin/pacstrap /mnt base base-devel btrfs-progs efibootmgr vim git grub-btrfs ansible sudo
 
 - name: "Installs linux kernel"
-  shell: /usr/bin/pacstrap /mnt linux linux-firmware
+  shell: /usr/bin/pacstrap /mnt linux linux-headers linux-firmware
   when: kernel == "standard"
 
 - name: "Installs linux zen kernel"
-  shell: /usr/bin/pacstrap /mnt linux-zen linux-firmware
+  shell: /usr/bin/pacstrap /mnt linux-zen linux-zen-headers linux-firmware
   when: kernel == "zen"
 
 - name: "Get cpu type"
