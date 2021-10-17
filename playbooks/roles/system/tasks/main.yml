@@ -61,8 +61,11 @@
       line: 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet splash"'
       mode: 0644
       backup: yes
+  - stat: path=/boot/grub/grub.cfg
+    register: grub-cfg
   - name: "Regenerate GRUB config"
     command: grub-mkconfig -o /boot/grub/grub.cfg
+    when: grub-cfg.stat.exists
 
 - name: Configure security
   tags: [system, security]
