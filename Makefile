@@ -12,9 +12,11 @@ system: bootstrap
 	arch-chroot /mnt ansible-playbook /root/provisioner/playbooks/system.yml -i localhost, -c local
 
 install-grub:
-	arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 	arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Archlinux
+	arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 
 local-system:
 	sudo ansible-galaxy collection install -r ./requirements.yml
 	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local
+
+dc3652ed-bb0e-447c-a5ec-920898097e6d
