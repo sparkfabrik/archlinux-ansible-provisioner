@@ -32,8 +32,6 @@
         - bluez-utils
   - name: Activate bluetooth service
     command: systemctl enable bluetooth
-  - name: Enable sshd.service
-    shell: systemctl enable sshd
 
 - name: Install pipewire audio
   tags: [system, audio]
