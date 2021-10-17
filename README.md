@@ -5,6 +5,16 @@ installation, please be aware this is made just for personal use, use it at your
 
 ## Pre-requisites (manual steps)
 
+#### Configure network
+
+This is quite a simple process, if you want configure a wifi connection, just run:
+
+```bash
+iwctl wlan0 scan
+iwctl wlan0 connect <YOUR-ESSID> 
+```
+You should be online in a few seconds.
+
 #### Activate SSH
 
 I like to install Archlinux using SSH, you can use this guide: https://wiki.archlinux.org/title/Install_Arch_Linux_via_SSH
