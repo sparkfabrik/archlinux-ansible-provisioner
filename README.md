@@ -5,16 +5,6 @@ installation, please be aware this is made just for personal use, use it at your
 
 ## Pre-requisites (manual steps)
 
-#### Configure network
-
-This is quite a simple process, if you want configure a wifi connection, just run:
-
-```bash
-iwctl wlan0 scan
-iwctl wlan0 connect <YOUR-ESSID>
-```
-You should be online in a few seconds.
-
 #### Activate SSH
 
 I like to install Archlinux using SSH, you can use this guide: https://wiki.archlinux.org/title/Install_Arch_Linux_via_SSH
@@ -85,13 +75,43 @@ This is my current disk layout (using `cfdisk`):
 I will use `/dev/nvme0n1p4` and `/dev/nvme0n1p5` respectively for `/` and `swap` partitions.
 The rest is a Ubuntu 20.04 LTS installation. I'll share the EFI partition too between the two distros.
 
+Export the following variables, that we'll be used by next installation steps:
+
+```shell
+export UEFI_PARTITION=/dev/nvme0n1p1
+export ROOT_PARTITION=/dev/nvme0n1p4
+export SWAP_PARTITION=/dev/nvme0n1p5
+export LUKS_PARTITION=/dev/mapper/cryptroot
+```
+
+Just to be sure about the partitions, you can always run `lsblk` to see partitions per disk.
+
+> ***VERY IMPORTANT***: From now on i'll use `/dev/nvme0n1p4` for the root partition and `/dev/nvme0n1p5` and `/dev/nvme0n1p5` for the swap one. Adjust them according to your setup.
+
+#### Root encryption
+
+1. Archlinux wiki: https://wiki.archlinux.org/title/Dm-crypt/Encrypting_an_entire_system#LUKS_on_a_partition
+2. Unofficial guide: https://blog.bespinian.io/posts/installing-arch-linux-on-uefi-with-full-disk-encryption/
+
+We are going to encrypt the entire root filesystem:
+
+1. Run `cryptsetup -y -v luksFormat ${ROOT_PARTITION}` and then type `YES` and the new encryption password to encrypt the root partition
+1. Run `cryptsetup open ${ROOT_PARTITION} cryptroot` to open the encrypted partition
+
+#### UEFI Partition
+
+***VERY IMPORTANT***: This step is only required when creating a new EFI partition, if you are installing
+beside another Linux distribution or Windows and you already have an EFI partition, you can skip it.
+
+Run this command: `mkfs.fat -F32 ${UEFI_PARTITION}`
+
 #### BTRFS installation
 
 We are going to create btrfs volumes and subvolumes:
 
 ```
-mkfs.btrfs -L arch /dev/nvme0n1p4
-mount /dev/nvme0n1p4 /mnt
+mkfs.btrfs -L arch ${LUKS_PARTITION}
+mount ${LUKS_PARTITION} /mnt
 
 # This is a layout made to be compatible with timeshift and similare to the Manjaro one (https://www.reddit.com/r/archlinux/comments/fkcamq/comment/fks5mph/?utm_source=share&utm_medium=web2x&context=3)
 btrfs subvolume create /mnt/@
@@ -106,17 +126,17 @@ Next, create all the directories needed and mount all the partitions (/boot/efi 
 umount /mnt
 
 # Mount root and create default directories.
-mount -o noatime,compress=zstd,subvol=@ /dev/nvme0n1p4 /mnt
+mount -o noatime,compress=zstd,subvol=@ ${LUKS_PARTITION} /mnt
 mkdir /mnt/{home,boot}
 mkdir /mnt/boot/efi
 mkdir -p /mnt/mnt/allvolumes
 
 # Mount efi partition.
-mount /dev/nvme0n1p1 /mnt/boot/efi
+mount ${UEFI_PARTITION} /mnt/boot/efi
 
 # Mount the subvolumes
-mount -o noatime,compress=zstd,subvol=@home /dev/nvme0n1p4 /mnt/home
-mount -o noatime,compress=zstd,subvol=/ /dev/nvme0n1p4 /mnt/mnt/allvolumes
+mount -o noatime,compress=zstd,subvol=@home ${LUKS_PARTITION} /mnt/home
+mount -o noatime,compress=zstd,subvol=/ ${LUKS_PARTITION} /mnt/mnt/allvolumes
 ```
 > Please note that we are mounting btrfs with compression enabled to reduce writes (and ssd lifespan)
 and performance [here](https://wiki.archlinux.org/title/btrfs#Compression) and [here](https://fedoraproject.org/wiki/Changes/BtrfsByDefault#Compression) some refs.
@@ -128,6 +148,7 @@ Done, we can now run the provisioner.
 Start by cloning the repo:
 
 ```bash
+cd /root
 git clone https://github.com/paolomainardi/archlinux-ansible-provisioner.git provisioner
 cd provisioner
 ```
@@ -141,7 +162,7 @@ make system install-grub
 
 #### Configure GRUB to the encrypted disk
 
-1. Run `blkid -s UUID -o value ${LUKE_PARTITION}` to get the `UUID` of the device
+1. Run `blkid -s UUID -o value ${ROOT_PARTITION}` to get the `UUID` of the device
 1. Run `vim /mnt/etc/default/grub` and set `GRUB_CMDLINE_LINUX="cryptdevice=UUID=xxxx:cryptroot` while replacing “xxxx” with the `UUID` of the `$LUKE_PARTITION` device to tell GRUB about our encrypted file system.
 1. Run `make install-grub`
 
