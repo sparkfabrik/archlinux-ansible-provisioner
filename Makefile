@@ -12,7 +12,7 @@ system: bootstrap
 	arch-chroot /mnt ansible-playbook /root/provisioner/playbooks/system.yml -i localhost, -c local
 
 install-grub:
-	arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Archlinux
+	arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=Archlinux
 	arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 
 local-system:

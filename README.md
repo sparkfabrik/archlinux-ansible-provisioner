@@ -127,12 +127,12 @@ umount /mnt
 
 # Mount root and create default directories.
 mount -o noatime,compress=zstd,subvol=@ ${LUKS_PARTITION} /mnt
-mkdir /mnt/{home,boot}
-mkdir /mnt/boot/efi
-mkdir -p /mnt/mnt/allvolumes
 
-# Mount efi partition.
-mount ${UEFI_PARTITION} /mnt/boot/efi
+# Mount boot partition.
+mount ${UEFI_PARTITION} /mnt/boot
+mkdir /mnt/boot/efi
+mkdir /mnt/home
+mkdir -p /mnt/mnt/allvolumes
 
 # Mount the subvolumes
 mount -o noatime,compress=zstd,subvol=@home ${LUKS_PARTITION} /mnt/home
