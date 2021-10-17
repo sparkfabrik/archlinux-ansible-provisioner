@@ -44,12 +44,14 @@
     community.general.pacman:
       name:
         - ansible
-        - vim
-        - sudo
-        - grub-btrfs
         - btrfs-progs
         - efibootmgr
         - git
+        - grub-btrfs
+        - ntfs-3g
+        - vim
+        - sudo
+
   - name: Install bluetooth dependencies
     community.general.pacman:
       name:

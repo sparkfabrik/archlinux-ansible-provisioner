@@ -11,7 +11,7 @@ This is quite a simple process, if you want configure a wifi connection, just ru
 
 ```bash
 iwctl wlan0 scan
-iwctl wlan0 connect <YOUR-ESSID> 
+iwctl wlan0 connect <YOUR-ESSID>
 ```
 You should be online in a few seconds.
 
@@ -23,7 +23,7 @@ Basically it is just `systemctl enable sshd && passwd`.
 
 #### Install ansible and git
 
-In order to use the provisioner we need to install `ansible` `git` and `make`, as we are going 
+In order to use the provisioner we need to install `ansible` `git` and `make`, as we are going
 to use the provisioner to bootstrap the entire system.
 
 ```
@@ -64,7 +64,7 @@ What i've used as a reference:
 * https://wiki.archlinux.org/title/User:M0p/LUKS_Root_on_Btrfs
 
 This is the most flexible way to keep the things well separated and giving me the chance
-to automatically snapshot the root or home volumes separately and using `grub-btrfs` 
+to automatically snapshot the root or home volumes separately and using `grub-btrfs`
 to automatically from snapshots (TO BE TESTED).
 
 This is my current disk layout (using `cfdisk`):
@@ -75,7 +75,7 @@ This is my current disk layout (using `cfdisk`):
                                  Label: gpt, identifier: 4BAEBBEA-64DB-4DE6-A7F2-04E8972BF153
 
     Device                                Start                 End             Sectors           Size Type
->>  /dev/nvme0n1p1                         2048              487423              485376           237M EFI System              
+>>  /dev/nvme0n1p1                         2048              487423              485376           237M EFI System
     /dev/nvme0n1p2                       487424          1139156991          1138669568           543G Linux filesystem
     /dev/nvme0n1p3                   1139156992          1206265855            67108864            32G Linux swap
     /dev/nvme0n1p4                   1206265856          1881548799           675282944           322G Linux filesystem
@@ -118,7 +118,7 @@ mount /dev/nvme0n1p1 /mnt/boot/efi
 mount -o noatime,compress=zstd,subvol=@home /dev/nvme0n1p4 /mnt/home
 mount -o noatime,compress=zstd,subvol=/ /dev/nvme0n1p4 /mnt/mnt/allvolumes
 ```
-> Please note that we are mounting btrfs with compression enabled to reduce writes (and ssd lifespan) 
+> Please note that we are mounting btrfs with compression enabled to reduce writes (and ssd lifespan)
 and performance [here](https://wiki.archlinux.org/title/btrfs#Compression) and [here](https://fedoraproject.org/wiki/Changes/BtrfsByDefault#Compression) some refs.
 
 Done, we can now run the provisioner.
@@ -136,7 +136,7 @@ Now we run the first part of the installation, which will run `pacstrap`
 and some other installations tasks:
 
 ```bash
-make bootstrap install-packages
+make system install-grub
 ```
 
 Now that the process if finished you can setup the password for the created user:

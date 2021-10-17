@@ -1,17 +1,19 @@
 ---
 - name: Install gnome
   block:
-    - name: Install packages
+    - name: Install xorg
+      community.general.pacman:
+        - xorg
+        - xorg-server
+    - name: Install gnome packages
       community.general.pacman:
         name:
           - gdm
-          - xorg
           - gnome
           - gnome-extra
           - gnome-shell-extension-appindicator
           - power-profiles-daemon
           - networkmanager
-          - ntfs-3g
           - xorg-server
         state: present
         update_cache: yes
