@@ -15,7 +15,7 @@
           - xorg-server
         state: present
         update_cache: yes
-      - name: Install gnome aur dependencies
+    - name: Install gnome aur dependencies
       kewlfft.aur.aur:
         use: paru
         name:
