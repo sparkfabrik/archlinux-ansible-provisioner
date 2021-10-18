@@ -15,11 +15,11 @@
   register: cpu_type
 
 - name: "Installs amd-ucode"
-  shell: /usr/bin/pacstrap /mnt amd-ucode
+  shell: rm -rf /mnt/boot/amd-ucode.img && /usr/bin/pacstrap /mnt amd-ucode
   when: cpu_type.stdout == "AuthenticAMD"
 
 - name: "Installs intel-ucode"
-  shell: /usr/bin/pacstrap /mnt intel-ucode
+  shell: rm -rf /mnt/boot/intel-ucode.img && /usr/bin/pacstrap /mnt intel-ucode
   when: cpu_type.stdout == "GenuineIntel"
 
 - name: "Populates base system fstab with configured storage devices"

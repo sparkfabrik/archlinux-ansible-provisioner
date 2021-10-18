@@ -205,7 +205,7 @@ make system
 1. Run `vim /mnt/etc/mkinitcpio.conf` and, to the `HOOKS` array, add `keyboard` between `autodetect` and `modconf` and add `encrypt` between `block` and `filesystems`
 1. Run `arch-chroot /mnt mkinitcpio -P`
 1. Run `blkid -s UUID -o value ${ROOT_PARTITION}` to get the `UUID` of the device
-1. Run `vim /mnt/etc/default/grub` and set `GRUB_CMDLINE_LINUX="cryptdevice=UUID=xxxx:cryptroot /dev/mapper/cryptroot"` while replacing `xxxx` with the `UUID` of the `$ROOT_PARTITION` device to tell GRUB about our encrypted file system.
+1. Run `vim /mnt/etc/default/grub` and set `GRUB_CMDLINE_LINUX="cryptdevice=UUID=xxxx:cryptroot root=/dev/mapper/cryptroot"` while replacing `xxxx` with the `UUID` of the `$ROOT_PARTITION` device to tell GRUB about our encrypted file system.
 
 #### Set the user password
 
@@ -217,6 +217,7 @@ arch-chroot /mnt passwd <your-user>
 
 #### Install GRUB
 
-1. Run `make install-grub`
+1. ***FOR ENCRYPTED INSTALLATIONS*** run `make install-grub-with-encryption`
+1. ***FOR NON ENCRYPTED INSTALLATIONS*** run `make install-grub-no-encryption`
 
 Finished, restart your system and enjoy your brand new Archlinux installation.
