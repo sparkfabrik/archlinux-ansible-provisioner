@@ -1,3 +1,2 @@
 collections:
   - name: kewlfft.aur
-  - src: git+https://github.com/aisbergg/ansible-role-mkinitcpio.git
