@@ -182,6 +182,13 @@ and performance [here](https://wiki.archlinux.org/title/btrfs#Compression) and [
 
 Done, we can now run the provisioner.
 
+## Setup swap partition
+
+```shell
+mkswap ${SWAP_PARTITION}
+swapon ${SWAP_PARTITION}
+```
+
 ## Provisioner
 
 Start by cloning the repo:
