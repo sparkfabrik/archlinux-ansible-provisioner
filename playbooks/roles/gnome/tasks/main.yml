@@ -22,7 +22,7 @@
       kewlfft.aur.aur:
         use: paru
         name:
-          - gnome-shell-extension-desktop-icons
+          - gnome-shell-extension-desktop-icons-ng
           - gnome-shell-extension-just-perfection-desktop-git
       become: yes
       become_user: aur_builder
