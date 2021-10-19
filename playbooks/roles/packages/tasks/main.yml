@@ -42,6 +42,7 @@
         - base-devel
         - dnsutils
         - dhcpcd
+        - dmidecode
         - deja-dup
         - firefox
         - guvcview
