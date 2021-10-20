@@ -50,6 +50,7 @@
         - ansible
         - btrfs-progs
         - efibootmgr
+        - freetype2
         - git
         - grub-btrfs
         - ntfs-3g

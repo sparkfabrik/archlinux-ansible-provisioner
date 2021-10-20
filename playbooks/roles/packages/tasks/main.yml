@@ -52,12 +52,14 @@
         - neofetch
         - net-tools
         - dialog
-        - wpa_supplicant        
         - tcpdump
+        - usbutils
         - thefuck
         - tmux
+        - yadm
         - vim
         - telegram-desktop
+        - wpa_supplicant
         - zsh
   - name: Symlink vim to vi
     command: ln -sf /usr/bin/vim /usr/bin/vi
