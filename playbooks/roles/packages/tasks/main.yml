@@ -52,12 +52,13 @@
         - neofetch
         - net-tools
         - dialog
-        - wpa_supplicant
-        - zsh
+        - wpa_supplicant        
+        - tcpdump
         - thefuck
         - tmux
         - vim
         - telegram-desktop
+        - zsh
   - name: Symlink vim to vi
     command: ln -sf /usr/bin/vim /usr/bin/vi
   - name: Install base packages from aur
