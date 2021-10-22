@@ -1,37 +1,38 @@
 ---
-- name: "Detect NVIDIA"
-  shell: "lspci | grep -i vga | grep -i nvidia"
-  ignore_errors: yes
-  register: is_nvidia
-
-- name: "Detect Intel GPU"
-  shell: "lspci | grep -i vga | grep -i intel"
-  ignore_errors: yes
-  register: is_intel
-
-- name: Install nvidia drivers
-  tags: [system, nvidia]
-  when: is_nvidia.stdout != ""
-  community.general.pacman:
-    name:
-      - nvidia-dkms
-      - nvidia-settings
-      - nvidia-utils
-    state: present
-    update_cache: yes
-
-- name: Install optimus-manager drivers
-  tags: [system, nvidia]
-  when: is_intel.stdout != ""
+- name: Configure nvidia cards
+  tags: [nvidia]
   block:
-  - name: Install optimus-manager
-    kewlfft.aur.aur:
-        use: paru
-        name:
-          - optimus-manager
-          - optimus-manager-qt
-          - gdm-prime
-    become: yes
-    become_user: aur_builder
-  - name: Enable optimus-manager
-    command: systemctl enable optimus-manager
+  - name: "Detect NVIDIA"
+    shell: "lspci | grep -i vga | grep -i nvidia"
+    ignore_errors: yes
+    register: is_nvidia
+
+  - name: "Detect Intel GPU"
+    shell: "lspci | grep -i vga | grep -i intel"
+    ignore_errors: yes
+    register: is_intel
+
+  - name: Install nvidia drivers
+    when: is_nvidia.stdout != ""
+    community.general.pacman:
+      name:
+        - nvidia-dkms
+        - nvidia-settings
+        - nvidia-utils
+      state: present
+      update_cache: yes
+
+  - name: Install optimus-manager drivers
+    when: is_intel.stdout != ""
+    block:
+    - name: Install optimus-manager
+      kewlfft.aur.aur:
+          use: paru
+          name:
+            - optimus-manager
+            - optimus-manager-qt
+            - gdm-prime
+      become: yes
+      become_user: aur_builder
+    - name: Enable optimus-manager
+      command: systemctl enable optimus-manager
