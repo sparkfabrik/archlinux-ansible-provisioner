@@ -19,6 +19,10 @@ install-grub-no-encryption:
 	arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Archlinux
 	arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 
-local-system:
+local-install:
 	sudo ansible-galaxy collection install -r ./requirements.yml
-	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local
+	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local 
+
+# Example of usage: sudo TAGS=your-tags make local-install-tags
+local-install-tags:
+	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --tags $(TAGS)

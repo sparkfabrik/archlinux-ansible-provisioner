@@ -48,8 +48,12 @@
     community.general.pacman:
       name:
         - ansible
+        - bashtop
+        - lm_sensors
+        - dmidecode
         - btrfs-progs
         - efibootmgr
+        - freetype2
         - git
         - grub-btrfs
         - ntfs-3g
@@ -59,10 +63,17 @@
   - name: Install bluetooth dependencies
     community.general.pacman:
       name:
+        - blueman
         - bluez
         - bluez-utils
   - name: Activate bluetooth service
     command: systemctl enable bluetooth
+
+- name: "Detect extreme x1 gen3"
+  tags: [system, thinkpad]
+  shell: "dmidecode | grep \"ThinkPad X1 Extreme Gen 3\""
+  ignore_errors: yes
+  register: is_extreme_gen3
 
 - name: Install pipewire audio
   tags: [system, audio]
@@ -176,3 +187,10 @@
       option: deny
       value: 6
       exclusive: yes
+
+- name: Congigure AX201 for thinkpad x1 gen3
+  tags: [system, thinkpad]
+  lineinfile:
+    path: /etc/modprobe.d/iwl.conf
+    line: options iwlwifi 11n_disable=1 power_save=0
+  when: is_extreme_gen3.stdout != ""
