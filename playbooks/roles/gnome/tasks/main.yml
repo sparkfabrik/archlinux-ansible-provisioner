@@ -14,7 +14,6 @@
           - gnome
           - gnome-extra
           - gnome-shell-extension-appindicator
-          - power-profiles-daemon
           - networkmanager
           - xorg-server
         state: present
