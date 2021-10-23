@@ -76,18 +76,32 @@
     become: yes
     become_user: aur_builder
 
-- name: Install fonts
+- name: Install and configure fonts
   tags: [system, fonts]
-  community.general.pacman:
-    name:
-      - ttf-anonymous-pro
-      - ttf-droid
-      - ttf-fira-code
-      - ttf-fira-mono
-      - ttf-fira-sans
-      - ttf-jetbrains-mono
-      - ttf-lato
-      - ttf-roboto
-      - ttf-roboto-mono
-      - ttf-ubuntu-font-family
-      - ttf-ibm-plex
+  block:
+  - name: Install fonts
+    community.general.pacman:
+      name:
+        - fontconfig
+        - ttf-anonymous-pro
+        - ttf-droid
+        - ttf-fira-code
+        - ttf-fira-mono
+        - ttf-fira-sans
+        - ttf-jetbrains-mono
+        - ttf-lato
+        - ttf-roboto
+        - ttf-roboto-mono
+        - ttf-ubuntu-font-family
+        - ttf-ibm-plex
+  - name: Enable rgb subpixel configuration
+    file:
+      src: "/usr/share/fontconfig/conf.avail/10-sub-pixel-rgb.conf"
+      dest: "/etc/fonts/conf.d/10-sub-pixel-rgb.conf"
+      state: link
+  - name: Enable slight hinting
+    file:
+      src: "/usr/share/fontconfig/conf.avail/10-hinting-slight.conf"
+      dest: "/etc/fonts/conf.d/10-hinting-slight.conf"
+      state: link
+
