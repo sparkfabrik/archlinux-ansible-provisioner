@@ -83,8 +83,12 @@
     community.general.pacman:
       name:
         - fontconfig
+        - adobe-source-sans-fonts
+        - cantarell-fonts
+        - noto-fonts
         - ttf-anonymous-pro
         - ttf-droid
+        - ttf-liberation	
         - ttf-fira-code
         - ttf-fira-mono
         - ttf-fira-sans
@@ -94,6 +98,11 @@
         - ttf-roboto-mono
         - ttf-ubuntu-font-family
         - ttf-ibm-plex
+        - ttf-bitstream-vera
+        - ttf-dejavu
+        - ttf-hack
+        - ttf-inconsolata
+        - tamsyn-font
   - name: Enable rgb subpixel configuration
     file:
       src: "/usr/share/fontconfig/conf.avail/10-sub-pixel-rgb.conf"
