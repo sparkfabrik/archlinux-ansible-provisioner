@@ -1,4 +1,9 @@
 ---
+- name: "Get cpu type"
+  tags: [system, cpu]
+  shell: "cat /proc/cpuinfo | grep vendor_id | head -n1 | awk '{print $3}'"
+  register: cpu_type
+
 - name: Create an aur_builder user to install aur packages without password
   tags: [system]
   block:
@@ -164,24 +169,13 @@
 
 - name: Configure energy system
   tags: [system, energy]
+  when: cpu_type.stdout == "GenuineIntel"
   block:  
-  - name: "Get cpu type"
-    shell: "cat /proc/cpuinfo | grep vendor_id | head -n1 | awk '{print $3}'"
-    register: cpu_type
   - name: "Install energy saving tools (powertop and tlp)"
     community.general.pacman:
       name: 
         - power-profiles-daemon
         - powertop
-    when: cpu_type.stdout == "GenuineIntel"
-  - name: "Create powertop systemd services"
-    ansible.builtin.copy:
-      src: powertop.service
-      dest: /etc/systemd/system/powertop.service
-    when: cpu_type.stdout == "GenuineIntel"
-  - name: "Create powertop systemd services"
-    command: systemctl enable powertop
-    when: cpu_type.stdout == "GenuineIntel"
     
 - name: Configure security
   tags: [system, security]
