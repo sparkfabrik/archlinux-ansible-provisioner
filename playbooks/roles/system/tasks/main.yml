@@ -90,7 +90,12 @@
         name:
           - sof-firmware
           - alsa-ucm-conf
-
+    - name: Add user to audio group
+      user:
+        name: '{{ username }}'
+        groups: audio
+        append: yes
+        
 - name: Configure printing system
   tags: [system, printing]
   block:
