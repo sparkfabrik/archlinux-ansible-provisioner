@@ -59,6 +59,7 @@
         - yadm
         - vim
         - telegram-desktop
+        - tree
         - wpa_supplicant
         - zsh
   - name: Symlink vim to vi
