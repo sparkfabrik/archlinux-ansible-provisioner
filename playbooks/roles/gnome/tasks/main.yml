@@ -2,20 +2,26 @@
 - name: Install gnome
   tags: gnome
   block:
-    - name: Install xorg
+    - name: Install xorg and wayland
       community.general.pacman:
         name:
+          - wayland
           - xorg
           - xorg-server
+          - xorg-xwayland
     - name: Install gnome packages
       community.general.pacman:
         name:
           - gdm
           - gnome
-          - gnome-extra
+          - gnome-connections
+          - gnome-tweaks
+          - gnome-usage
+          - gnome-sound-recorder
+          - dconf-editor
+          - gnome-software-packagekit-plugin
           - gnome-shell-extension-appindicator
           - networkmanager
-          - xorg-server
         state: present
         update_cache: yes
     - name: Install gnome extensions
