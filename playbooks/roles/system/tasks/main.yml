@@ -71,6 +71,7 @@
         - blueman
         - bluez
         - bluez-utils
+
   - name: Activate bluetooth service
     command: systemctl enable bluetooth
 
@@ -80,6 +81,25 @@
   ignore_errors: yes
   register: is_extreme_gen3
 
+- name: "Detect fingerprint reader"
+  tags: [system, thinkpad]
+  shell: "lsusb | grep \"fingerprint\""
+  ignore_errors: yes
+  register: is_fingerprint_reader
+
+- name: Install fingerprint reader (if hw is available)
+  tags: [system, fingerprint]
+  block:
+    - name: Install fprintd
+      community.general.pacman:
+        name:
+          - fprintd
+    - name: Add user to input group
+      user:
+        name: '{{ username }}'
+        groups: input
+        append: yes
+
 - name: Install pipewire audio
   tags: [system, audio]
   block:
@@ -88,6 +108,7 @@
     - name: Install audio system dependencies
       community.general.pacman:
         name:
+          - pavucontrol
           - sof-firmware
           - alsa-ucm-conf
     - name: Add user to audio group
@@ -176,7 +197,7 @@
   tags: [system, energy]
   when: cpu_type.stdout == "GenuineIntel"
   block:  
-  - name: "Install energy saving tools (powertop and tlp)"
+  - name: "Install energy saving tools (powertop and power-profiles-daemon)"
     community.general.pacman:
       name: 
         - power-profiles-daemon

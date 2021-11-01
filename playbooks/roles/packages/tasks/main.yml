@@ -68,6 +68,8 @@
     kewlfft.aur.aur:
       use: paru
       name:
+        - inxi
+        - glxinfo
         - google-chrome
         - slack-desktop
         - timeshift
