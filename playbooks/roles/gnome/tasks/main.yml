@@ -2,13 +2,6 @@
 - name: Install gnome
   tags: gnome
   block:
-    - name: Install xorg and wayland
-      community.general.pacman:
-        name:
-          - wayland
-          - xorg
-          - xorg-server
-          - xorg-xwayland
     - name: Install gnome packages
       community.general.pacman:
         name:
