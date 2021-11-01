@@ -1,0 +1,9 @@
+---
+- name: Install xorg and wayland
+  tags: [system, display]
+  community.general.pacman:
+    name:
+      - xorg
+      - xorg-server
+      - xorg-xwayland
+      - wayland

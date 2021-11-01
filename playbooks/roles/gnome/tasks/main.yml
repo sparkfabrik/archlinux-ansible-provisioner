@@ -17,6 +17,7 @@
           - gnome-connections
           - gnome-tweaks
           - gnome-usage
+          - gnome-system-monitor
           - gnome-sound-recorder
           - dconf-editor
           - gnome-software-packagekit-plugin
@@ -34,6 +35,7 @@
       kewlfft.aur.aur:
         use: paru
         name:
+          - gnome-shell-extension-system-monitor-git
           - gnome-shell-extension-dash-to-dock
           - gnome-shell-extension-desktop-icons-ng
           - gnome-shell-extension-just-perfection-desktop-git

@@ -61,3 +61,6 @@
 
 - name: Set up laptop
   import_tasks: laptop.yml
+
+- name: Set up display
+  import_tasks: display.yml

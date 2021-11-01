@@ -117,3 +117,5 @@
       dest: "/etc/fonts/conf.d/10-hinting-slight.conf"
       state: link
 
+- name: Set up multimedia packages
+  import_tasks: multimedia.yml
