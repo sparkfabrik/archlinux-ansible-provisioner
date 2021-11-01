@@ -6,6 +6,7 @@
       kewlfft.aur.aur:
         use: paru
         name:
+          - blanket
           - kooha
           - mplayer
           - vlc
