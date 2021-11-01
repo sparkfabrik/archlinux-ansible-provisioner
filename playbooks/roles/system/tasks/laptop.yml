@@ -1,0 +1,32 @@
+---
+- name: "Detect fingerprint reader"
+  tags: [system, thinkpad]
+  shell: "lsusb | grep \"fingerprint\""
+  ignore_errors: yes
+  register: is_fingerprint_reader
+
+- name: Install fingerprint reader (if hw is available)
+  tags: [system, fingerprint]
+  block:
+    - name: Install fprintd
+      community.general.pacman:
+        name:
+          - fprintd
+    - name: Add user to input group
+      user:
+        name: '{{ username }}'
+        groups: input
+        append: yes
+
+- name: "Detect extreme x1 gen3"
+  tags: [system, thinkpad]
+  shell: "dmidecode | grep \"ThinkPad X1 Extreme Gen 3\""
+  ignore_errors: yes
+  register: is_extreme_gen3
+
+- name: Congigure AX201 for thinkpad x1 gen3
+  tags: [system, thinkpad]
+  lineinfile:
+    path: /etc/modprobe.d/iwl.conf
+    line: options iwlwifi 11n_disable=1 power_save=0
+  when: is_extreme_gen3.stdout != ""

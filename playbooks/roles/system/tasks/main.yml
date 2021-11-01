@@ -1,9 +1,4 @@
 ---
-- name: "Get cpu type"
-  tags: [system, cpu]
-  shell: "cat /proc/cpuinfo | grep vendor_id | head -n1 | awk '{print $3}'"
-  register: cpu_type
-
 - name: Create an aur_builder user to install aur packages without password
   tags: [system]
   block:
@@ -46,192 +41,23 @@
       become_user: aur_builder
       when: paru.stat.exists == false
 
-- name: Configure system components
-  tags: [system, bluetooth]
-  block:
-  - name: Install system packages
-    community.general.pacman:
-      name:
-        - ansible
-        - bashtop
-        - lm_sensors
-        - dmidecode
-        - btrfs-progs
-        - efibootmgr
-        - freetype2
-        - git
-        - grub-btrfs
-        - ntfs-3g
-        - vim
-        - sudo
+- name: Set up grub
+  import_tasks: grub.yml
 
-  - name: Install bluetooth dependencies
-    community.general.pacman:
-      name:
-        - blueman
-        - bluez
-        - bluez-utils
+- name: Set up energy
+  import_tasks: energy.yml
 
-  - name: Activate bluetooth service
-    command: systemctl enable bluetooth
+- name: Set up security
+  import_tasks: security.yml
 
-- name: "Detect extreme x1 gen3"
-  tags: [system, thinkpad]
-  shell: "dmidecode | grep \"ThinkPad X1 Extreme Gen 3\""
-  ignore_errors: yes
-  register: is_extreme_gen3
+- name: Set up printing
+  import_tasks: printing.yml
 
-- name: "Detect fingerprint reader"
-  tags: [system, thinkpad]
-  shell: "lsusb | grep \"fingerprint\""
-  ignore_errors: yes
-  register: is_fingerprint_reader
+- name: Set up audio
+  import_tasks: audio.yml
 
-- name: Install fingerprint reader (if hw is available)
-  tags: [system, fingerprint]
-  block:
-    - name: Install fprintd
-      community.general.pacman:
-        name:
-          - fprintd
-    - name: Add user to input group
-      user:
-        name: '{{ username }}'
-        groups: input
-        append: yes
+- name: Set up bluetooth
+  import_tasks: bluetooth.yml
 
-- name: Install pipewire audio
-  tags: [system, audio]
-  block:
-    - name: Install pipewire packages (to replace Pulseaudio)
-      shell: yes | pacman -Syu pipewire-pulse # there isn't a way to install conflicting packages.
-    - name: Install audio system dependencies
-      community.general.pacman:
-        name:
-          - pavucontrol
-          - sof-firmware
-          - alsa-ucm-conf
-    - name: Add user to audio group
-      user:
-        name: '{{ username }}'
-        groups: audio
-        append: yes
-        
-- name: Configure printing system
-  tags: [system, printing]
-  block:
-    - name: Install cups
-      community.general.pacman:
-        name:
-          - cups
-          - cups-pdf
-          - system-config-printer
-    - name: Enable cups socket based
-      shell: systemctl enable cups.socket
-
-- name: Configure grub
-  tags: [system, grub]
-  block:
-  - stat: path=/boot/grub
-    register: grubcfg
-  - name: "Configuring GRUB to print the OEM logo"
-    lineinfile:
-      dest: /etc/default/grub
-      regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
-      line: 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet splash"'
-      mode: 0644
-      backup: yes
-  - name: Enable OS_PROBER
-    lineinfile:
-      dest: /etc/default/grub
-      line: GRUB_DISABLE_OS_PROBER=false
-      mode: 0644
-      backup: yes
-  - name: "Regenerate GRUB config"
-    command: grub-mkconfig -o /boot/grub/grub.cfg
-    when: grubcfg.stat.isdir is defined and grubcfg.stat.isdir
-
-- name: Configure security
-  tags: [system, security]
-  tags: security
-  block:
-  - name: Set unlock_time to 30s after the lock out.
-    community.general.ini_file:
-      path: /etc/security/faillock.conf
-      section: null
-      option: unlock_time
-      value: 30
-      exclusive: yes
-  - name: Set fail_interval to 30s after N fail attempts
-    community.general.ini_file:
-      path: /etc/security/faillock.conf
-      section: null
-      option: fail_interval
-      value: 30
-      exclusive: yes
-  - name: Set deny acesso to 6 consecutive authentication failures
-    community.general.ini_file:
-      path: /etc/security/faillock.conf
-      section: null
-      option: deny
-      value: 6
-      exclusive: yes
-
-- name: Configure grub to print OEM logo
-  tags: [system, grub]
-  block:
-  - name: "Configuring GRUB cmdline"
-    lineinfile:
-      dest: /etc/default/grub
-      regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
-      line: 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet splash"'
-      mode: 0644
-      backup: yes
-  - stat: path=/boot/grub
-    register: grubcfg
-  - name: "Regenerate GRUB config"
-    command: grub-mkconfig -o /boot/grub/grub.cfg
-    when: grubcfg.stat.isdir is defined and grubcfg.stat.isdir
-
-- name: Configure energy system
-  tags: [system, energy]
-  when: cpu_type.stdout == "GenuineIntel"
-  block:  
-  - name: "Install energy saving tools (powertop and power-profiles-daemon)"
-    community.general.pacman:
-      name: 
-        - power-profiles-daemon
-        - powertop
-    
-- name: Configure security
-  tags: [system, security]
-  tags: security
-  block:
-  - name: Set unlock_time to 30s after the lock out.
-    community.general.ini_file:
-      path: /etc/security/faillock.conf
-      section: null
-      option: unlock_time
-      value: 30
-      exclusive: yes
-  - name: Set fail_interval to 30s after N fail attempts
-    community.general.ini_file:
-      path: /etc/security/faillock.conf
-      section: null
-      option: fail_interval
-      value: 30
-      exclusive: yes
-  - name: Set deny acesso to 6 consecutive authentication failures
-    community.general.ini_file:
-      path: /etc/security/faillock.conf
-      section: null
-      option: deny
-      value: 6
-      exclusive: yes
-
-- name: Congigure AX201 for thinkpad x1 gen3
-  tags: [system, thinkpad]
-  lineinfile:
-    path: /etc/modprobe.d/iwl.conf
-    line: options iwlwifi 11n_disable=1 power_save=0
-  when: is_extreme_gen3.stdout != ""
+- name: Set up laptop
+  import_tasks: laptop.yml

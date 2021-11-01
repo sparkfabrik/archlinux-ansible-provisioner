@@ -1,0 +1,15 @@
+---
+- name: "Get cpu type"
+  tags: [system, cpu]
+  shell: "cat /proc/cpuinfo | grep vendor_id | head -n1 | awk '{print $3}'"
+  register: cpu_type
+
+- name: Configure energy system
+  tags: [system, energy]
+  when: cpu_type.stdout == "GenuineIntel"
+  block:  
+  - name: "Install energy saving tools (powertop and power-profiles-daemon)"
+    community.general.pacman:
+      name: 
+        - power-profiles-daemon
+        - powertop

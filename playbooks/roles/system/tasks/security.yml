@@ -1,0 +1,26 @@
+---
+- name: Configure security
+  tags: [system, security]
+  tags: security
+  block:
+  - name: Set unlock_time to 30s after the lock out.
+    community.general.ini_file:
+      path: /etc/security/faillock.conf
+      section: null
+      option: unlock_time
+      value: 30
+      exclusive: yes
+  - name: Set fail_interval to 30s after N fail attempts
+    community.general.ini_file:
+      path: /etc/security/faillock.conf
+      section: null
+      option: fail_interval
+      value: 30
+      exclusive: yes
+  - name: Set deny to 6 consecutive authentication failures
+    community.general.ini_file:
+      path: /etc/security/faillock.conf
+      section: null
+      option: deny
+      value: 6
+      exclusive: yes

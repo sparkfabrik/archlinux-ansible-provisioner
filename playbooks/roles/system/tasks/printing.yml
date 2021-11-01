@@ -1,0 +1,12 @@
+---
+- name: Configure printing system
+  tags: [system, printing]
+  block:
+    - name: Install cups
+      community.general.pacman:
+        name:
+          - cups
+          - cups-pdf
+          - system-config-printer
+    - name: Enable cups socket based
+      shell: systemctl enable cups.socket

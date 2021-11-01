@@ -1,0 +1,17 @@
+---
+- name: Install pipewire audio
+  tags: [system, audio]
+  block:
+    - name: Install pipewire packages (to replace Pulseaudio)
+      shell: yes | pacman -Syu pipewire-pulse # there isn't a way to install conflicting packages.
+    - name: Install audio system dependencies
+      community.general.pacman:
+        name:
+          - pavucontrol
+          - sof-firmware
+          - alsa-ucm-conf
+    - name: Add user to audio group
+      user:
+        name: '{{ username }}'
+        groups: audio
+        append: yes
