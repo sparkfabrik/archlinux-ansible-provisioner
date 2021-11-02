@@ -6,6 +6,7 @@
       community.general.pacman:
         name:
           - aws-cli
+          - jq
           - kubectl
           - helm
     - name: Install cloud native packages from aur
