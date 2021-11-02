@@ -5,6 +5,13 @@ installation, please be aware this is made just for personal use, use it at your
 
 ## Pre-requisites (manual steps)
 
+#### Configure network
+
+If you use an ethernet connection, you do not need to do nothing, it works.
+
+If you want to use a WI-FI connection, you should use `iwctl`, you can find all the 
+information you need here: https://wiki.archlinux.org/title/Iwd
+
 #### Activate SSH
 
 I like to install Archlinux using SSH, you can use this guide: https://wiki.archlinux.org/title/Install_Arch_Linux_via_SSH
