@@ -190,8 +190,11 @@ Start by cloning the repo:
 cd /root
 git clone https://github.com/paolomainardi/archlinux-ansible-provisioner.git provisioner
 cd provisioner
-make system
+make
 ```
+
+> ***VERY IMPORTANT***: Ansible will use the default values specified by the roles, you should change it or pass it, at the moment 
+> the later option is not supported by the Makefile.
 
 #### Configure GRUB to the encrypted disk (only for encrypted installations)
 
