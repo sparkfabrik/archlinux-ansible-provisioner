@@ -123,6 +123,13 @@
       src: "/usr/share/fontconfig/conf.avail/11-lcdfilter-default.conf"
       dest: "/etc/fonts/conf.d/11-lcdfilter-default.conf"
       state: link
+  - name: Enable freetype2
+    ansible.builtin.lineinfile:
+      path: /etc/profile.d/freetype2.sh
+      regexp: '^export FREETYPE_PROPERTIES='
+      line: export FREETYPE_PROPERTIES="truetype:interpreter-version=40"
+  - name: Clear font cache
+    command: fc-cache -fv
 
 - name: Set up multimedia packages
   import_tasks: multimedia.yml
