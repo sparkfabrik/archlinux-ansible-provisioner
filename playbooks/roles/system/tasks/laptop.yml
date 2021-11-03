@@ -1,7 +1,7 @@
 ---
 - name: "Detect fingerprint reader"
   tags: [system, thinkpad]
-  shell: "lsusb | grep \"fingerprint\""
+  shell: "lsusb | grep -i \"fingerprint\""
   ignore_errors: yes
   register: is_fingerprint_reader
 

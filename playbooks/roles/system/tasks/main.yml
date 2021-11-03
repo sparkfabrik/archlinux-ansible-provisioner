@@ -1,6 +1,6 @@
 ---
 - name: Create an aur_builder user to install aur packages without password
-  tags: [system]
+  tags: [system, paru]
   block:
   - name: Create the `aur_builder` user
     ansible.builtin.user:
@@ -22,24 +22,35 @@
       create: yes
       validate: 'visudo -cf %s'
 
-- name: Install paru
+  - name: Detect if paru is installed
+    stat: path=/usr/bin/paru
+    register: paru
+
+  - name: Checkout paru
+    ansible.builtin.git:
+      repo: 'https://aur.archlinux.org/paru.git'
+      dest: /tmp/paru
+    become: yes
+    become_user: aur_builder
+    when: paru.stat.exists == false
+
+  - name: Build and install paru
+    shell: makepkg -si --noconfirm
+    args:
+      chdir: /tmp/paru
+    become: yes
+    become_user: aur_builder
+    when: paru.stat.exists == false
+
+- name: Install and setup reflector
+  tags: [system, pacman]
   block:
-    - stat: path=/usr/bin/paru
-      register: paru
-    - name: Checkout paru
-      ansible.builtin.git:
-        repo: 'https://aur.archlinux.org/paru.git'
-        dest: /tmp/paru
-      become: yes
-      become_user: aur_builder
-      when: paru.stat.exists == false
-    - name: Build and install paru
-      shell: makepkg -si --noconfirm
-      args:
-        chdir: /tmp/paru
-      become: yes
-      become_user: aur_builder
-      when: paru.stat.exists == false
+    - name: Install reflector
+      community.general.pacman:
+        name:
+          - reflector
+    - name: Enable reflector weekly
+      shell: systemctl enable reflector.timer
 
 - name: Set up grub
   import_tasks: grub.yml

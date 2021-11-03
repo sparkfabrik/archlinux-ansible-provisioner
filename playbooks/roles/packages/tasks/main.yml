@@ -6,6 +6,7 @@
       community.general.pacman:
         name:
           - aws-cli
+          - yq
           - jq
           - kubectl
           - helm
@@ -35,44 +36,68 @@
 - name: Install base packages
   tags: [base, packages]
   block:
-  - name: Install base packages
+  - name: Install network packages
     community.general.pacman:
       name:
-        - git
-        - gparted
-        - base-devel
         - dnsutils
         - dhcpcd
-        - dmidecode
-        - deja-dup
-        - firefox
-        - guvcview
-        - lshw
-        - htop
-        - pacman-contrib
         - iproute2
-        - neofetch
         - net-tools
-        - dialog
         - tcpdump
-        - usbutils
-        - thefuck
-        - tmux
-        - yadm
-        - vim
-        - telegram-desktop
-        - tree
         - wpa_supplicant
+
+  - name: Install system packages
+    community.general.pacman:
+      name:
+        - base-devel
+        - dialog
+        - dmidecode
+        - neofetch
+        - pacman-contrib
+        - gparted
+        - htop
+        - git
+        - tree
+        - usbutils
+        - tmux
         - zsh
-  - name: Symlink vim to vi
-    command: ln -sf /usr/bin/vim /usr/bin/vi
-  - name: Install base packages from aur
+        - lshw
+
+  - name: Install system packages from aur
     kewlfft.aur.aur:
       use: paru
       name:
         - inxi
         - glxinfo
+    become: yes
+    become_user: aur_builder
+
+  - name: Install base packages
+    community.general.pacman:
+      name:
+        - deja-dup
+        - guvcview
+        - thefuck
+        - yadm
+        - vim
+        - telegram-desktop
+
+  - name: Symlink vim to vi
+    command: ln -sf /usr/bin/vim /usr/bin/vi
+
+  - name: Install web browsers
+    kewlfft.aur.aur:
+      use: paru
+      name:
         - google-chrome
+        - firefox
+    become: yes
+    become_user: aur_builder
+
+  - name: Install productivity packages from aur
+    kewlfft.aur.aur:
+      use: paru
+      name:
         - slack-desktop
         - timeshift
         - timeshift-autosnap
