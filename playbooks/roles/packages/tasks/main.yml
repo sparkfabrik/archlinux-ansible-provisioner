@@ -47,6 +47,7 @@
         - deja-dup
         - firefox
         - guvcview
+        - lshw
         - htop
         - pacman-contrib
         - iproute2
