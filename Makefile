@@ -1,3 +1,6 @@
+ifndef CONFIG
+	$(error "You must pass a config yaml file (see ./config/*.yaml for examples")
+endif
 
 init:
 	ansible-galaxy collection install -r requirements.yml
@@ -9,7 +12,7 @@ system: bootstrap
 	mkdir -p /mnt/root/provisioner
 	cp -aR . /mnt/root/provisioner
 	arch-chroot /mnt ansible-galaxy collection install -r /root/provisioner/requirements.yml
-	arch-chroot /mnt ansible-playbook /root/provisioner/playbooks/system.yml -i localhost, -c local
+	arch-chroot /mnt ansible-playbook /root/provisioner/playbooks/system.yml -i localhost, -c local --extra-vars "@$(CONFIG)"
 
 install-grub-with-encryption:
 	arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=Archlinux
@@ -23,6 +26,6 @@ local-install:
 	sudo ansible-galaxy collection install -r ./requirements.yml
 	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local 
 
-# Example of usage: sudo TAGS=your-tags make local-install-tags
+# Example of usage: sudo TAGS=your-tags CONFIG=./config/your-config.yaml make local-install-tags
 local-install-tags:
-	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --tags $(TAGS)
+	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --tags $(TAGS) --extra-vars "@$(CONFIG)"

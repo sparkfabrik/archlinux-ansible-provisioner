@@ -75,3 +75,6 @@
 
 - name: Set up display
   import_tasks: display.yml
+
+- name: Configure kernel
+  import_tasks: kernel.yml

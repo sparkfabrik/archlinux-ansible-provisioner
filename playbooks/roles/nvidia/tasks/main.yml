@@ -12,16 +12,46 @@
     ignore_errors: yes
     register: is_intel
 
-  - name: Install nvidia drivers
-    when: is_nvidia.stdout != ""
-    community.general.pacman:
-      name:
-        - egl-wayland
-        - nvidia-dkms
-        - nvidia-settings
-        - nvidia-utils
-      state: present
-      update_cache: yes
+  - name: Install nvidia drivers (for kernel != lts)
+    when: is_nvidia.stdout != "" and kernel != "lts"
+    block:
+     - name: Install dkms drivers
+       community.general.pacman:
+         name:
+           - egl-wayland
+           - nvidia-dkms
+           - nvidia-settings
+           - nvidia-utils
+         state: present
+         update_cache: yes
+     - name: Remove other not-dkms drivers
+       community.general.pacman:
+         name:
+           - nvidia
+           - nvidia-lts
+         state: absent
+         update_cache: yes
+     
+  - name: Install nvidia drivers (lts kernel) 
+    when: is_nvidia.stdout != "" and kernel == "lts"
+    block:
+    - name: Install lts drivers   
+      community.general.pacman:
+        name:
+          - egl-wayland
+          - nvidia-lts
+          - nvidia-settings
+          - nvidia-utils
+        state: present
+        update_cache: yes
+      
+    - name: Ensure not-lts drivers are not installed
+      community.general.pacman:
+        name:
+          - nvidia-dkms
+          - nvidia
+        state: absent
+        update_cache: yes
 
   - name: Install optimus-manager drivers
     when: is_intel.stdout != ""
