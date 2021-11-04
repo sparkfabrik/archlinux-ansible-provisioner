@@ -23,10 +23,3 @@
   shell: "dmidecode | grep \"ThinkPad X1 Extreme Gen 3\""
   ignore_errors: yes
   register: is_extreme_gen3
-
-- name: Congigure AX201 for thinkpad x1 gen3
-  tags: [system, thinkpad]
-  lineinfile:
-    path: /etc/modprobe.d/iwl.conf
-    line: options iwlwifi 11n_disable=1 power_save=0
-  when: is_extreme_gen3.stdout != ""
