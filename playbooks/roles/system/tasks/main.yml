@@ -68,7 +68,7 @@
       - vim
       - sudo
     state: present
-    update: yes
+    update_cache: yes
 
 - name: Set up grub
   import_tasks: grub.yml
