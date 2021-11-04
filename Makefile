@@ -6,7 +6,7 @@ init:
 	ansible-galaxy collection install -r requirements.yml
 
 bootstrap: init
-	ansible-playbook playbooks/bootstrap.yml -i localhost, -c local
+	ansible-playbook playbooks/bootstrap.yml -i localhost, -c local --extra-vars "@$(CONFIG)"
 
 system: bootstrap
 	mkdir -p /mnt/root/provisioner
