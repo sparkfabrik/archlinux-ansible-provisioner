@@ -12,7 +12,7 @@ system: bootstrap
 	mkdir -p /mnt/root/provisioner
 	cp -aR . /mnt/root/provisioner
 	arch-chroot /mnt ansible-galaxy collection install -r /root/provisioner/requirements.yml
-	arch-chroot /mnt ansible-playbook /root/provisioner/playbooks/system.yml -i localhost, -c local --extra-vars "@/root/provisioner/playbooks/$(CONFIG)"
+	arch-chroot /mnt ansible-playbook /root/provisioner/playbooks/system.yml -i localhost, -c local --extra-vars "@/root/provisioner/$(CONFIG)"
 
 install-grub-with-encryption:
 	arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=Archlinux
