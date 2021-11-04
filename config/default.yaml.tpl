@@ -1,3 +1,3 @@
 hostname: foobar-arch
 username: foobar
-kernel: standard
+kernel: standard # standard|lts|zen
