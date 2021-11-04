@@ -4,6 +4,9 @@
   block:
   - name: "Block linux upstream kernel"
     block:
+     - stat: path=/boot/grub
+       register: grubcfg
+       
     - name: Install linux kernel
       community.general.pacman:
         name:
@@ -73,3 +76,4 @@
 
   - name: Regenerate grub config
     shell: grub-mkconfig -o /boot/grub/grub.cfg
+    when: grubcfg.stat.isdir is defined and grubcfg.stat.isdir
