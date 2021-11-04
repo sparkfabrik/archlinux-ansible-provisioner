@@ -67,6 +67,8 @@
       - ntfs-3g
       - vim
       - sudo
+    state: present
+    update: yes
 
 - name: Set up grub
   import_tasks: grub.yml
