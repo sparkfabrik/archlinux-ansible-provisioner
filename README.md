@@ -140,7 +140,7 @@ mkdir -p /mnt/boot/uefi
 mount ${UEFI_PARTITION} /mnt/boot
 
 # Mount home.
-mkdir /mnt/home
+mkdir -p /mnt/home
 mount -o noatime,compress=zstd,subvol=@home ${LUKS_PARTITION} /mnt/home
 
 # Mount all subvolumes just for convenience.
