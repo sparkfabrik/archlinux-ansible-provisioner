@@ -4,9 +4,9 @@
   block:
   - name: "Block linux upstream kernel"
     block:
-     - stat: path=/boot/grub
-       register: grubcfg
-       
+    - stat: path=/boot/grub
+      register: grubcfg
+
     - name: Install linux kernel
       community.general.pacman:
         name:
