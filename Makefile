@@ -1,5 +1,5 @@
 ifndef CONFIG
-	$(error "You must pass a config yaml file (see ./config/*.yaml for examples")
+$(error "You must pass a config yaml file (see ./config/*.yaml for examples"))
 endif
 
 init:

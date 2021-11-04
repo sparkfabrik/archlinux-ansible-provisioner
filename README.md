@@ -210,9 +210,11 @@ make
 #### Configure GRUB to the encrypted disk (only for encrypted installations)
 
 1. Run `vim /mnt/etc/mkinitcpio.conf` and, to the `HOOKS` array, add `keyboard` between `autodetect` and `modconf` and add `encrypt` between `block` and `filesystems`
+   It should look like this: `HOOKS=(base udev autodetect keyboard modconf block encrypt filesystems keyboard fsck)`
 1. Run `arch-chroot /mnt mkinitcpio -P`
-1. Run `blkid -s UUID -o value ${ROOT_PARTITION}` to get the `UUID` of the device
+1. Run `blkid -s UUID -o value ${ROOT_PARTITION}` to get the `UUID` of the device 
 1. Run `vim /mnt/etc/default/grub` and set `GRUB_CMDLINE_LINUX="cryptdevice=UUID=xxxx:cryptroot /dev/mapper/cryptroot"` while replacing `xxxx` with the `UUID` of the `$ROOT_PARTITION` device to tell GRUB about our encrypted file system.
+   It should look like this: `GRUB_CMDLINE_LINUX="cryptdevice=UUID=1aa4277d-f942-49d1-b5b4-74641941dd9c:cryptroot /dev/mapper/cryptroot"`
 
 #### Set the user password
 
@@ -222,8 +224,12 @@ Now that the process if finished you can setup the password for the created user
 arch-chroot /mnt passwd <your-user>
 ```
 
-#### Install GRUB
+#### Install GRUB with encryption
 
-1. Run `make install-grub`
+1. Run `CONFIG=./config/default.yaml make install-grub-with-encryption`
+
+#### Install GRUB without encryption
+
+1. Run `CONFIG=./config/default.yaml make install-grub-no-encryption`
 
 Finished, restart your system and enjoy your brand new Archlinux installation.
