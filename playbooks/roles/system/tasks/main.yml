@@ -52,6 +52,22 @@
     - name: Enable reflector weekly
       shell: systemctl enable reflector.timer
 
+- name: Install system packages
+  community.general.pacman:
+    name:
+      - ansible
+      - bashtop
+      - lm_sensors
+      - dmidecode
+      - btrfs-progs
+      - efibootmgr
+      - freetype2
+      - git
+      - grub-btrfs
+      - ntfs-3g
+      - vim
+      - sudo
+
 - name: Set up grub
   import_tasks: grub.yml
 

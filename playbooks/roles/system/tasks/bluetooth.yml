@@ -2,22 +2,6 @@
 - name: Configure system components
   tags: [system, bluetooth]
   block:
-  - name: Install system packages
-    community.general.pacman:
-      name:
-        - ansible
-        - bashtop
-        - lm_sensors
-        - dmidecode
-        - btrfs-progs
-        - efibootmgr
-        - freetype2
-        - git
-        - grub-btrfs
-        - ntfs-3g
-        - vim
-        - sudo
-
   - name: Install bluetooth dependencies
     community.general.pacman:
       name:
