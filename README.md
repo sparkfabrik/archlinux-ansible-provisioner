@@ -197,6 +197,10 @@ Start by cloning the repo:
 cd /root
 git clone https://github.com/paolomainardi/archlinux-ansible-provisioner.git provisioner
 cd provisioner
+cp config/default.yaml.tpl config/default.yaml
+# !!! EDIT THIS FILE ACCORDING TO YOUR NEEDS !!!
+vim config/default.yaml
+CONFIG=./config/default.yaml make system
 make
 ```
 
