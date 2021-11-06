@@ -120,6 +120,7 @@
       key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/command"
       value: "'nautilus'"
 
+  ## PLEASE BE AWARE: This is a static list that needs to be updated for each new custom shortcut.
   - name: Set custom keybindings list
     dconf:
       key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings"
