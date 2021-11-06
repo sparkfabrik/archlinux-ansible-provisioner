@@ -2,6 +2,9 @@ ifndef CONFIG
 $(error "You must pass a config yaml file (see ./config/*.yaml for examples"))
 endif
 
+install-githooks:
+	cp git-hooks/pre-commit .git/hooks/pre-commit
+
 init:
 	ansible-galaxy collection install -r requirements.yml
 
