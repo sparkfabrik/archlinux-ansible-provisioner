@@ -16,6 +16,8 @@
         name:
           - kind
           - kubectx
+          - kubetail
+          - rancher-k3d-bin
           - stern
           - google-cloud-sdk
       become: yes
