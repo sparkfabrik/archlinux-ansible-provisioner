@@ -54,16 +54,10 @@
         update_cache: yes
 
   - name: Install optimus-manager drivers
-    when: is_intel.stdout != ""
+    when: is_intel.stdout != "" and is_nvidia != ""
     block:
-    - name: Install optimus-manager
-      kewlfft.aur.aur:
-          use: paru
-          name:
-            - optimus-manager
-            - optimus-manager-qt
-            - gdm-prime
-      become: yes
-      become_user: aur_builder
-    - name: Enable optimus-manager
-      command: systemctl enable optimus-manager
+    -  community.general.pacman:
+        name:
+          - nvidia-prime
+        state: absent
+        update_cache: yes

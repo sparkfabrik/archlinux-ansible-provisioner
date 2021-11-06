@@ -1,0 +1,101 @@
+---
+- name: Configure gnome
+  tags: [gnome, gnome-config]
+  block:
+    - name: Use gtk theme 'Yaru-dark'
+      dconf:
+        key: "/org/gnome/desktop/interface/gtk-theme"
+        value: "'Adwaita-dark'"
+      become: yes
+      become_user: '{{ username }}'
+
+    - name: Use gnome shell theme 'Yaru-dark'
+      dconf:
+        key: "/org/gnome/shell/extensions/user-theme/name"
+        value: "'Adwaita-dark'"
+    
+    - name: Set font hinting to slight (as ubuntu does)
+      dconf:
+        key: "/org/gnome/desktop/interface/font-hinting"
+        value: "'slight'"
+    
+    - name: Set gtk font default font
+      dconf:
+        key: "/org/gnome/desktop/interface/font-name"
+        value: "'Ubuntu 12'"
+    
+    - name: Set document default font
+      dconf:
+        key: "/org/gnome/desktop/interface/document-font-name"
+        value: "'Ubuntu 12'"
+    
+    - name: Set default monospace font
+      dconf:
+        key: "/org/gnome/desktop/interface/monospace-font-name"
+        value: "'IBM Plex Mono 12'"
+
+    - name: Center new windows
+      dconf:
+        key: "/org/gnome/mutter/center-new-windows"
+        value: "true"
+      
+    - name: Show battery percentage
+      dconf:
+        key: "/org/gnome/desktop/interface/show-battery-percentage"
+        value: "true"
+    
+    - name: Show date on clock
+      dconf:
+        key: "/org/gnome/desktop/interface/clock-show-date"
+        value: "true"
+      
+    - name: Show seconds on clock
+      dconf:
+        key: "/org/gnome/desktop/interface/clock-show-seconds"
+        value: "true"
+
+    - name: Show weekdays on calendar
+      dconf:
+        key: "/org/gnome/desktop/interface/clock-show-weekday"
+        value: "true"
+
+    - name: Show week number on calendar
+      dconf:
+        key: "/org/gnome/desktop/calendar/show-weekdate"
+        value: "true"
+
+    - name: Use exactly 4 workspaces
+      dconf:
+        key: "/org/gnome/desktop/wm/preferences/num-workspaces"
+        value: "4"
+
+    - name: Use workspaces on all monitors
+      dconf:
+        key: "/org/gnome/mutter/workspaces-only-on-primary"
+        value: "false"
+
+    - name: Enable mouse natural scrool
+      dconf:
+        key: "/org/gnome/desktop/peripherals/mouse/natural-scroll"
+        value: "true"
+    
+    - name: Arrangement of buttons on the titlebar
+      dconf:
+        key: "/org/gnome/desktop/wm/preferences/button-layout"
+        value: "'appmenu:minimize,maximize,close'"
+
+    - name: Enable gnome-shell extensions (available after restarting)
+      dconf:
+        key: "/org/gnome/shell/enabled-extensions"
+        value:
+          - appindicatorsupport@rgcjonas.gmail.com
+          - just-perfection-desktop@just-perfection
+          - screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com
+          - user-theme@gnome-shell-extensions.gcampax.github.com
+          - workspace-indicator@gnome-shell-extensions.gcampax.github.com']
+          - dash-to-dock@micxgx.gmail.com
+          - ding@rastersoft.com
+
+  become: true
+  become_user: '{{ username }}'
+

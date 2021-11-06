@@ -1,0 +1,121 @@
+---
+- name: Configure gnome keybindings
+  tags: [gnome, gnome-config, keybindings]
+  block:
+  - name: Set 'move to workspace 1' keyboard shortcut
+    dconf:
+      key: "/org/gnome/desktop/wm/keybindings/move-to-workspace-1"
+      value: "['<Shift><Super>F1']"
+
+  - name: Set 'move to workspace 2' keyboard shortcut
+    dconf:
+      key: "/org/gnome/desktop/wm/keybindings/move-to-workspace-2"
+      value: "['<Shift><Super>F2']"
+
+  - name: Set 'move to workspace 3' keyboard shortcut
+    dconf:
+      key: "/org/gnome/desktop/wm/keybindings/move-to-workspace-3"
+      value: "['<Shift><Super>F3']"
+
+  - name: Set 'move to workspace 4' keyboard shortcut
+    dconf:
+      key: "/org/gnome/desktop/wm/keybindings/move-to-workspace-4"
+      value: "['<Shift><Super>F4']"
+
+  - name: Set 'switch to workspace 1' keyboard shortcut
+    dconf:
+      key: "/org/gnome/desktop/wm/keybindings/switch-to-workspace-1"
+      value: "['<Super>1']"
+
+  - name: Set 'switch to workspace 2' keyboard shortcut
+    dconf:
+      key: "/org/gnome/desktop/wm/keybindings/switch-to-workspace-2"
+      value: "['<Super>2']"
+
+  - name: Set 'switch to workspace 3' keyboard shortcut
+    dconf:
+      key: "/org/gnome/desktop/wm/keybindings/switch-to-workspace-3"
+      value: "['<Super>3']"
+
+  - name: Set 'switch to workspace 4' keyboard shortcut
+    dconf:
+      key: "/org/gnome/desktop/wm/keybindings/switch-to-workspace-4"
+      value: "['<Super>4']"
+
+  - name: Disable 'switch-to-application-1' keyboard shortcut
+    dconf:
+      key: "/org/gnome/shell/keybindings/switch-to-application-1"
+      value: "@as []"
+  - name: Disable 'switch-to-application-2' keyboard shortcut
+    dconf:
+      key: "/org/gnome/shell/keybindings/switch-to-application-2"
+      value: "@as []"
+  - name: Disable 'switch-to-application-3' keyboard shortcut
+    dconf:
+      key: "/org/gnome/shell/keybindings/switch-to-application-3"
+      value: "@as []"
+  - name: Disable 'switch-to-application-4' keyboard shortcut
+    dconf:
+      key: "/org/gnome/shell/keybindings/switch-to-application-4"
+      value: "@as []"
+
+  - name: Disable dash-to-dock hotkeys-1
+    dconf:
+      key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-1"
+      value: "@as []"
+  - name: Disable dash-to-dock hotkeys-2
+    dconf:
+      key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-2"
+      value: "@as []"
+  - name: Disable dash-to-dock hotkeys-3
+    dconf:
+      key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-3"
+      value: "@as []"
+  - name: Disable dash-to-dock hotkeys-4
+    dconf:
+      key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-4"
+      value: "@as []"
+    
+  - name: Close windows with super+shift+q
+    dconf:
+      key: "/org/gnome/desktop/wm/keybindings/close"
+      value: "['<Shift><Super>q']"
+
+  - name: Open terminal with <Super>+Return name
+    dconf:
+      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/name"
+      value: "'Open terminal'"
+  - name: Open terminal with <Super>+Return binding
+    dconf:
+      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/binding"
+      value: "'<Super>Return'"
+  - name: Open terminal with <Super>+Return command
+    dconf:
+      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/command"
+      value: "'gnome-terminal'"
+
+  - name: Open browser shortcut
+    dconf:
+      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/name"
+      value: "'Open browser'"
+  - name: Open browser binding
+    dconf:
+      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/binding"
+      value: "'<Shift><Super>Return'"
+  - name: Open browser binding command
+    dconf:
+      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/command"
+      value: "'google-chrome-stable'"
+
+  - name: Open nautilus shortcut
+    dconf:
+      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/name"
+      value: "'Open nautilus'"
+  - name: Open nautilus shortcut
+    dconf:
+      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/binding"
+      value: "'<Shift><Super>n'"
+  - name: Open nautilus command
+    dconf:
+      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/command"
+      value: "'nautilus'"
