@@ -14,8 +14,9 @@
           - gnome-sound-recorder
           - dconf-editor
           - gnome-software-packagekit-plugin
-          - gnome-shell-extension-appindicator
           - networkmanager
+          - networkmanager-openvpn
+          - seahorse
         state: present
         update_cache: yes
     - name: Install gnome extensions
@@ -40,7 +41,7 @@
       shell: systemctl enable NetworkManager
     - name: "Enable power-profiles-daemon"
       shell: systemctl enable power-profiles-daemon
-    
+
 - name: Configure gnome
   import_tasks: dconf.yml
 

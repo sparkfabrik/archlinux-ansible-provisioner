@@ -1,5 +1,5 @@
 ifndef CONFIG
-$(error "You must pass a config yaml file (see ./config/*.yaml for examples"))
+$(error "You must pass a config yaml file (see ./config/*.yaml for examples)")
 endif
 
 install-githooks:
@@ -27,7 +27,7 @@ install-grub-no-encryption:
 
 local-install:
 	sudo ansible-galaxy collection install -r ./requirements.yml
-	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local 
+	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --extra-vars "@$(CONFIG)"
 
 # Example of usage: sudo TAGS=your-tags CONFIG=./config/your-config.yaml make local-install-tags
 local-install-tags:
