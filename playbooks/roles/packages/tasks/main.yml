@@ -14,6 +14,7 @@
       kewlfft.aur.aur:
         use: paru
         name:
+          - pack-cli-bin
           - kind
           - kubectx
           - kubetail
@@ -55,6 +56,7 @@
         - bash-completion
         - dialog
         - dmidecode
+        - flatpak
         - neofetch
         - pacman-contrib
         - gparted
