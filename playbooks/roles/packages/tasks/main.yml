@@ -52,6 +52,7 @@
     community.general.pacman:
       name:
         - base-devel
+        - bash-completion
         - dialog
         - dmidecode
         - neofetch
@@ -63,6 +64,7 @@
         - usbutils
         - tmux
         - zsh
+        - zsh-completions
         - lshw
 
   - name: Install system packages from aur
@@ -120,7 +122,7 @@
         - noto-fonts
         - ttf-anonymous-pro
         - ttf-droid
-        - ttf-liberation	
+        - ttf-liberation
         - ttf-fira-code
         - ttf-fira-mono
         - ttf-fira-sans
