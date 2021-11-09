@@ -26,6 +26,7 @@ dialog
 dmidecode
 docker
 docker-compose
+easyeffects
 efibootmgr
 eog
 epiphany
@@ -35,6 +36,7 @@ file
 file-roller
 findutils
 firefox
+flatpak
 flex
 fprintd
 gawk
@@ -106,6 +108,7 @@ gvfs-nfs
 gvfs-smb
 gzip
 helm
+helvum
 hplip
 htop
 i3-gaps
