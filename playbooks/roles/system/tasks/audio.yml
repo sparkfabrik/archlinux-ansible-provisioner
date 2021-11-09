@@ -8,6 +8,7 @@
       community.general.pacman:
         name:
           - easyeffects
+          - helvum
           - pavucontrol
           - sof-firmware
           - alsa-ucm-conf
