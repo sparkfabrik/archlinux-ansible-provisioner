@@ -26,7 +26,6 @@ dialog
 dmidecode
 docker
 docker-compose
-easyeffects
 efibootmgr
 eog
 epiphany
@@ -121,6 +120,7 @@ kooha
 kubectl
 kubectx
 kubetail
+libpipewire02
 libtool
 linux
 linux-firmware

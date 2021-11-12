@@ -1,0 +1,41 @@
+---
+- name: Configure multitouch gestures
+  tags: [gnome, gestures]
+  block:
+  - name: "Detect gesture input"
+    shell: "sudo libinput list-devices | grep gesture"
+    ignore_errors: yes
+    register: has_gesture_input
+    ignore_errors: yes
+  
+  - name: "Detect if is running on X11"
+    shell: "echo $XDG_SESSION_TYPE | grep x11"
+    ignore_errors: yes
+    register: is_x11
+    become: yes
+    become_user: '{{ username }}'
+    ignore_errors: yes
+
+  - name: Install touchee and gnome-shell-extension-x11gestures
+    kewlfft.aur.aur:
+      use: paru
+      name:
+        - touchegg
+        - touche
+        - gnome-shell-extension-x11gestures
+    become: yes
+    become_user: aur_builder
+    when: has_gesture_input.stdout != "" and is_x11 != ""
+
+  - name: Enable gnome-shell-extension-x11gestures extensions (available after restarting)
+    dconf:
+      key: "/org/gnome/shell/enabled-extensions"
+      value:
+        - appindicatorsupport@rgcjonas.gmail.com
+        - just-perfection-desktop@just-perfection
+        - screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com
+        - user-theme@gnome-shell-extensions.gcampax.github.com
+        - workspace-indicator@gnome-shell-extensions.gcampax.github.com']
+        - dash-to-dock@micxgx.gmail.com
+        - ding@rastersoft.com
+        - x11gestures@joseexposito.github.io

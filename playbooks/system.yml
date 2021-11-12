@@ -3,5 +3,7 @@
     - role: system
     - role: nvidia
     - role: gnome
+      vars_files:
+      - /vars/gnome-extensions.yml
     - role: packages
     - role: logitech

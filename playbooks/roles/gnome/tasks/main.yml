@@ -47,3 +47,6 @@
 
 - name: Configure gnome keybindings
   import_tasks: keybindings.yml
+
+- name: Configure multitouch gestures (x11)
+  import_tasks: gestures.yml
