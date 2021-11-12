@@ -1,34 +1,34 @@
 ---
 - name: Configure gnome
   tags: [gnome, gnome-config]
+  become: yes
+  become_user: '{{ username }}'
   block:
     - name: Use gtk theme 'Yaru-dark'
       dconf:
         key: "/org/gnome/desktop/interface/gtk-theme"
         value: "'Adwaita-dark'"
-      become: yes
-      become_user: '{{ username }}'
 
     - name: Use gnome shell theme 'Yaru-dark'
       dconf:
         key: "/org/gnome/shell/extensions/user-theme/name"
         value: "'Adwaita-dark'"
-    
+
     - name: Set font hinting to slight (as ubuntu does)
       dconf:
         key: "/org/gnome/desktop/interface/font-hinting"
         value: "'slight'"
-    
+
     - name: Set gtk font default font
       dconf:
         key: "/org/gnome/desktop/interface/font-name"
         value: "'Ubuntu 12'"
-    
+
     - name: Set document default font
       dconf:
         key: "/org/gnome/desktop/interface/document-font-name"
         value: "'Ubuntu 12'"
-    
+
     - name: Set default monospace font
       dconf:
         key: "/org/gnome/desktop/interface/monospace-font-name"
@@ -38,17 +38,17 @@
       dconf:
         key: "/org/gnome/mutter/center-new-windows"
         value: "true"
-      
+
     - name: Show battery percentage
       dconf:
         key: "/org/gnome/desktop/interface/show-battery-percentage"
         value: "true"
-    
+
     - name: Show date on clock
       dconf:
         key: "/org/gnome/desktop/interface/clock-show-date"
         value: "true"
-      
+
     - name: Show seconds on clock
       dconf:
         key: "/org/gnome/desktop/interface/clock-show-seconds"
@@ -78,7 +78,7 @@
       dconf:
         key: "/org/gnome/desktop/peripherals/mouse/natural-scroll"
         value: "true"
-    
+
     - name: Arrangement of buttons on the titlebar
       dconf:
         key: "/org/gnome/desktop/wm/preferences/button-layout"
@@ -95,7 +95,4 @@
           - workspace-indicator@gnome-shell-extensions.gcampax.github.com']
           - dash-to-dock@micxgx.gmail.com
           - ding@rastersoft.com
-
-  become: true
-  become_user: '{{ username }}'
 

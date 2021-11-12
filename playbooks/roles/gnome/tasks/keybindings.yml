@@ -1,6 +1,8 @@
 ---
 - name: Configure gnome keybindings
   tags: [gnome, gnome-config, keybindings]
+  become: yes
+  become_user: '{{ username }}'
   block:
   - name: Set 'move to workspace 1' keyboard shortcut
     dconf:
@@ -75,7 +77,7 @@
     dconf:
       key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-4"
       value: "@as []"
-    
+
   - name: Close windows with super+shift+q
     dconf:
       key: "/org/gnome/desktop/wm/keybindings/close"
