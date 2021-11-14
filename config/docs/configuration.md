@@ -20,6 +20,7 @@ The installation variables to be used in Ansible
 hostname: myarch-host
 username: foobar
 kernel: standard
+encryption: false
 enable_xorg_multitouch_gestures: false
 debug: false
 
@@ -29,9 +30,10 @@ debug: false
 
 | Property                                                            | Type      | Required | Nullable       | Defined by                                                                                                                                                                                           |
 | :------------------------------------------------------------------ | :-------- | :------- | :------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [hostname](#hostname)                                               | `string`  | Required | cannot be null | [Archlinux provisioner variables](configuration-properties-the-hostname-schema.md "#/properties/hostname#/properties/hostname")                                                                      |
-| [username](#username)                                               | `string`  | Required | cannot be null | [Archlinux provisioner variables](configuration-properties-the-username-schema.md "#/properties/username#/properties/username")                                                                      |
+| [hostname](#hostname)                                               | `string`  | Required | cannot be null | [Archlinux provisioner variables](configuration-properties-the-hostname-of-this-installation.md "#/properties/hostname#/properties/hostname")                                                        |
+| [username](#username)                                               | `string`  | Required | cannot be null | [Archlinux provisioner variables](configuration-properties-the-username-to-create-at-the-installation.md "#/properties/username#/properties/username")                                               |
 | [kernel](#kernel)                                                   | `string`  | Required | cannot be null | [Archlinux provisioner variables](configuration-properties-the-kernel-schema.md "#/properties/kernel#/properties/kernel")                                                                            |
+| [encryption](#encryption)                                           | `boolean` | Optional | cannot be null | [Archlinux provisioner variables](configuration-properties-encrypt-the-system.md "#/properties/encryption#/properties/encryption")                                                                   |
 | [enable_xorg_multitouch_gestures](#enable_xorg_multitouch_gestures) | `boolean` | Optional | cannot be null | [Archlinux provisioner variables](configuration-properties-the-enable_xorg_multitouch_gestures-schema.md "#/properties/enable_xorg_multitouch_gestures#/properties/enable_xorg_multitouch_gestures") |
 | [debug](#debug)                                                     | `boolean` | Optional | cannot be null | [Archlinux provisioner variables](configuration-properties-the-debug-schema.md "#/properties/debug#/properties/debug")                                                                               |
 | Additional Properties                                               | Any       | Optional | can be null    |                                                                                                                                                                                                      |
@@ -44,15 +46,15 @@ System hostname (/etc/hostname).
 
 *   is required
 
-*   Type: `string` ([The hostname schema](configuration-properties-the-hostname-schema.md))
+*   Type: `string` ([The hostname of this installation.](configuration-properties-the-hostname-of-this-installation.md))
 
 *   cannot be null
 
-*   defined in: [Archlinux provisioner variables](configuration-properties-the-hostname-schema.md "#/properties/hostname#/properties/hostname")
+*   defined in: [Archlinux provisioner variables](configuration-properties-the-hostname-of-this-installation.md "#/properties/hostname#/properties/hostname")
 
 ### hostname Type
 
-`string` ([The hostname schema](configuration-properties-the-hostname-schema.md))
+`string` ([The hostname of this installation.](configuration-properties-the-hostname-of-this-installation.md))
 
 ### hostname Examples
 
@@ -69,15 +71,15 @@ The username of the first user to provision, that will be the sudoer.
 
 *   is required
 
-*   Type: `string` ([The username schema](configuration-properties-the-username-schema.md))
+*   Type: `string` ([The username to create at the installation.](configuration-properties-the-username-to-create-at-the-installation.md))
 
 *   cannot be null
 
-*   defined in: [Archlinux provisioner variables](configuration-properties-the-username-schema.md "#/properties/username#/properties/username")
+*   defined in: [Archlinux provisioner variables](configuration-properties-the-username-to-create-at-the-installation.md "#/properties/username#/properties/username")
 
 ### username Type
 
-`string` ([The username schema](configuration-properties-the-username-schema.md))
+`string` ([The username to create at the installation.](configuration-properties-the-username-to-create-at-the-installation.md))
 
 ### username Examples
 
@@ -118,6 +120,31 @@ The kernel to install from the Archlinux supported ones.
 
 ```yaml
 standard
+
+```
+
+## encryption
+
+Activating this option configures the system to support file-system encryption
+
+`encryption`
+
+*   is optional
+
+*   Type: `boolean` ([Encrypt the system](configuration-properties-encrypt-the-system.md))
+
+*   cannot be null
+
+*   defined in: [Archlinux provisioner variables](configuration-properties-encrypt-the-system.md "#/properties/encryption#/properties/encryption")
+
+### encryption Type
+
+`boolean` ([Encrypt the system](configuration-properties-encrypt-the-system.md))
+
+### encryption Examples
+
+```yaml
+false
 
 ```
 

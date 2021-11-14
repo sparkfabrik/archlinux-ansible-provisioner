@@ -8,6 +8,7 @@
             "hostname": "myarch-host",
             "username": "foobar",
             "kernel": "standard",
+            "encryption": false,
             "enable_xorg_multitouch_gestures": false,
             "debug": false
         }
@@ -21,7 +22,7 @@
         "hostname": {
             "$id": "#/properties/hostname",
             "type": "string",
-            "title": "The hostname schema",
+            "title": "The hostname of this installation.",
             "description": "System hostname (/etc/hostname).",
             "default": "",
             "examples": [
@@ -31,7 +32,7 @@
         "username": {
             "$id": "#/properties/username",
             "type": "string",
-            "title": "The username schema",
+            "title": "The username to create at the installation.",
             "description": "The username of the first user to provision, that will be the sudoer.",
             "default": "",
             "examples": [
@@ -44,9 +45,23 @@
             "title": "The kernel schema",
             "description": "The kernel to install from the Archlinux supported ones.",
             "default": "",
-            "enum": ["standard", "lts", "zen"],
+            "enum": [
+                "standard",
+                "lts",
+                "zen"
+            ],
             "examples": [
                 "standard"
+            ]
+        },
+        "encryption": {
+            "$id": "#/properties/encryption",
+            "type": "boolean",
+            "title": "Encrypt the system",
+            "description": "Activating this option configures the system to support file-system encryption",
+            "default": false,
+            "examples": [
+                false
             ]
         },
         "enable_xorg_multitouch_gestures": {

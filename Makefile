@@ -1,6 +1,5 @@
 ifndef CONFIG
 	CONFIG=./config/default.yaml
-	$(info Using a ./config/default.yaml file...)
 endif
 
 install-githooks:
