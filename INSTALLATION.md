@@ -219,13 +219,19 @@ playbooks/roles
 * `nvidia`: Install Nvidia drivers with nvidia-prime autodetection in case of hybrid graphics system
 * `packages`: Install all needed packages for development, multimedia, utilities and so on.
 
-
 Start by cloning the repo:
 
 ```bash
 cd /root
 git clone https://github.com/paolomainardi/archlinux-ansible-provisioner.git provisioner
 cd provisioner
+```
+
+Now you have to prepare your configuration file, which shuold reside under `./config`,
+you can start with `./config/default.yaml.tpl` as an example.
+
+You can find [here](./config/docs/configuration.md) the schema documentation.
+
 cp config/default.yaml.tpl config/default.yaml
 # !!! EDIT THIS FILE ACCORDING TO YOUR NEEDS !!!
 vim config/default.yaml

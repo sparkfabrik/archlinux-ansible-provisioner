@@ -1,9 +1,20 @@
 ifndef CONFIG
-$(error "You must pass a config yaml file (see ./config/*.yaml for examples)")
+	CONFIG=./config/default.yaml
+	$(info Using a ./config/default.yaml file...)
 endif
 
 install-githooks:
 	cp git-hooks/pre-commit .git/hooks/pre-commit
+
+build-docker-tools:
+	docker build -t paolomainardi/archlinux-provisioner-tools:latest .
+
+generate-json-schema-docs: build-docker-tools
+	docker run --rm -it -u $$UID -v $$PWD:$$PWD -w $$PWD paolomainardi/archlinux-provisioner-tools:latest jsonschema2md -d config/schemas -o config/docs -x - -f yaml -n
+
+validate-json-schema: build-docker-tools
+
+	docker run --rm -it -v $$PWD:$$PWD -w $$PWD paolomainardi/archlinux-provisioner-tools:latest ajv validate -s config/configuration.schema.json -d $(CONFIG)
 
 init:
 	ansible-galaxy collection install -r requirements.yml

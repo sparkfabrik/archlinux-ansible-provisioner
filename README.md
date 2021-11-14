@@ -27,6 +27,8 @@ playbooks/roles
 
 To install it, just follow the [Installation guide](INSTALLATION.md)
 
+You can find the full `pkglist` on the root of this repository, which is kept automatically updated from a running system
+
 ## Usage after installation
 
 Once you've installed Archlinux using this ansible playbook, you can always re-run it totally or just partially, using tags.

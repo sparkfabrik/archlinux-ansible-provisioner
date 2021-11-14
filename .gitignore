@@ -1,2 +1,4 @@
 config
 !config/default.yaml.tpl
+!config/schemas/*
+!config/docs/*
