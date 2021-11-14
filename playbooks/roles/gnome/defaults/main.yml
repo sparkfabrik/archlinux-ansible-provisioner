@@ -1,0 +1,13 @@
+enable_xorg_multitouch_gestures: false
+
+gnome_extensions: &base
+  - appindicatorsupport@rgcjonas.gmail.com
+  - just-perfection-desktop@just-perfection
+  - screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com
+  - user-theme@gnome-shell-extensions.gcampax.github.com
+  - workspace-indicator@gnome-shell-extensions.gcampax.github.com']
+  - dash-to-dock@micxgx.gmail.com
+  - ding@rastersoft.com
+
+gnome_extensions_multitouch:
+  - gnome-shell-extension-x11gestures

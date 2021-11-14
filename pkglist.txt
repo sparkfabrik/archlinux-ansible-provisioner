@@ -26,7 +26,6 @@ dialog
 dmidecode
 docker
 docker-compose
-easyeffects
 efibootmgr
 eog
 epiphany
@@ -76,6 +75,7 @@ gnome-shell-extension-dash-to-dock
 gnome-shell-extension-desktop-icons-ng
 gnome-shell-extension-just-perfection-desktop-git
 gnome-shell-extension-system-monitor-git
+gnome-shell-extension-x11gestures
 gnome-shell-extensions
 gnome-software
 gnome-software-packagekit-plugin
@@ -121,10 +121,13 @@ kooha
 kubectl
 kubectx
 kubetail
+libpipewire02
 libtool
 linux
 linux-firmware
 linux-headers
+linux-lts
+linux-lts-headers
 logiops
 lshw
 m4
@@ -177,6 +180,8 @@ timeshift
 timeshift-autosnap
 tmux
 totem
+touche
+touchegg
 tracker
 tracker-miners
 tracker3-miners

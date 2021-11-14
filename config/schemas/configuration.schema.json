@@ -1,0 +1,74 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "object",
+    "title": "Archlinux provisioner variables",
+    "description": "The installation variables to be used in Ansible",
+    "examples": [
+        {
+            "hostname": "myarch-host",
+            "username": "foobar",
+            "kernel": "standard",
+            "enable_xorg_multitouch_gestures": false,
+            "debug": false
+        }
+    ],
+    "required": [
+        "hostname",
+        "username",
+        "kernel"
+    ],
+    "properties": {
+        "hostname": {
+            "$id": "#/properties/hostname",
+            "type": "string",
+            "title": "The hostname schema",
+            "description": "System hostname (/etc/hostname).",
+            "default": "",
+            "examples": [
+                "test"
+            ]
+        },
+        "username": {
+            "$id": "#/properties/username",
+            "type": "string",
+            "title": "The username schema",
+            "description": "The username of the first user to provision, that will be the sudoer.",
+            "default": "",
+            "examples": [
+                "test"
+            ]
+        },
+        "kernel": {
+            "$id": "#/properties/kernel",
+            "type": "string",
+            "title": "The kernel schema",
+            "description": "The kernel to install from the Archlinux supported ones.",
+            "default": "",
+            "enum": ["standard", "lts", "zen"],
+            "examples": [
+                "standard"
+            ]
+        },
+        "enable_xorg_multitouch_gestures": {
+            "$id": "#/properties/enable_xorg_multitouch_gestures",
+            "type": "boolean",
+            "title": "The enable_xorg_multitouch_gestures schema",
+            "description": "Enable touchegg to have multitouch gestures under X11.",
+            "default": false,
+            "examples": [
+                false
+            ]
+        },
+        "debug": {
+            "$id": "#/properties/debug",
+            "type": "boolean",
+            "title": "The debug schema",
+            "description": "Enable debug to print verbose messages from supported roles.",
+            "default": false,
+            "examples": [
+                false
+            ]
+        }
+    },
+    "additionalProperties": true
+}
