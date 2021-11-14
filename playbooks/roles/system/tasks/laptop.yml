@@ -5,6 +5,38 @@
   ignore_errors: yes
   register: is_fingerprint_reader
 
+- name: "Detect if device has a lid"
+  tags: [system, thinkpad]
+  shell: "cat /proc/acpi/button/lid/LID/state"
+  ignore_errors: yes
+  register: has_lid
+
+- name: Better lid configuration
+  tags: [system, thinkpad]
+  when: has_lid.stdout != ""
+  block:
+  - name: Suspend on lid closing
+    lineinfile:
+      dest: /etc/systemd/logind.conf
+      regexp: '^HandleLidSwitch='
+      line: 'HandleLidSwitch=suspend'
+      mode: 0644
+      backup: yes
+  - name: Do nothing on lid closing with external power
+    lineinfile:
+      dest: /etc/systemd/logind.conf
+      regexp: '^HandleLidSwitchExternalPower='
+      line: 'HandleLidSwitchExternalPower=ignore'
+      mode: 0644
+      backup: yes
+  - name: Do nothing on lid closing when docked
+    lineinfile:
+      dest: /etc/systemd/logind.conf
+      regexp: '^HandleLidSwitchDocked='
+      line: 'HandleLidSwitchDocked=ignore'
+      mode: 0644
+      backup: yes
+
 - name: Install fingerprint reader (if hw is available)
   tags: [system, fingerprint]
   block:
@@ -18,8 +50,3 @@
         groups: input
         append: yes
 
-- name: "Detect extreme x1 gen3"
-  tags: [system, thinkpad]
-  shell: "dmidecode | grep \"ThinkPad X1 Extreme Gen 3\""
-  ignore_errors: yes
-  register: is_extreme_gen3
