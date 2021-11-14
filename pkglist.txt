@@ -126,6 +126,8 @@ libtool
 linux
 linux-firmware
 linux-headers
+linux-lts
+linux-lts-headers
 logiops
 lshw
 m4
