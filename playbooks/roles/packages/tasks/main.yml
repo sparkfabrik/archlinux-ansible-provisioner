@@ -88,7 +88,15 @@
         - yadm
         - vim
         - telegram-desktop
-
+ 
+  - name: Install base packages from aur
+    kewlfft.aur.aur:
+      use: paru
+      name:
+        - toggldesktop
+    become: yes
+    become_user: aur_builder
+        
   - name: Symlink vim to vi
     command: ln -sf /usr/bin/vim /usr/bin/vi
 
