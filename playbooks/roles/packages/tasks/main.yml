@@ -15,12 +15,13 @@
         use: paru
         name:
           - pack-cli-bin
+          - google-cloud-sdk
           - kind
           - kubectx
           - kubetail
           - rancher-k3d-bin
           - stern
-          - google-cloud-sdk
+          - tmate
       become: yes
       become_user: aur_builder
     - name: Install docker
