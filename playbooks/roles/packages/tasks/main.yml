@@ -37,6 +37,15 @@
     - name: Enable docker service
       shell: systemctl enable docker
 
+- name: Install development packages
+  tags: [base, dev]
+  block:
+  - name: Install development packages
+    community.general.pacman:
+      name:
+        - node
+        - npm
+        
 - name: Install base packages
   tags: [base, packages]
   block:
