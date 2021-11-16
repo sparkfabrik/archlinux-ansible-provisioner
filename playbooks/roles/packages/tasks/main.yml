@@ -38,13 +38,16 @@
       shell: systemctl enable docker
 
 - name: Install development packages
-  tags: [base, dev]
+  tags: [dev, packages]
   block:
   - name: Install development packages
     community.general.pacman:
       name:
-        - node
+        - nodejs-lts-gallium
         - npm
+        - yarn
+        - php
+        - go
         
 - name: Install base packages
   tags: [base, packages]
@@ -113,7 +116,9 @@
     kewlfft.aur.aur:
       use: paru
       name:
-        - google-chrome
+        - 
+        
+        ogle-chrome
         - firefox
     become: yes
     become_user: aur_builder
