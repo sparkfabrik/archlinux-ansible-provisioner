@@ -54,6 +54,17 @@
                 "standard"
             ]
         },
+        "timezone": {
+            "$id": "#/properties/timezone",
+            "type": "string",
+            "title": "The system timezone",
+            "description": "The system timezone used in /etc/localtime",
+            "default": "Europe/Rome",
+            "examples": [
+                "Europe/Rome",
+                "Europe/Madrid"
+            ]
+        },
         "encryption": {
             "$id": "#/properties/encryption",
             "type": "boolean",

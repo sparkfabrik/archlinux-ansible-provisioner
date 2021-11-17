@@ -12,8 +12,7 @@ generate-json-schema-docs: build-docker-tools
 	docker run --rm -it -u $$UID -v $$PWD:$$PWD -w $$PWD paolomainardi/archlinux-provisioner-tools:latest jsonschema2md -d config/schemas -o config/docs -x - -f yaml -n
 
 validate-json-schema: build-docker-tools
-
-	docker run --rm -it -v $$PWD:$$PWD -w $$PWD paolomainardi/archlinux-provisioner-tools:latest ajv validate -s config/configuration.schema.json -d $(CONFIG)
+	docker run --rm -it -v $$PWD:$$PWD -w $$PWD paolomainardi/archlinux-provisioner-tools:latest ajv validate -s config/schemas/configuration.schema.json -d $(CONFIG)
 
 init:
 	ansible-galaxy collection install -r requirements.yml

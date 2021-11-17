@@ -29,7 +29,7 @@
 # shell: sed -i 's|,subvolid=||g' /mnt/etc/fstab
 
 - name: "Set default timezone"
-  shell: arch-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime
+  shell: arch-chroot /mnt ln -sf /usr/share/zoneinfo/{{ timezone }} /etc/localtime
 
 - name: "Run hwclock to regenerate /etc/adjtime"
   shell: arch-chroot /mnt hwclock --systohc
