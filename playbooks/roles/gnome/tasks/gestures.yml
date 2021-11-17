@@ -17,7 +17,7 @@
     dconf:
       key: "/org/gnome/shell/enabled-extensions"
       value: "{{ gnome_extensions + gnome_extensions_multitouch }}"
-   
+
   - name: debug
     debug:
       msg: "Installed extensions: {{ gnome_extensions + gnome_extensions_multitouch }}"

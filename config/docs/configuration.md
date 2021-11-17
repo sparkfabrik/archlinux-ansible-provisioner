@@ -33,6 +33,7 @@ debug: false
 | [hostname](#hostname)                                               | `string`  | Required | cannot be null | [Archlinux provisioner variables](configuration-properties-the-hostname-of-this-installation.md "#/properties/hostname#/properties/hostname")                                                        |
 | [username](#username)                                               | `string`  | Required | cannot be null | [Archlinux provisioner variables](configuration-properties-the-username-to-create-at-the-installation.md "#/properties/username#/properties/username")                                               |
 | [kernel](#kernel)                                                   | `string`  | Required | cannot be null | [Archlinux provisioner variables](configuration-properties-the-kernel-schema.md "#/properties/kernel#/properties/kernel")                                                                            |
+| [timezone](#timezone)                                               | `string`  | Optional | cannot be null | [Archlinux provisioner variables](configuration-properties-the-system-timezone.md "#/properties/timezone#/properties/timezone")                                                                      |
 | [encryption](#encryption)                                           | `boolean` | Optional | cannot be null | [Archlinux provisioner variables](configuration-properties-encrypt-the-system.md "#/properties/encryption#/properties/encryption")                                                                   |
 | [enable_xorg_multitouch_gestures](#enable_xorg_multitouch_gestures) | `boolean` | Optional | cannot be null | [Archlinux provisioner variables](configuration-properties-the-enable_xorg_multitouch_gestures-schema.md "#/properties/enable_xorg_multitouch_gestures#/properties/enable_xorg_multitouch_gestures") |
 | [debug](#debug)                                                     | `boolean` | Optional | cannot be null | [Archlinux provisioner variables](configuration-properties-the-debug-schema.md "#/properties/debug#/properties/debug")                                                                               |
@@ -120,6 +121,44 @@ The kernel to install from the Archlinux supported ones.
 
 ```yaml
 standard
+
+```
+
+## timezone
+
+The system timezone used in /etc/localtime
+
+`timezone`
+
+*   is optional
+
+*   Type: `string` ([The system timezone](configuration-properties-the-system-timezone.md))
+
+*   cannot be null
+
+*   defined in: [Archlinux provisioner variables](configuration-properties-the-system-timezone.md "#/properties/timezone#/properties/timezone")
+
+### timezone Type
+
+`string` ([The system timezone](configuration-properties-the-system-timezone.md))
+
+### timezone Default Value
+
+The default value is:
+
+```json
+"Europe/Rome"
+```
+
+### timezone Examples
+
+```yaml
+Europe/Rome
+
+```
+
+```yaml
+Europe/Madrid
 
 ```
 
