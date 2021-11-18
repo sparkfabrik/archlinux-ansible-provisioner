@@ -1,7 +1,6 @@
 ---
 - name: Configure security
   tags: [system, security]
-  tags: security
   block:
   - name: Set unlock_time to 30s after the lock out.
     community.general.ini_file:
