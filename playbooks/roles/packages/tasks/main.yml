@@ -159,6 +159,7 @@
         - ttf-dejavu
         - ttf-hack
         - ttf-inconsolata
+        - ttf-press-start-2p
         - tamsyn-font
   - name: Enable rgb subpixel configuration
     file:
