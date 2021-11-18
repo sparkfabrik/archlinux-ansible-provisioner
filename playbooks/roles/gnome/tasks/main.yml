@@ -13,6 +13,7 @@
           - gnome-system-monitor
           - gnome-sound-recorder
           - dconf-editor
+          - python-psutil
           - gnome-software-packagekit-plugin
           - networkmanager
           - networkmanager-openvpn
