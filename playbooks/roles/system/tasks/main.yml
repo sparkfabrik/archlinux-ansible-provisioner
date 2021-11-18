@@ -58,6 +58,8 @@
       - ansible
       - bashtop
       - lm_sensors
+      - coreutils
+      - usbutils
       - dmidecode
       - btrfs-progs
       - efibootmgr
