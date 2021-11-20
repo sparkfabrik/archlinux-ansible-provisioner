@@ -237,7 +237,6 @@ cp config/default.yaml.tpl config/default.yaml
 # --- EDIT THIS FILE ACCORDING TO YOUR NEEDS ---
 vim config/default.yaml
 CONFIG=./config/default.yaml make system
-make
 ```
 
 > ***VERY IMPORTANT***: Ansible will use the default values specified by the roles, you should change it or pass it, at the moment 
