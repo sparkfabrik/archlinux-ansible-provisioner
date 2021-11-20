@@ -233,7 +233,7 @@ you can start with `./config/default.yaml.tpl` as an example.
 You can find [here](./config/docs/configuration.md) the schema documentation.
 
 cp config/default.yaml.tpl config/default.yaml
-# !!! EDIT THIS FILE ACCORDING TO YOUR NEEDS !!!
+# --- EDIT THIS FILE ACCORDING TO YOUR NEEDS ---
 vim config/default.yaml
 CONFIG=./config/default.yaml make system
 make
