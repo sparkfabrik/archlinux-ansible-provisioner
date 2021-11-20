@@ -1,0 +1,53 @@
+---
+- name: Install base packages
+  tags: [packages, base]
+  block:
+  - name: Network packages
+    community.general.pacman:
+      name:
+        - dnsutils
+        - dhcpcd
+        - iproute2
+        - net-tools
+        - tcpdump
+        - wpa_supplicant
+
+  - name: System packages
+    community.general.pacman:
+      name:
+        - ansible
+        - bashtop
+        - lm_sensors
+        - coreutils
+        - usbutils
+        - dmidecode
+        - base-devel
+        - bash-completion
+        - dialog
+        - dmidecode
+        - flatpak
+        - neofetch
+        - pacman-contrib
+        - gparted
+        - htop
+        - git
+        - tree
+        - usbutils
+        - tmux
+        - zsh
+        - zsh-completions
+        - lshw
+        - deja-dup
+        - vim
+
+  - name: System packges from aur
+    kewlfft.aur.aur:
+      use: paru
+      name:
+        - inxi
+        - glxinfo
+    become: yes
+    become_user: aur_builder
+
+  - name: Symlink vim to vi
+    command: ln -sf /usr/bin/vim /usr/bin/vi

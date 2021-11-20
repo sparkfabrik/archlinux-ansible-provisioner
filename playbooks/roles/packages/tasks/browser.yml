@@ -1,0 +1,12 @@
+---
+- name: Browsers
+  tags: [base, browser]
+  block:
+  - name: Install web browsers
+    kewlfft.aur.aur:
+      use: paru
+      name:
+        - google-chrome
+        - firefox
+    become: yes
+    become_user: aur_builder
