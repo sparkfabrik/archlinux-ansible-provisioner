@@ -2,15 +2,20 @@
 - name: Install multimedia packages
   tags: [packages, media]
   block:
-    - name: Install media packages (aur)
-      kewlfft.aur.aur:
-        use: paru
-        name:
-          - blanket
-          - kooha
-          - mplayer
-          - vlc
-          - libmicrodns
-          - protobuf
-      become: yes
-      become_user: aur_builder
+  - name: Install media packages
+    community.general.pacman:
+      name:
+        - guvcview
+
+  - name: Install media packages (aur)
+    kewlfft.aur.aur:
+      use: paru
+      name:
+        - blanket
+        - kooha
+        - mplayer
+        - vlc
+        - libmicrodns
+        - protobuf
+    become: yes
+    become_user: aur_builder

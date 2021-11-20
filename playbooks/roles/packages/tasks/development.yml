@@ -1,0 +1,51 @@
+---
+- name: Install cloud native packages
+  tags: [packages, dev, cloudnative]
+  block:
+    - name: Install cloud native packages
+      community.general.pacman:
+        name:
+          - aws-cli
+          - yq
+          - jq
+          - kubectl
+          - k9s
+          - helm
+    - name: Install cloud native packages from aur
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - pack-cli-bin
+          - google-cloud-sdk
+          - kind
+          - kubectx
+          - kubetail
+          - rancher-k3d-bin
+          - stern
+          - tmate
+      become: yes
+      become_user: aur_builder
+    - name: Install docker
+      community.general.pacman:
+        name:
+          - docker
+          - docker-compose
+    - name: Add user to docker group
+      user:
+        name: '{{ username }}'
+        groups: docker
+        append: yes
+    - name: Enable docker service
+      shell: systemctl enable docker
+
+- name: Install development packages
+  tags: [packages, dev]
+  block:
+  - name: Install development packages
+    community.general.pacman:
+      name:
+        - nodejs-lts-gallium
+        - npm
+        - yarn
+        - php
+        - go

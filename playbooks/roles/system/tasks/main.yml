@@ -52,22 +52,14 @@
     - name: Enable reflector weekly
       shell: systemctl enable reflector.timer
 
-- name: Install system packages
+- name: Install root system packages
   community.general.pacman:
     name:
-      - ansible
-      - bashtop
-      - lm_sensors
-      - coreutils
-      - usbutils
-      - dmidecode
       - btrfs-progs
       - efibootmgr
-      - freetype2
       - git
       - grub-btrfs
       - ntfs-3g
-      - vim
       - sudo
     state: present
     update_cache: yes

@@ -1,0 +1,51 @@
+---
+- name: Install and configure fonts
+  tags: [packages, fonts]
+  block:
+  - name: Install fonts
+    community.general.pacman:
+      name:
+        - freetype2
+        - fontconfig
+        - adobe-source-sans-fonts
+        - cantarell-fonts
+        - noto-fonts
+        - ttf-anonymous-pro
+        - ttf-droid
+        - ttf-liberation
+        - ttf-fira-code
+        - ttf-fira-mono
+        - ttf-fira-sans
+        - ttf-jetbrains-mono
+        - ttf-lato
+        - ttf-roboto
+        - ttf-roboto-mono
+        - ttf-ubuntu-font-family
+        - ttf-ibm-plex
+        - ttf-bitstream-vera
+        - ttf-dejavu
+        - ttf-hack
+        - ttf-inconsolata
+        - tamsyn-font
+  - name: Enable rgb subpixel configuration
+    file:
+      src: "/usr/share/fontconfig/conf.avail/10-sub-pixel-rgb.conf"
+      dest: "/etc/fonts/conf.d/10-sub-pixel-rgb.conf"
+      state: link
+  - name: Enable slight hinting
+    file:
+      src: "/usr/share/fontconfig/conf.avail/10-hinting-slight.conf"
+      dest: "/etc/fonts/conf.d/10-hinting-slight.conf"
+      state: link
+  - name: Enable lcd filter
+    file:
+      src: "/usr/share/fontconfig/conf.avail/11-lcdfilter-default.conf"
+      dest: "/etc/fonts/conf.d/11-lcdfilter-default.conf"
+      state: link
+  - name: Enable freetype2
+    ansible.builtin.lineinfile:
+      path: /etc/profile.d/freetype2.sh
+      regexp: '^export FREETYPE_PROPERTIES='
+      line: export FREETYPE_PROPERTIES="truetype:interpreter-version=40"
+  - name: Clear font cache
+    command: fc-cache -fv
