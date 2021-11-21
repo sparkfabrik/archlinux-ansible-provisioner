@@ -1,0 +1,9 @@
+---
+- name: Productivity
+  tags: [packages, office]
+  block:
+  - name: Install office docs packages
+    community.general.pacman:
+      name:
+        - libreoffice-fresh
+    when: office
