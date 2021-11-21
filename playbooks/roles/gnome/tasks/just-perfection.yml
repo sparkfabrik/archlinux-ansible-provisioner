@@ -1,0 +1,10 @@
+---
+- name: Configure gnome
+  tags: [gnome, gnome-config, just-perfection]
+  become: yes
+  become_user: '{{ username }}'
+  block:
+  - name: Set startup status to desktop instead of the useless overview
+    dconf:
+      key: "/org/gnome/shell/extensions/just-perfection/startup-status"
+      value: "0"

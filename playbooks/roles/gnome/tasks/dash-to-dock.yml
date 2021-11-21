@@ -1,0 +1,55 @@
+---
+- name: Configure gnome
+  tags: [gnome, gnome-config, dash-to-dock]
+  become: yes
+  become_user: '{{ username }}'
+  block:
+  - name: Move dock to bottom
+    dconf:
+      key: "/org/gnome/shell/extensions/dash-to-dock/dock-position"
+      value: "'BOTTOM'"
+
+  - name: Set dock icons' size to 32
+    dconf:
+      key: "/org/gnome/shell/extensions/dash-to-dock/dash-max-icon-size"
+      value: "32"
+
+  - name: Use built-in theme
+    dconf:
+      key: "/org/gnome/shell/extensions/dash-to-dock/apply-custom-theme"
+      value: "true"
+
+  - name: Show 'Dash to Dock' dock in all monitors (available after restarting)
+    dconf:
+      key: "/org/gnome/shell/extensions/dash-to-dock/multi-monitor"
+      value: "false"
+
+  - name: Enable 'Dash to Dock' autohide 
+    dconf:
+      key: "/org/gnome/shell/extensions/dash-to-dock/autohide"
+      value: "true"
+
+  - name: Enable 'Dash to Dock' autohide in full screen
+    dconf:
+      key: "/org/gnome/shell/extensions/dash-to-dock/auto-hide-in-fullscreen"
+      value: "true"
+
+  - name: Hide 'Dash to Dock' dock when any window obstructs it
+    dconf:
+      key: "/org/gnome/shell/extensions/dash-to-dock/intellihide-mode"
+      value: "'ALL_WINDOWS'"
+
+  - name: Disable show favorites
+    dconf:
+      key: "/org/gnome/shell/extensions/dash-to-dock/show-favorites"
+      value: "false"
+
+  - name: Disable hot keys
+    dconf:
+      key: "/org/gnome/shell/extensions/dash-to-dock/hot-keys"
+      value: "false"
+
+  - name: Use default 'Dash to Dock' opacity (available after restarting)
+    dconf:
+      key: "/org/gnome/shell/extensions/dash-to-dock/transparency-mode"
+      value: "'DEFAULT'"
