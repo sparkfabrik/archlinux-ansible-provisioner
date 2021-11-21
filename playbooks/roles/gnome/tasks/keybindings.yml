@@ -77,6 +77,14 @@
     dconf:
       key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-4"
       value: "@as []"
+  - name: Disable dash-to-dock hotkeys-5
+    dconf:
+      key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-5"
+      value: "@as []"
+  - name: Disable dash-to-dock hotkeys-6
+    dconf:
+      key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-6"
+      value: "@as []"
 
   - name: Close windows with super+shift+q
     dconf:
