@@ -49,6 +49,9 @@
 - name: Configure dash-to-dock
   import_tasks: dash-to-dock.yml
 
+- name: Configure gnome-terminal
+  import_tasks: gnome-terminal.yml
+
 - name: Configure just-perfection
   import_tasks: just-perfection.yml
 
