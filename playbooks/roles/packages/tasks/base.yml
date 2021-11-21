@@ -25,6 +25,7 @@
         - bash-completion
         - dialog
         - dmidecode
+        - glances
         - flatpak
         - neofetch
         - pacman-contrib

@@ -87,5 +87,5 @@
     - name: Enable gnome-shell extensions (available after restarting)
       dconf:
         key: "/org/gnome/shell/enabled-extensions"
-        value: "{{ gnome_extensions_multitouch }}"
+        value: "{{ gnome_extensions }} + {{ gnome_extensions_multitouch }}"
 
