@@ -13,3 +13,6 @@
 
 - name: Set up development packages
   import_tasks: development.yml
+
+- name: Set up office packages
+  import_tasks: office.yml

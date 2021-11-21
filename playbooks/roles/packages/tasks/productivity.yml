@@ -19,5 +19,6 @@
         - visual-studio-code-bin
         - toggldesktop
         - zoom
+        - xournalpp
     become: yes
     become_user: aur_builder
