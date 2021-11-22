@@ -10,7 +10,9 @@
             "kernel": "standard",
             "encryption": false,
             "enable_xorg_multitouch_gestures": false,
-            "debug": false
+            "debug": false,
+            "office": false,
+            "use_mouse_natural_scroll": true
         }
     ],
     "required": [
@@ -93,6 +95,30 @@
             "default": false,
             "examples": [
                 false
+            ]
+        },
+        "office": {
+            "$id": "#/properties/office",
+            "type": "boolean",
+            "title": "The office schema",
+            "description": "Enable office applications.",
+            "default": false,
+            "examples": [
+                false
+            ]
+        },
+        "use_mouse_natural_scroll": {
+            "$id": "#/properties/use_mouse_natural_scroll",
+            "type": "string",
+            "title": "The natural scroll schema",
+            "description": "Enable natural scroll for mouse.",
+            "default": "true",
+            "enum": [
+                "true",
+                "false"
+            ],
+            "examples": [
+                "true"
             ]
         }
     },

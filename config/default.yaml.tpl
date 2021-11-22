@@ -6,3 +6,4 @@ debug: false # Enable debug to print verbose messages from supported roles.
 encryption: false
 timezone: Europe/Rome
 office: false
+use_mouse_natural_scroll: "true"

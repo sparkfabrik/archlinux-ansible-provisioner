@@ -11,3 +11,5 @@ gnome_extensions: &base
 
 gnome_extensions_multitouch:
   - x11gestures@joseexposito.github.io
+
+use_mouse_natural_scroll: "true"
