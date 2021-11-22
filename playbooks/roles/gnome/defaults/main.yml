@@ -10,4 +10,4 @@ gnome_extensions: &base
   - ding@rastersoft.com
 
 gnome_extensions_multitouch:
-  - gnome-shell-extension-x11gestures
+  - x11gestures@joseexposito.github.io

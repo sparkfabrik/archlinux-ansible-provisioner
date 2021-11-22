@@ -79,6 +79,11 @@
         key: "/org/gnome/desktop/peripherals/mouse/natural-scroll"
         value: "true"
 
+    - name: Disable hot corners
+      dconf:
+        key: "/org/gnome/desktop/interface/enable-hot-corners"
+        value: "false"
+
     - name: Arrangement of buttons on the titlebar
       dconf:
         key: "/org/gnome/desktop/wm/preferences/button-layout"
@@ -87,5 +92,5 @@
     - name: Enable gnome-shell extensions (available after restarting)
       dconf:
         key: "/org/gnome/shell/enabled-extensions"
-        value: "{{ gnome_extensions_multitouch }}"
+        value: "{{ gnome_extensions }} + {{ gnome_extensions_multitouch }}"
 

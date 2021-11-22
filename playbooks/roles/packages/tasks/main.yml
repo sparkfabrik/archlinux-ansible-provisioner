@@ -1,4 +1,7 @@
 ---
+- name: Set up base packages
+  import_tasks: base.yml
+
 - name: Set up browsers
   import_tasks: browser.yml
 
