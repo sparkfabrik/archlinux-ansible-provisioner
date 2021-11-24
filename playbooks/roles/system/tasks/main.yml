@@ -59,6 +59,7 @@
       - efibootmgr
       - git
       - grub-btrfs
+      - os-prober
       - ntfs-3g
       - sudo
     state: present

@@ -1,6 +1,6 @@
 ---
 - name: "Installs base system using pacstrap"
-  shell: /usr/bin/pacstrap /mnt base base-devel btrfs-progs efibootmgr vim git grub-btrfs ansible sudo
+  shell: /usr/bin/pacstrap /mnt base base-devel btrfs-progs efibootmgr vim git grub-btrfs os-prober ansible sudo
 
 - name: "Installs linux kernel"
   shell: /usr/bin/pacstrap /mnt linux linux-headers linux-firmware
