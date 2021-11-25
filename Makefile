@@ -41,3 +41,8 @@ local-install:
 # Example of usage: sudo TAGS=your-tags CONFIG=./config/your-config.yaml make local-install-tags
 local-install-tags:
 	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --tags $(TAGS) --extra-vars "@$(CONFIG)"
+
+regenerate-mkinitcpio-grub:
+	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --tags mkinitcpio --extra-vars "@$(CONFIG)"
+	sudo mkinitcpio -P
+	sudo grub-mkconfig -o /boot/grub/grub.cfg

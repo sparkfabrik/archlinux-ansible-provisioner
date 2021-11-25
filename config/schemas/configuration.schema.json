@@ -8,7 +8,6 @@
             "hostname": "myarch-host",
             "username": "foobar",
             "kernel": "standard",
-            "encryption": false,
             "enable_xorg_multitouch_gestures": false,
             "debug": false
         }
@@ -63,16 +62,6 @@
             "examples": [
                 "Europe/Rome",
                 "Europe/Madrid"
-            ]
-        },
-        "encryption": {
-            "$id": "#/properties/encryption",
-            "type": "boolean",
-            "title": "Encrypt the system",
-            "description": "Activating this option configures the system to support file-system encryption",
-            "default": false,
-            "examples": [
-                false
             ]
         },
         "enable_xorg_multitouch_gestures": {

@@ -20,7 +20,6 @@ The installation variables to be used in Ansible
 hostname: myarch-host
 username: foobar
 kernel: standard
-encryption: false
 enable_xorg_multitouch_gestures: false
 debug: false
 
@@ -34,7 +33,6 @@ debug: false
 | [username](#username)                                               | `string`  | Required | cannot be null | [Archlinux provisioner variables](configuration-properties-the-username-to-create-at-the-installation.md "#/properties/username#/properties/username")                                               |
 | [kernel](#kernel)                                                   | `string`  | Required | cannot be null | [Archlinux provisioner variables](configuration-properties-the-kernel-schema.md "#/properties/kernel#/properties/kernel")                                                                            |
 | [timezone](#timezone)                                               | `string`  | Optional | cannot be null | [Archlinux provisioner variables](configuration-properties-the-system-timezone.md "#/properties/timezone#/properties/timezone")                                                                      |
-| [encryption](#encryption)                                           | `boolean` | Optional | cannot be null | [Archlinux provisioner variables](configuration-properties-encrypt-the-system.md "#/properties/encryption#/properties/encryption")                                                                   |
 | [enable_xorg_multitouch_gestures](#enable_xorg_multitouch_gestures) | `boolean` | Optional | cannot be null | [Archlinux provisioner variables](configuration-properties-the-enable_xorg_multitouch_gestures-schema.md "#/properties/enable_xorg_multitouch_gestures#/properties/enable_xorg_multitouch_gestures") |
 | [debug](#debug)                                                     | `boolean` | Optional | cannot be null | [Archlinux provisioner variables](configuration-properties-the-debug-schema.md "#/properties/debug#/properties/debug")                                                                               |
 | Additional Properties                                               | Any       | Optional | can be null    |                                                                                                                                                                                                      |
@@ -159,31 +157,6 @@ Europe/Rome
 
 ```yaml
 Europe/Madrid
-
-```
-
-## encryption
-
-Activating this option configures the system to support file-system encryption
-
-`encryption`
-
-*   is optional
-
-*   Type: `boolean` ([Encrypt the system](configuration-properties-encrypt-the-system.md))
-
-*   cannot be null
-
-*   defined in: [Archlinux provisioner variables](configuration-properties-encrypt-the-system.md "#/properties/encryption#/properties/encryption")
-
-### encryption Type
-
-`boolean` ([Encrypt the system](configuration-properties-encrypt-the-system.md))
-
-### encryption Examples
-
-```yaml
-false
 
 ```
 
