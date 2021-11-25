@@ -57,11 +57,15 @@
     when: kernel == "zen"
 
   - name: Copy provided mkinitcpio.conf
+    tags: [system, mkinitcpio]
     vars:
       enable_encrypt: "{{ (encryption == true) | ternary('encrypt', '') }}"
-    ansible.builtin.template:
-      src: files/mkinitcpio.conf.j2
+    ansible.builtin.copy:
+      src: files/mkinitcpio.conf
       dest: /etc/mkinitcpio.conf
+    #ansible.builtin.template:
+    #  src: files/mkinitcpio.conf.j2
+    #  dest: /etc/mkinitcpio.conf
 
   - name: Regenerate mkinitcpio.conf
     shell: mkinitcpio -P
