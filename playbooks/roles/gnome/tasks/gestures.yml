@@ -2,7 +2,7 @@
 
 
 - name: Configure multitouch gestures
-  when: desktop.desktop.x11_gestures
+  when: desktop.x11_gestures
   tags: [gnome, gestures]
   vars:
     gesture_ext:
