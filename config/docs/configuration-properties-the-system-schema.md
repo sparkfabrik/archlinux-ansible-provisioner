@@ -38,8 +38,8 @@ timezone: Europe/Rome
 | :-------------------- | :------- | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [hostname](#hostname) | `string` | Required | cannot be null | [The root schema](configuration-properties-the-system-schema-properties-the-hostname-schema.md "#/properties/system/properties/hostname#/properties/system/properties/hostname") |
 | [username](#username) | `string` | Required | cannot be null | [The root schema](configuration-properties-the-system-schema-properties-the-username-schema.md "#/properties/system/properties/username#/properties/system/properties/username") |
-| [kernel](#kernel)     | `string` | Required | cannot be null | [The root schema](configuration-properties-the-system-schema-properties-the-kernel-schema.md "#/properties/system/properties/kernel#/properties/system/properties/kernel")       |
-| [timezone](#timezone) | `string` | Required | cannot be null | [The root schema](configuration-properties-the-system-schema-properties-the-timezone-schema.md "#/properties/system/properties/timezone#/properties/system/properties/timezone") |
+| [kernel](#kernel)     | `string` | Optional | cannot be null | [The root schema](configuration-properties-the-system-schema-properties-the-kernel-schema.md "#/properties/system/properties/kernel#/properties/system/properties/kernel")       |
+| [timezone](#timezone) | `string` | Optional | cannot be null | [The root schema](configuration-properties-the-system-schema-properties-the-timezone-schema.md "#/properties/system/properties/timezone#/properties/system/properties/timezone") |
 | Additional Properties | Any      | Optional | can be null    |                                                                                                                                                                                  |
 
 ## hostname
@@ -98,7 +98,7 @@ An explanation about the purpose of this instance.
 
 `kernel`
 
-*   is required
+*   is optional
 
 *   Type: `string` ([The kernel schema](configuration-properties-the-system-schema-properties-the-kernel-schema.md))
 
@@ -123,7 +123,7 @@ An explanation about the purpose of this instance.
 
 `timezone`
 
-*   is required
+*   is optional
 
 *   Type: `string` ([The timezone schema](configuration-properties-the-system-schema-properties-the-timezone-schema.md))
 

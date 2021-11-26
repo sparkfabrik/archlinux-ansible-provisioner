@@ -40,7 +40,7 @@ extensions:
 
 | Property                  | Type    | Required | Nullable       | Defined by                                                                                                                                                                                                                                              |
 | :------------------------ | :------ | :------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [extensions](#extensions) | `array` | Required | cannot be null | [The root schema](configuration-properties-the-desktop-schema-properties-the-gnome-schema-properties-the-extensions-schema.md "#/properties/desktop/properties/gnome/properties/extensions#/properties/desktop/properties/gnome/properties/extensions") |
+| [extensions](#extensions) | `array` | Optional | cannot be null | [The root schema](configuration-properties-the-desktop-schema-properties-the-gnome-schema-properties-the-extensions-schema.md "#/properties/desktop/properties/gnome/properties/extensions#/properties/desktop/properties/gnome/properties/extensions") |
 | Additional Properties     | Any     | Optional | can be null    |                                                                                                                                                                                                                                                         |
 
 ## extensions
@@ -49,7 +49,7 @@ An explanation about the purpose of this instance.
 
 `extensions`
 
-*   is required
+*   is optional
 
 *   Type: an array of merged types ([Details](configuration-properties-the-desktop-schema-properties-the-gnome-schema-properties-the-extensions-schema-items.md))
 

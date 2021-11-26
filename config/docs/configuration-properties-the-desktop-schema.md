@@ -44,8 +44,8 @@ office: false
 | Property                      | Type      | Required | Nullable       | Defined by                                                                                                                                                                                      |
 | :---------------------------- | :-------- | :------- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [gnome](#gnome)               | `object`  | Required | cannot be null | [The root schema](configuration-properties-the-desktop-schema-properties-the-gnome-schema.md "#/properties/desktop/properties/gnome#/properties/desktop/properties/gnome")                      |
-| [x11_gestures](#x11_gestures) | `boolean` | Required | cannot be null | [The root schema](configuration-properties-the-desktop-schema-properties-the-x11_gestures-schema.md "#/properties/desktop/properties/x11_gestures#/properties/desktop/properties/x11_gestures") |
-| [office](#office)             | `boolean` | Required | cannot be null | [The root schema](configuration-properties-the-desktop-schema-properties-the-office-schema.md "#/properties/desktop/properties/office#/properties/desktop/properties/office")                   |
+| [x11_gestures](#x11_gestures) | `boolean` | Optional | cannot be null | [The root schema](configuration-properties-the-desktop-schema-properties-the-x11_gestures-schema.md "#/properties/desktop/properties/x11_gestures#/properties/desktop/properties/x11_gestures") |
+| [office](#office)             | `boolean` | Optional | cannot be null | [The root schema](configuration-properties-the-desktop-schema-properties-the-office-schema.md "#/properties/desktop/properties/office#/properties/desktop/properties/office")                   |
 | Additional Properties         | Any       | Optional | can be null    |                                                                                                                                                                                                 |
 
 ## gnome
@@ -94,7 +94,7 @@ An explanation about the purpose of this instance.
 
 `x11_gestures`
 
-*   is required
+*   is optional
 
 *   Type: `boolean` ([The x11\_gestures schema](configuration-properties-the-desktop-schema-properties-the-x11\_gestures-schema.md))
 
@@ -119,7 +119,7 @@ An explanation about the purpose of this instance.
 
 `office`
 
-*   is required
+*   is optional
 
 *   Type: `boolean` ([The office schema](configuration-properties-the-desktop-schema-properties-the-office-schema.md))
 
