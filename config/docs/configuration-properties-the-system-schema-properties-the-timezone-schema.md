@@ -1,7 +1,7 @@
-# The debug schema Schema
+# The timezone schema Schema
 
 ```txt
-#/properties/debug#/properties/debug
+#/properties/system/properties/timezone#/properties/system/properties/timezone
 ```
 
 An explanation about the purpose of this instance.
@@ -10,13 +10,13 @@ An explanation about the purpose of this instance.
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :---------------------------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [configuration.schema.json*](../schemas/configuration.schema.json "open original schema") |
 
-## debug Type
+## timezone Type
 
-`boolean` ([The debug schema](configuration-properties-the-debug-schema.md))
+`string` ([The timezone schema](configuration-properties-the-system-schema-properties-the-timezone-schema.md))
 
-## debug Examples
+## timezone Examples
 
 ```yaml
-false
+Europe/Rome
 
 ```

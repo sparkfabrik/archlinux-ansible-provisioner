@@ -1,203 +1,151 @@
-# Archlinux provisioner variables Schema
+# The root schema Schema
 
 ```txt
-undefined
+http://example.com/example.json
 ```
 
-The installation variables to be used in Ansible
+The root schema comprises the entire JSON document.
 
 | Abstract            | Extensible | Status         | Identifiable | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                               |
 | :------------------ | :--------- | :------------- | :----------- | :---------------- | :-------------------- | :------------------ | :--------------------------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | No           | Forbidden         | Allowed               | none                | [configuration.schema.json](../schemas/configuration.schema.json "open original schema") |
 
-## Archlinux provisioner variables Type
+## The root schema Type
 
-`object` ([Archlinux provisioner variables](configuration.md))
+`object` ([The root schema](configuration.md))
 
-## Archlinux provisioner variables Examples
-
-```yaml
-hostname: myarch-host
-username: foobar
-kernel: standard
-enable_xorg_multitouch_gestures: false
-debug: false
-
-```
-
-# Archlinux provisioner variables Properties
-
-| Property                                                            | Type      | Required | Nullable       | Defined by                                                                                                                                                                                           |
-| :------------------------------------------------------------------ | :-------- | :------- | :------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [hostname](#hostname)                                               | `string`  | Required | cannot be null | [Archlinux provisioner variables](configuration-properties-the-hostname-of-this-installation.md "#/properties/hostname#/properties/hostname")                                                        |
-| [username](#username)                                               | `string`  | Required | cannot be null | [Archlinux provisioner variables](configuration-properties-the-username-to-create-at-the-installation.md "#/properties/username#/properties/username")                                               |
-| [kernel](#kernel)                                                   | `string`  | Required | cannot be null | [Archlinux provisioner variables](configuration-properties-the-kernel-schema.md "#/properties/kernel#/properties/kernel")                                                                            |
-| [timezone](#timezone)                                               | `string`  | Optional | cannot be null | [Archlinux provisioner variables](configuration-properties-the-system-timezone.md "#/properties/timezone#/properties/timezone")                                                                      |
-| [enable_xorg_multitouch_gestures](#enable_xorg_multitouch_gestures) | `boolean` | Optional | cannot be null | [Archlinux provisioner variables](configuration-properties-the-enable_xorg_multitouch_gestures-schema.md "#/properties/enable_xorg_multitouch_gestures#/properties/enable_xorg_multitouch_gestures") |
-| [debug](#debug)                                                     | `boolean` | Optional | cannot be null | [Archlinux provisioner variables](configuration-properties-the-debug-schema.md "#/properties/debug#/properties/debug")                                                                               |
-| Additional Properties                                               | Any       | Optional | can be null    |                                                                                                                                                                                                      |
-
-## hostname
-
-System hostname (/etc/hostname).
-
-`hostname`
-
-*   is required
-
-*   Type: `string` ([The hostname of this installation.](configuration-properties-the-hostname-of-this-installation.md))
-
-*   cannot be null
-
-*   defined in: [Archlinux provisioner variables](configuration-properties-the-hostname-of-this-installation.md "#/properties/hostname#/properties/hostname")
-
-### hostname Type
-
-`string` ([The hostname of this installation.](configuration-properties-the-hostname-of-this-installation.md))
-
-### hostname Examples
-
-```yaml
-test
-
-```
-
-## username
-
-The username of the first user to provision, that will be the sudoer.
-
-`username`
-
-*   is required
-
-*   Type: `string` ([The username to create at the installation.](configuration-properties-the-username-to-create-at-the-installation.md))
-
-*   cannot be null
-
-*   defined in: [Archlinux provisioner variables](configuration-properties-the-username-to-create-at-the-installation.md "#/properties/username#/properties/username")
-
-### username Type
-
-`string` ([The username to create at the installation.](configuration-properties-the-username-to-create-at-the-installation.md))
-
-### username Examples
-
-```yaml
-test
-
-```
-
-## kernel
-
-The kernel to install from the Archlinux supported ones.
-
-`kernel`
-
-*   is required
-
-*   Type: `string` ([The kernel schema](configuration-properties-the-kernel-schema.md))
-
-*   cannot be null
-
-*   defined in: [Archlinux provisioner variables](configuration-properties-the-kernel-schema.md "#/properties/kernel#/properties/kernel")
-
-### kernel Type
-
-`string` ([The kernel schema](configuration-properties-the-kernel-schema.md))
-
-### kernel Constraints
-
-**enum**: the value of this property must be equal to one of the following values:
-
-| Value        | Explanation |
-| :----------- | :---------- |
-| `"standard"` |             |
-| `"lts"`      |             |
-| `"zen"`      |             |
-
-### kernel Examples
-
-```yaml
-standard
-
-```
-
-## timezone
-
-The system timezone used in /etc/localtime
-
-`timezone`
-
-*   is optional
-
-*   Type: `string` ([The system timezone](configuration-properties-the-system-timezone.md))
-
-*   cannot be null
-
-*   defined in: [Archlinux provisioner variables](configuration-properties-the-system-timezone.md "#/properties/timezone#/properties/timezone")
-
-### timezone Type
-
-`string` ([The system timezone](configuration-properties-the-system-timezone.md))
-
-### timezone Default Value
+## The root schema Default Value
 
 The default value is:
 
 ```json
-"Europe/Rome"
+{}
 ```
 
-### timezone Examples
+## The root schema Examples
 
 ```yaml
-Europe/Rome
+system:
+  hostname: foobar
+  username: foobar
+  kernel: standard
+desktop:
+  gnome:
+    extensions:
+      - appindicatorsupport@rgcjonas.gmail.com
+      - just-perfection-desktop@just-perfection
+      - screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com
+      - user-theme@gnome-shell-extensions.gcampax.github.com
+      - workspace-indicator@gnome-shell-extensions.gcampax.github.com']
+      - dash-to-dock@micxgx.gmail.com
+      - ding@rastersoft.com
+  x11_gestures: true
+  office: false
+debug: false
 
 ```
 
-```yaml
-Europe/Madrid
+# The root schema Properties
 
-```
+| Property              | Type      | Required | Nullable       | Defined by                                                                                                   |
+| :-------------------- | :-------- | :------- | :------------- | :----------------------------------------------------------------------------------------------------------- |
+| [system](#system)     | `object`  | Required | cannot be null | [The root schema](configuration-properties-the-system-schema.md "#/properties/system#/properties/system")    |
+| [desktop](#desktop)   | `object`  | Required | cannot be null | [The root schema](configuration-properties-the-desktop-schema.md "#/properties/desktop#/properties/desktop") |
+| [debug](#debug)       | `boolean` | Required | cannot be null | [The root schema](configuration-properties-the-debug-schema.md "#/properties/debug#/properties/debug")       |
+| Additional Properties | Any       | Optional | can be null    |                                                                                                              |
 
-## enable_xorg_multitouch_gestures
+## system
 
-Enable touchegg to have multitouch gestures under X11.
+An explanation about the purpose of this instance.
 
-`enable_xorg_multitouch_gestures`
+`system`
 
-*   is optional
+*   is required
 
-*   Type: `boolean` ([The enable_xorg_multitouch_gestures schema](configuration-properties-the-enable_xorg_multitouch_gestures-schema.md))
+*   Type: `object` ([The system schema](configuration-properties-the-system-schema.md))
 
 *   cannot be null
 
-*   defined in: [Archlinux provisioner variables](configuration-properties-the-enable_xorg_multitouch_gestures-schema.md "#/properties/enable_xorg_multitouch_gestures#/properties/enable_xorg_multitouch_gestures")
+*   defined in: [The root schema](configuration-properties-the-system-schema.md "#/properties/system#/properties/system")
 
-### enable_xorg_multitouch_gestures Type
+### system Type
 
-`boolean` ([The enable_xorg_multitouch_gestures schema](configuration-properties-the-enable_xorg_multitouch_gestures-schema.md))
+`object` ([The system schema](configuration-properties-the-system-schema.md))
 
-### enable_xorg_multitouch_gestures Examples
+### system Default Value
+
+The default value is:
+
+```json
+{}
+```
+
+### system Examples
 
 ```yaml
-false
+hostname: foobar
+username: foobar
+kernel: standard
+timezone: Europe/Rome
+
+```
+
+## desktop
+
+An explanation about the purpose of this instance.
+
+`desktop`
+
+*   is required
+
+*   Type: `object` ([The desktop schema](configuration-properties-the-desktop-schema.md))
+
+*   cannot be null
+
+*   defined in: [The root schema](configuration-properties-the-desktop-schema.md "#/properties/desktop#/properties/desktop")
+
+### desktop Type
+
+`object` ([The desktop schema](configuration-properties-the-desktop-schema.md))
+
+### desktop Default Value
+
+The default value is:
+
+```json
+{}
+```
+
+### desktop Examples
+
+```yaml
+gnome:
+  extensions:
+    - appindicatorsupport@rgcjonas.gmail.com
+    - just-perfection-desktop@just-perfection
+    - screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com
+    - user-theme@gnome-shell-extensions.gcampax.github.com
+    - workspace-indicator@gnome-shell-extensions.gcampax.github.com']
+    - dash-to-dock@micxgx.gmail.com
+    - ding@rastersoft.com
+x11_gestures: true
+office: false
 
 ```
 
 ## debug
 
-Enable debug to print verbose messages from supported roles.
+An explanation about the purpose of this instance.
 
 `debug`
 
-*   is optional
+*   is required
 
 *   Type: `boolean` ([The debug schema](configuration-properties-the-debug-schema.md))
 
 *   cannot be null
 
-*   defined in: [Archlinux provisioner variables](configuration-properties-the-debug-schema.md "#/properties/debug#/properties/debug")
+*   defined in: [The root schema](configuration-properties-the-debug-schema.md "#/properties/debug#/properties/debug")
 
 ### debug Type
 

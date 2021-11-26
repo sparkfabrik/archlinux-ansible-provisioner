@@ -2,7 +2,7 @@
 - name: Configure gnome keybindings
   tags: [gnome, gnome-config, keybindings]
   become: yes
-  become_user: '{{ username }}'
+  become_user: '{{ system.username }}'
   block:
   - name: Set 'move to workspace 1' keyboard shortcut
     dconf:

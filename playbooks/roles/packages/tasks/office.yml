@@ -6,4 +6,4 @@
     community.general.pacman:
       name:
         - libreoffice-fresh
-    when: office
+    when: desktop.office

@@ -1,7 +1,7 @@
-# The debug schema Schema
+# The username schema Schema
 
 ```txt
-#/properties/debug#/properties/debug
+#/properties/system/properties/username#/properties/system/properties/username
 ```
 
 An explanation about the purpose of this instance.
@@ -10,13 +10,13 @@ An explanation about the purpose of this instance.
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :---------------------------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [configuration.schema.json*](../schemas/configuration.schema.json "open original schema") |
 
-## debug Type
+## username Type
 
-`boolean` ([The debug schema](configuration-properties-the-debug-schema.md))
+`string` ([The username schema](configuration-properties-the-system-schema-properties-the-username-schema.md))
 
-## debug Examples
+## username Examples
 
 ```yaml
-false
+foobar
 
 ```

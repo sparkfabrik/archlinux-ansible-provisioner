@@ -1,0 +1,16 @@
+{
+    "system": {
+        "hostname": "foobar",
+        "username": "foobar",
+        "kernel": "standard",
+        "timezone": "Europe/Rome"
+    },
+    "desktop": {
+        "gnome": {
+            "extensions": []
+        },
+        "x11_gestures": true,
+        "office": false
+    },
+    "debug": false
+}

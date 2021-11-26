@@ -1,0 +1,6 @@
+hostname: paolo-cto-arch
+username: paolo
+kernel: standard
+enable_xorg_multitouch_gestures: true
+debug: false
+office: false

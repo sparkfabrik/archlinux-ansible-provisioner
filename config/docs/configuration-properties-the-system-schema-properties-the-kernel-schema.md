@@ -1,7 +1,7 @@
-# The debug schema Schema
+# The kernel schema Schema
 
 ```txt
-#/properties/debug#/properties/debug
+#/properties/system/properties/kernel#/properties/system/properties/kernel
 ```
 
 An explanation about the purpose of this instance.
@@ -10,13 +10,13 @@ An explanation about the purpose of this instance.
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :---------------------------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [configuration.schema.json*](../schemas/configuration.schema.json "open original schema") |
 
-## debug Type
+## kernel Type
 
-`boolean` ([The debug schema](configuration-properties-the-debug-schema.md))
+`string` ([The kernel schema](configuration-properties-the-system-schema-properties-the-kernel-schema.md))
 
-## debug Examples
+## kernel Examples
 
 ```yaml
-false
+standard
 
 ```

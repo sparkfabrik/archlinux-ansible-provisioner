@@ -34,7 +34,7 @@ install-grub-no-encryption:
 	arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Archlinux
 	arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 
-local-install:
+local-install: validate-json-schema
 	sudo ansible-galaxy collection install -r ./requirements.yml
 	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --extra-vars "@$(CONFIG)"
 
@@ -42,7 +42,11 @@ local-install:
 local-install-tags:
 	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --tags $(TAGS) --extra-vars "@$(CONFIG)"
 
+local-install-apps: validate-json-schema
+	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --tags packages --extra-vars "@$(CONFIG)"
+
 regenerate-mkinitcpio-grub:
 	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --tags mkinitcpio --extra-vars "@$(CONFIG)"
 	sudo mkinitcpio -P
 	sudo grub-mkconfig -o /boot/grub/grub.cfg
+

@@ -1,7 +1,7 @@
-# The debug schema Schema
+# The x11\_gestures schema Schema
 
 ```txt
-#/properties/debug#/properties/debug
+#/properties/desktop/properties/x11_gestures#/properties/desktop/properties/x11_gestures
 ```
 
 An explanation about the purpose of this instance.
@@ -10,13 +10,13 @@ An explanation about the purpose of this instance.
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :---------------------------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [configuration.schema.json*](../schemas/configuration.schema.json "open original schema") |
 
-## debug Type
+## x11\_gestures Type
 
-`boolean` ([The debug schema](configuration-properties-the-debug-schema.md))
+`boolean` ([The x11\_gestures schema](configuration-properties-the-desktop-schema-properties-the-x11\_gestures-schema.md))
 
-## debug Examples
+## x11\_gestures Examples
 
 ```yaml
-false
+true
 
 ```

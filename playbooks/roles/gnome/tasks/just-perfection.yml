@@ -2,7 +2,7 @@
 - name: Configure gnome
   tags: [gnome, gnome-config, just-perfection]
   become: yes
-  become_user: '{{ username }}'
+  become_user: '{{ system.username }}'
   block:
   - name: Set startup status to desktop instead of the useless overview
     dconf:

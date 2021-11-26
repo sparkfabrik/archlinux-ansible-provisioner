@@ -2,7 +2,7 @@
 - name: Configure gnome
   tags: [gnome, gnome-config, dash-to-dock]
   become: yes
-  become_user: '{{ username }}'
+  become_user: '{{ system.username }}'
   block:
   - name: Move dock to bottom
     dconf:
@@ -24,7 +24,7 @@
       key: "/org/gnome/shell/extensions/dash-to-dock/multi-monitor"
       value: "false"
 
-  - name: Enable 'Dash to Dock' autohide 
+  - name: Enable 'Dash to Dock' autohide
     dconf:
       key: "/org/gnome/shell/extensions/dash-to-dock/autohide"
       value: "true"

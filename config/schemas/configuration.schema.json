@@ -1,84 +1,218 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
     "type": "object",
-    "title": "Archlinux provisioner variables",
-    "description": "The installation variables to be used in Ansible",
+    "title": "The root schema",
+    "description": "The root schema comprises the entire JSON document.",
+    "default": {},
     "examples": [
         {
-            "hostname": "myarch-host",
-            "username": "foobar",
-            "kernel": "standard",
-            "enable_xorg_multitouch_gestures": false,
+            "system": {
+                "hostname": "foobar",
+                "username": "foobar",
+                "kernel": "standard"
+            },
+            "desktop": {
+                "gnome": {
+                    "extensions": [
+                        "appindicatorsupport@rgcjonas.gmail.com",
+                        "just-perfection-desktop@just-perfection",
+                        "screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com",
+                        "user-theme@gnome-shell-extensions.gcampax.github.com",
+                        "workspace-indicator@gnome-shell-extensions.gcampax.github.com']",
+                        "dash-to-dock@micxgx.gmail.com",
+                        "ding@rastersoft.com"
+                    ]
+                },
+                "x11_gestures": true,
+                "office": false
+            },
             "debug": false
         }
     ],
     "required": [
-        "hostname",
-        "username",
-        "kernel"
+        "system",
+        "desktop",
+        "debug"
     ],
     "properties": {
-        "hostname": {
-            "$id": "#/properties/hostname",
-            "type": "string",
-            "title": "The hostname of this installation.",
-            "description": "System hostname (/etc/hostname).",
-            "default": "",
+        "system": {
+            "$id": "#/properties/system",
+            "type": "object",
+            "title": "The system schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": {},
             "examples": [
-                "test"
-            ]
-        },
-        "username": {
-            "$id": "#/properties/username",
-            "type": "string",
-            "title": "The username to create at the installation.",
-            "description": "The username of the first user to provision, that will be the sudoer.",
-            "default": "",
-            "examples": [
-                "test"
-            ]
-        },
-        "kernel": {
-            "$id": "#/properties/kernel",
-            "type": "string",
-            "title": "The kernel schema",
-            "description": "The kernel to install from the Archlinux supported ones.",
-            "default": "",
-            "enum": [
-                "standard",
-                "lts",
-                "zen"
+                {
+                    "hostname": "foobar",
+                    "username": "foobar",
+                    "kernel": "standard",
+                    "timezone": "Europe/Rome"
+                }
             ],
-            "examples": [
-                "standard"
-            ]
+            "required": [
+                "hostname",
+                "username",
+                "kernel",
+                "timezone"
+            ],
+            "properties": {
+                "hostname": {
+                    "$id": "#/properties/system/properties/hostname",
+                    "type": "string",
+                    "title": "The hostname schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "foobar"
+                    ]
+                },
+                "username": {
+                    "$id": "#/properties/system/properties/username",
+                    "type": "string",
+                    "title": "The username schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "foobar"
+                    ]
+                },
+                "kernel": {
+                    "$id": "#/properties/system/properties/kernel",
+                    "type": "string",
+                    "title": "The kernel schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "standard"
+                    ]
+                },
+                "timezone": {
+                    "$id": "#/properties/system/properties/timezone",
+                    "type": "string",
+                    "title": "The timezone schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "Europe/Rome"
+                    ]
+                }
+            },
+            "additionalProperties": true
         },
-        "timezone": {
-            "$id": "#/properties/timezone",
-            "type": "string",
-            "title": "The system timezone",
-            "description": "The system timezone used in /etc/localtime",
-            "default": "Europe/Rome",
+        "desktop": {
+            "$id": "#/properties/desktop",
+            "type": "object",
+            "title": "The desktop schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": {},
             "examples": [
-                "Europe/Rome",
-                "Europe/Madrid"
-            ]
-        },
-        "enable_xorg_multitouch_gestures": {
-            "$id": "#/properties/enable_xorg_multitouch_gestures",
-            "type": "boolean",
-            "title": "The enable_xorg_multitouch_gestures schema",
-            "description": "Enable touchegg to have multitouch gestures under X11.",
-            "default": false,
-            "examples": [
-                false
-            ]
+                {
+                    "gnome": {
+                        "extensions": [
+                            "appindicatorsupport@rgcjonas.gmail.com",
+                            "just-perfection-desktop@just-perfection",
+                            "screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com",
+                            "user-theme@gnome-shell-extensions.gcampax.github.com",
+                            "workspace-indicator@gnome-shell-extensions.gcampax.github.com']",
+                            "dash-to-dock@micxgx.gmail.com",
+                            "ding@rastersoft.com"
+                        ]
+                    },
+                    "x11_gestures": true,
+                    "office": false
+                }
+            ],
+            "required": [
+                "gnome",
+                "x11_gestures",
+                "office"
+            ],
+            "properties": {
+                "gnome": {
+                    "$id": "#/properties/desktop/properties/gnome",
+                    "type": "object",
+                    "title": "The gnome schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": {},
+                    "examples": [
+                        {
+                            "extensions": [
+                                "appindicatorsupport@rgcjonas.gmail.com",
+                                "just-perfection-desktop@just-perfection",
+                                "screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com",
+                                "user-theme@gnome-shell-extensions.gcampax.github.com",
+                                "workspace-indicator@gnome-shell-extensions.gcampax.github.com']",
+                                "dash-to-dock@micxgx.gmail.com",
+                                "ding@rastersoft.com"
+                            ]
+                        }
+                    ],
+                    "required": [
+                        "extensions"
+                    ],
+                    "properties": {
+                        "extensions": {
+                            "$id": "#/properties/desktop/properties/gnome/properties/extensions",
+                            "type": "array",
+                            "title": "The extensions schema",
+                            "description": "An explanation about the purpose of this instance.",
+                            "default": [],
+                            "examples": [
+                                [
+                                    "appindicatorsupport@rgcjonas.gmail.com",
+                                    "just-perfection-desktop@just-perfection"
+                                ]
+                            ],
+                            "additionalItems": true,
+                            "items": {
+                                "$id": "#/properties/desktop/properties/gnome/properties/extensions/items",
+                                "anyOf": [
+                                    {
+                                        "$id": "#/properties/desktop/properties/gnome/properties/extensions/items/anyOf/0",
+                                        "type": "string",
+                                        "title": "The first anyOf schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": "",
+                                        "examples": [
+                                            "appindicatorsupport@rgcjonas.gmail.com",
+                                            "just-perfection-desktop@just-perfection"
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "additionalProperties": true
+                },
+                "x11_gestures": {
+                    "$id": "#/properties/desktop/properties/x11_gestures",
+                    "type": "boolean",
+                    "title": "The x11_gestures schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": false,
+                    "examples": [
+                        true
+                    ]
+                },
+                "office": {
+                    "$id": "#/properties/desktop/properties/office",
+                    "type": "boolean",
+                    "title": "The office schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": false,
+                    "examples": [
+                        false
+                    ]
+                }
+            },
+            "additionalProperties": true
         },
         "debug": {
             "$id": "#/properties/debug",
             "type": "boolean",
             "title": "The debug schema",
-            "description": "Enable debug to print verbose messages from supported roles.",
+            "description": "An explanation about the purpose of this instance.",
             "default": false,
             "examples": [
                 false

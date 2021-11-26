@@ -1,7 +1,7 @@
-# The debug schema Schema
+# The office schema Schema
 
 ```txt
-#/properties/debug#/properties/debug
+#/properties/desktop/properties/office#/properties/desktop/properties/office
 ```
 
 An explanation about the purpose of this instance.
@@ -10,11 +10,11 @@ An explanation about the purpose of this instance.
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :---------------------------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [configuration.schema.json*](../schemas/configuration.schema.json "open original schema") |
 
-## debug Type
+## office Type
 
-`boolean` ([The debug schema](configuration-properties-the-debug-schema.md))
+`boolean` ([The office schema](configuration-properties-the-desktop-schema-properties-the-office-schema.md))
 
-## debug Examples
+## office Examples
 
 ```yaml
 false

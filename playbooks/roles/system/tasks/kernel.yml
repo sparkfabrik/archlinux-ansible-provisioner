@@ -34,7 +34,7 @@
         state: absent
         update_cache: yes
       ignore_errors: yes
-    when: kernel == "standard"
+    when: system.kernel == "standard"
 
   - name: "Linux zen kernel"
     block:
@@ -54,7 +54,7 @@
         state: absent
         update_cache: yes
       ignore_errors: yes
-    when: kernel == "zen"
+    when: system.kernel == "zen"
 
   - name: Copy provided mkinitcpio.conf
     tags: [system, mkinitcpio]

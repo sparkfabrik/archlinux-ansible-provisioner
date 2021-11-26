@@ -1,22 +1,19 @@
-# The debug schema Schema
+# Untitled undefined type in The root schema Schema
 
 ```txt
-#/properties/debug#/properties/debug
+#/properties/desktop/properties/gnome/properties/extensions/items#/properties/desktop/properties/gnome/properties/extensions/items
 ```
 
-An explanation about the purpose of this instance.
+
 
 | Abstract            | Extensible | Status         | Identifiable            | Custom Properties | Additional Properties | Access Restrictions | Defined In                                                                                |
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :---------------------------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [configuration.schema.json*](../schemas/configuration.schema.json "open original schema") |
 
-## debug Type
+## items Type
 
-`boolean` ([The debug schema](configuration-properties-the-debug-schema.md))
+merged type ([Details](configuration-properties-the-desktop-schema-properties-the-gnome-schema-properties-the-extensions-schema-items.md))
 
-## debug Examples
+any of
 
-```yaml
-false
-
-```
+*   [The first anyOf schema](configuration-properties-the-desktop-schema-properties-the-gnome-schema-properties-the-extensions-schema-items-anyof-the-first-anyof-schema.md "check type definition")

@@ -1,7 +1,7 @@
-# The debug schema Schema
+# The extensions schema Schema
 
 ```txt
-#/properties/debug#/properties/debug
+#/properties/desktop/properties/gnome/properties/extensions#/properties/desktop/properties/gnome/properties/extensions
 ```
 
 An explanation about the purpose of this instance.
@@ -10,13 +10,22 @@ An explanation about the purpose of this instance.
 | :------------------ | :--------- | :------------- | :---------------------- | :---------------- | :-------------------- | :------------------ | :---------------------------------------------------------------------------------------- |
 | Can be instantiated | No         | Unknown status | Unknown identifiability | Forbidden         | Allowed               | none                | [configuration.schema.json*](../schemas/configuration.schema.json "open original schema") |
 
-## debug Type
+## extensions Type
 
-`boolean` ([The debug schema](configuration-properties-the-debug-schema.md))
+an array of merged types ([Details](configuration-properties-the-desktop-schema-properties-the-gnome-schema-properties-the-extensions-schema-items.md))
 
-## debug Examples
+## extensions Default Value
+
+The default value is:
+
+```json
+[]
+```
+
+## extensions Examples
 
 ```yaml
-false
+- appindicatorsupport@rgcjonas.gmail.com
+- just-perfection-desktop@just-perfection
 
 ```

@@ -1,6 +1,12 @@
 ---
+
+
 - name: Configure multitouch gestures
+  when: desktop.desktop.x11_gestures
   tags: [gnome, gestures]
+  vars:
+    gesture_ext:
+      - x11gestures@joseexposito.github.io
   block:
   - name: Install touchee and gnome-shell-extension-x11gestures
     kewlfft.aur.aur:
@@ -11,14 +17,13 @@
         - gnome-shell-extension-x11gestures
     become: yes
     become_user: aur_builder
-    when: enable_xorg_multitouch_gestures
 
   - name: Enable gnome-shell-extension-x11gestures extensions (available after restarting)
     dconf:
       key: "/org/gnome/shell/enabled-extensions"
-      value: "{{ gnome_extensions + gnome_extensions_multitouch }}"
+      value: "{{ desktop.gnome.extensions + gesture_ext }}"
 
   - name: debug
     debug:
-      msg: "Installed extensions: {{ gnome_extensions + gnome_extensions_multitouch }}"
+      msg: "Installed extensions: {{ desktop.gnome.extensions + gesture_ext }}"
     when: debug
