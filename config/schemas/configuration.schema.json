@@ -10,7 +10,8 @@
             "system": {
                 "hostname": "foobar",
                 "username": "foobar",
-                "kernel": "standard"
+                "kernel": "standard",
+                "timezone": "Europe/Rome"
             },
             "desktop": {
                 "gnome": {

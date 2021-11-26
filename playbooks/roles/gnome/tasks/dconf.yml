@@ -74,10 +74,10 @@
         key: "/org/gnome/mutter/workspaces-only-on-primary"
         value: "false"
 
-    - name: Enable mouse natural scrool
+    - name: Enable mouse natural scroll
       dconf:
         key: "/org/gnome/desktop/peripherals/mouse/natural-scroll"
-        value: "true"
+        value: "{{ use_mouse_natural_scroll }}"
 
     - name: Disable hot corners
       dconf:

@@ -1,6 +1,6 @@
 
 desktop:
-  desktop.x11_gestures: false
+  x11_gestures: false
 
 gnome:
   extensions:

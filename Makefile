@@ -49,4 +49,3 @@ regenerate-mkinitcpio-grub:
 	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --tags mkinitcpio --extra-vars "@$(CONFIG)"
 	sudo mkinitcpio -P
 	sudo grub-mkconfig -o /boot/grub/grub.cfg
-

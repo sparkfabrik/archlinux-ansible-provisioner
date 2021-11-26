@@ -29,6 +29,7 @@ system:
   hostname: foobar
   username: foobar
   kernel: standard
+  timezone: Europe/Rome
 desktop:
   gnome:
     extensions:
