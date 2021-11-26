@@ -53,9 +53,7 @@
             ],
             "required": [
                 "hostname",
-                "username",
-                "kernel",
-                "timezone"
+                "username"
             ],
             "properties": {
                 "hostname": {
@@ -125,9 +123,7 @@
                 }
             ],
             "required": [
-                "gnome",
-                "x11_gestures",
-                "office"
+                "gnome"
             ],
             "properties": {
                 "gnome": {
@@ -149,9 +145,7 @@
                             ]
                         }
                     ],
-                    "required": [
-                        "extensions"
-                    ],
+                    "required": [],
                     "properties": {
                         "extensions": {
                             "$id": "#/properties/desktop/properties/gnome/properties/extensions",

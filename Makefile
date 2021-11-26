@@ -39,13 +39,13 @@ local-install: validate-json-schema
 	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --extra-vars "@$(CONFIG)"
 
 # Example of usage: sudo TAGS=your-tags CONFIG=./config/your-config.yaml make local-install-tags
-local-install-tags:
+local-install-tags: validate-json-schema
 	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --tags $(TAGS) --extra-vars "@$(CONFIG)"
 
 local-install-apps: validate-json-schema
 	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --tags packages --extra-vars "@$(CONFIG)"
 
-regenerate-mkinitcpio-grub:
+regenerate-mkinitcpio-grub: 
 	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --tags mkinitcpio --extra-vars "@$(CONFIG)"
 	sudo mkinitcpio -P
 	sudo grub-mkconfig -o /boot/grub/grub.cfg
