@@ -2,8 +2,10 @@
 system:
   hostname: foobar
   username: foobar
-  kernel: standard
+  kernel: standard # standard|lts|zen
   timezone: Europe/Rome
+timeshift:
+  maxSnaphots: 10
 desktop:
   gnome:
     extensions:

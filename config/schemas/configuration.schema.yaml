@@ -1,0 +1,182 @@
+$id: http://example.com/example.json
+$schema: http://json-schema.org/draft-07/schema
+additionalProperties: true
+default: {}
+description: The root schema comprises the entire JSON document.
+examples:
+-   debug: false
+    desktop:
+        gnome:
+            extensions:
+            - appindicatorsupport@rgcjonas.gmail.com
+            - just-perfection-desktop@just-perfection
+            - screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com
+            - user-theme@gnome-shell-extensions.gcampax.github.com
+            - workspace-indicator@gnome-shell-extensions.gcampax.github.com
+            - dash-to-dock@micxgx.gmail.com
+            - ding@rastersoft.com
+        office: false
+        x11_gestures: false
+    system:
+        hostname: foobar
+        kernel: standard
+        timezone: Europe/Rome
+        username: foobar
+    timeshift:
+        maxSnaphots: 10
+properties:
+    debug:
+        $id: '#/properties/debug'
+        default: false
+        description: An explanation about the purpose of this instance.
+        examples:
+        - false
+        title: The debug schema
+        type: boolean
+    desktop:
+        $id: '#/properties/desktop'
+        additionalProperties: true
+        default: {}
+        description: An explanation about the purpose of this instance.
+        examples:
+        -   gnome:
+                extensions:
+                - appindicatorsupport@rgcjonas.gmail.com
+                - just-perfection-desktop@just-perfection
+                - screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com
+                - user-theme@gnome-shell-extensions.gcampax.github.com
+                - workspace-indicator@gnome-shell-extensions.gcampax.github.com
+                - dash-to-dock@micxgx.gmail.com
+                - ding@rastersoft.com
+            office: false
+            x11_gestures: false
+        properties:
+            gnome:
+                $id: '#/properties/desktop/properties/gnome'
+                additionalProperties: true
+                default: {}
+                description: An explanation about the purpose of this instance.
+                examples:
+                -   extensions:
+                    - appindicatorsupport@rgcjonas.gmail.com
+                    - just-perfection-desktop@just-perfection
+                    - screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com
+                    - user-theme@gnome-shell-extensions.gcampax.github.com
+                    - workspace-indicator@gnome-shell-extensions.gcampax.github.com
+                    - dash-to-dock@micxgx.gmail.com
+                    - ding@rastersoft.com
+                properties:
+                    extensions:
+                        $id: '#/properties/desktop/properties/gnome/properties/extensions'
+                        additionalItems: true
+                        default: []
+                        description: An explanation about the purpose of this instance.
+                        examples:
+                        -   - appindicatorsupport@rgcjonas.gmail.com
+                            - just-perfection-desktop@just-perfection
+                        items:
+                            $id: '#/properties/desktop/properties/gnome/properties/extensions/items'
+                            anyOf:
+                            -   $id: '#/properties/desktop/properties/gnome/properties/extensions/items/anyOf/0'
+                                default: ''
+                                description: An explanation about the purpose of this
+                                    instance.
+                                examples:
+                                - appindicatorsupport@rgcjonas.gmail.com
+                                - just-perfection-desktop@just-perfection
+                                title: The first anyOf schema
+                                type: string
+                        title: The extensions schema
+                        type: array
+                required:
+                - extensions
+                title: The gnome schema
+                type: object
+            office:
+                $id: '#/properties/desktop/properties/office'
+                default: false
+                description: An explanation about the purpose of this instance.
+                examples:
+                - false
+                title: The office schema
+                type: boolean
+            x11_gestures:
+                $id: '#/properties/desktop/properties/x11_gestures'
+                default: false
+                description: An explanation about the purpose of this instance.
+                examples:
+                - false
+                title: The x11_gestures schema
+                type: boolean
+        title: The desktop schema
+        type: object
+    system:
+        $id: '#/properties/system'
+        additionalProperties: true
+        default: {}
+        description: An explanation about the purpose of this instance.
+        examples:
+        -   hostname: foobar
+            kernel: standard
+            timezone: Europe/Rome
+            username: foobar
+        properties:
+            hostname:
+                $id: '#/properties/system/properties/hostname'
+                default: ''
+                description: An explanation about the purpose of this instance.
+                examples:
+                - foobar
+                title: The hostname schema
+                type: string
+            kernel:
+                $id: '#/properties/system/properties/kernel'
+                default: ''
+                description: An explanation about the purpose of this instance.
+                examples:
+                - standard
+                title: The kernel schema
+                type: string
+            timezone:
+                $id: '#/properties/system/properties/timezone'
+                default: ''
+                description: An explanation about the purpose of this instance.
+                examples:
+                - Europe/Rome
+                title: The timezone schema
+                type: string
+            username:
+                $id: '#/properties/system/properties/username'
+                default: ''
+                description: An explanation about the purpose of this instance.
+                examples:
+                - foobar
+                title: The username schema
+                type: string
+        required:
+        - hostname
+        - username
+        title: The system schema
+        type: object
+    timeshift:
+        $id: '#/properties/timeshift'
+        additionalProperties: true
+        default: {}
+        description: An explanation about the purpose of this instance.
+        examples:
+        -   maxSnaphots: 10
+        properties:
+            maxSnaphots:
+                $id: '#/properties/timeshift/properties/maxSnaphots'
+                default: 10
+                description: An explanation about the purpose of this instance.
+                examples:
+                - 10
+                title: The maxSnaphots schema
+                type: integer
+        title: The timeshift schema
+        type: object
+required:
+- system
+title: The root schema
+type: object

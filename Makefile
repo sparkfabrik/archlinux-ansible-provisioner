@@ -2,17 +2,23 @@ ifndef CONFIG
 	CONFIG=./config/default.yaml
 endif
 
+DOCKER_IMAGE=paolomainardi/archlinux-provisioner-tools:latest
+
 install-githooks:
 	cp git-hooks/pre-commit .git/hooks/pre-commit
 
 build-docker-tools:
-	docker build -t paolomainardi/archlinux-provisioner-tools:latest .
+	@docker build -q -t $(DOCKER_IMAGE) .
+
+yaml-to-json: build-docker-tools
+	docker run --rm -it -u $$UID -v $$PWD:$$PWD -w $$PWD $(DOCKER_IMAGE) js-yaml config/default.yaml.tpl
 
 generate-json-schema-docs: build-docker-tools
-	docker run --rm -it -u $$UID -v $$PWD:$$PWD -w $$PWD paolomainardi/archlinux-provisioner-tools:latest jsonschema2md -d config/schemas -o config/docs -x - -f yaml -n
+	docker run --rm -it -u $$UID -v $$PWD:$$PWD -w $$PWD $(DOCKER_IMAGE) jsonschema2md -d config/schemas -o config/docs -x - -f yaml -n
 
 validate-json-schema: build-docker-tools
-	docker run --rm -it -v $$PWD:$$PWD -w $$PWD paolomainardi/archlinux-provisioner-tools:latest ajv validate -s config/schemas/configuration.schema.json --strict false -d $(CONFIG)
+	@echo "Validating configuration....."
+	@docker run --rm -it -v $$PWD:$$PWD -w $$PWD $(DOCKER_IMAGE) ajv validate -s config/schemas/configuration.schema.yaml --strict false -d $(CONFIG)
 
 init:
 	ansible-galaxy collection install -r requirements.yml
@@ -38,14 +44,13 @@ local-install: validate-json-schema
 	sudo ansible-galaxy collection install -r ./requirements.yml
 	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --extra-vars "@$(CONFIG)"
 
-# Example of usage: sudo TAGS=your-tags CONFIG=./config/your-config.yaml make local-install-tags
 local-install-tags: validate-json-schema
 	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --tags $(TAGS) --extra-vars "@$(CONFIG)"
 
 local-install-apps: validate-json-schema
 	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --tags packages --extra-vars "@$(CONFIG)"
 
-regenerate-mkinitcpio-grub: 
+regenerate-mkinitcpio-grub:
 	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --tags mkinitcpio --extra-vars "@$(CONFIG)"
 	sudo mkinitcpio -P
 	sudo grub-mkconfig -o /boot/grub/grub.cfg
