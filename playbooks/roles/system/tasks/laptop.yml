@@ -46,7 +46,7 @@
           - fprintd
     - name: Add user to input group
       user:
-        name: '{{ username }}'
+        name: '{{ system.username }}'
         groups: input
         append: yes
 

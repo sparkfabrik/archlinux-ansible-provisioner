@@ -52,7 +52,7 @@
     - name: Enable reflector weekly
       shell: systemctl enable reflector.timer
 
-- name: Install root system packages
+- name: Install system packages
   community.general.pacman:
     name:
       - btrfs-progs
@@ -64,6 +64,26 @@
       - sudo
     state: present
     update_cache: yes
+
+- name: Install and configure timeshift
+  tags: [timeshift]
+  block:
+    - name: Install timeshift and autosnap
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - timeshift
+          - timeshift-autosnap
+      become: yes
+      become_user: aur_builder
+    - name: Configure timeshift
+      community.general.ini_file:
+        path: /etc/timeshift-autosnap.conf
+        section: null
+        no_extra_spaces: true
+        option: maxSnapshots
+        value: {{ timeshift.maxSnapshots }}
+        exclusive: yes
 
 - name: Set up grub
   import_tasks: grub.yml

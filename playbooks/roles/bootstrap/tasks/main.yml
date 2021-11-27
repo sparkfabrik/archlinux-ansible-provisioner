@@ -4,11 +4,11 @@
 
 - name: "Installs linux kernel"
   shell: /usr/bin/pacstrap /mnt linux linux-headers linux-firmware
-  when: kernel == "standard"
+  when: system.kernel == "standard"
 
 - name: "Installs linux zen kernel"
   shell: /usr/bin/pacstrap /mnt linux-zen linux-zen-headers linux-firmware
-  when: kernel == "zen"
+  when: system.kernel == "zen"
 
 - name: "Get cpu type"
   shell: "cat /proc/cpuinfo | grep vendor_id | head -n1 | awk '{print $3}'"
@@ -29,7 +29,7 @@
 # shell: sed -i 's|,subvolid=||g' /mnt/etc/fstab
 
 - name: "Set default timezone"
-  shell: arch-chroot /mnt ln -sf /usr/share/zoneinfo/{{ timezone }} /etc/localtime
+  shell: arch-chroot /mnt ln -sf /usr/share/zoneinfo/{{ system.timezone }} /etc/localtime
 
 - name: "Run hwclock to regenerate /etc/adjtime"
   shell: arch-chroot /mnt hwclock --systohc
@@ -52,14 +52,14 @@
   shell: arch-chroot /mnt locale-gen
 
 - name: "Set hostname in /etc/hostname"
-  shell: arch-chroot /mnt sh -c 'echo "{{ hostname }}" > /etc/hostname'
+  shell: arch-chroot /mnt sh -c 'echo "{{ system.hostname }}" > /etc/hostname'
 
 - name: Configure /etc/hosts
   block:
   - name: Add hostname
     lineinfile:
       regexp: "^127.0.1.1"
-      line: "127.0.1.1	{{ hostname }}.localdomain {{ hostname }}"
+      line: "127.0.1.1	{{ system.hostname }}.localdomain {{ system.hostname }}"
       state: present
       path: "/mnt/etc/hosts"
 
@@ -76,7 +76,7 @@
       path: "/mnt/etc/hosts"
 
 - name: Create user and add to sudoers
-  shell: arch-chroot /mnt useradd -m -G wheel -s /bin/bash {{ username }}
+  shell: arch-chroot /mnt useradd -m -G wheel -s /bin/bash {{ system.username }}
   ignore_errors: yes
 
 - name: Allow 'wheel' group to become sudoer

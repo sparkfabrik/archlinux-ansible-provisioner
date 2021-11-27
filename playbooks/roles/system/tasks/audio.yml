@@ -13,6 +13,6 @@
           - alsa-ucm-conf
     - name: Add user to audio group
       user:
-        name: '{{ username }}'
+        name: '{{ system.username }}'
         groups: audio
         append: yes

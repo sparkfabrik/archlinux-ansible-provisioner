@@ -1,2 +1,2 @@
 FROM node:lts
-RUN yarn global add @adobe/jsonschema2md ajv-cli
+RUN yarn global add @adobe/jsonschema2md ajv-cli js-yaml

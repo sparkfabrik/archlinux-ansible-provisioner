@@ -2,12 +2,13 @@
 - name: Install Kernel
   tags: [system, kernel]
   block:
-  - name: "Block linux upstream kernel"
+  - name: "Check if grub is installed"
     block:
     - stat: path=/boot/grub
       register: grubcfg
 
   - name: "Install linux-lts kernel"
+    when: system.kernel == "standard"
     block:
     - name: Install lts kernel
       community.general.pacman:
@@ -26,6 +27,7 @@
           - linux-firmware
         state: present
         update_cache: yes
+
     - name: Ensure other kernel are not installed
       community.general.pacman:
         name:
@@ -34,9 +36,9 @@
         state: absent
         update_cache: yes
       ignore_errors: yes
-    when: kernel == "standard"
 
   - name: "Linux zen kernel"
+    when: system.kernel == "zen"
     block:
     - name: Install linux zen kernel
       community.general.pacman:
@@ -54,7 +56,27 @@
         state: absent
         update_cache: yes
       ignore_errors: yes
-    when: kernel == "zen"
+
+  - name: "Linux lts kernel"
+    when: system.kernel == "lts"
+    block:
+    - name: Install linux lts kernel
+      community.general.pacman:
+        name:
+          - linux-lts
+          - linux-lts-headers
+          - linux-firmware
+        state: present
+        update_cache: yes
+    - name: Ensure other kernel are not installed (standard and zen)
+      community.general.pacman:
+        name:
+          - linux
+          - linux-zen
+          - linux-headers
+        state: absent
+        update_cache: yes
+      ignore_errors: yes
 
   - name: Copy provided mkinitcpio.conf
     tags: [system, mkinitcpio]

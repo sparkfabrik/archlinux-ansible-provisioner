@@ -2,7 +2,7 @@
 - name: Configure gnome
   tags: [gnome, gnome-config]
   become: yes
-  become_user: '{{ username }}'
+  become_user: '{{ system.username }}'
   block:
     - name: Use gtk theme 'Yaru-dark'
       dconf:
@@ -92,5 +92,10 @@
     - name: Enable gnome-shell extensions (available after restarting)
       dconf:
         key: "/org/gnome/shell/enabled-extensions"
-        value: "{{ gnome_extensions }} + {{ gnome_extensions_multitouch }}"
+        value: "{{ desktop.gnome.extensions }}"
+
+    - name: Print installed extensions (variable desktop.gnome.extensions)
+      debug:
+        msg: "Installed extensions: {{ desktop.gnome.extensions }}"
+      when: debug
 
