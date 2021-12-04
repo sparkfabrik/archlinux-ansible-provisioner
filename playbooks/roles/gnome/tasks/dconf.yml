@@ -77,7 +77,7 @@
     - name: Enable mouse natural scroll
       dconf:
         key: "/org/gnome/desktop/peripherals/mouse/natural-scroll"
-        value: "{{ use_mouse_natural_scroll }}"
+        value: "'{{ desktop.gnome.use_mouse_natural_scroll }}'"
 
     - name: Disable hot corners
       dconf:
