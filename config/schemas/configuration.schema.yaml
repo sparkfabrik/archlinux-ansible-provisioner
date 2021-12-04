@@ -39,6 +39,9 @@ properties:
         additionalProperties: true
         default: {}
         description: An explanation about the purpose of this instance.
+        required:
+        - x11_gestures
+        - office
         examples:
         -   gnome:
                 extensions:
@@ -186,6 +189,14 @@ properties:
                 type: integer
         title: The timeshift schema
         type: object
+    sparkfabrik:
+        $id: '#/properties/sparkfabrik'
+        default: false
+        description: Install Sparkfabrik.
+        examples:
+        - false
+        title: Install Sparkfabrik custom stuff
+        type: boolean
 required:
 - system
 title: The root schema

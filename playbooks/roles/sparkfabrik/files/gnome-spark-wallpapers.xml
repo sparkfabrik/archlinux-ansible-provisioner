@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE wallpapers SYSTEM "gnome-wp-list.dtd">
+<wallpapers>
+ <wallpaper>
+     <name>Sparkfabrik 800x600</name>
+     <filename>/usr/share/backgrounds/sparkfabrik/800x600.jpg</filename>
+     <options>zoom</options>
+     <pcolor>#000000</pcolor>
+     <scolor>#000000</scolor>
+     <shade_type>solid</shade_type>
+ </wallpaper>
+  <wallpaper>
+     <name>Sparkfabrik 1024x768</name>
+     <filename>/usr/share/backgrounds/sparkfabrik/1024x768.jpg</filename>
+     <options>zoom</options>
+     <pcolor>#000000</pcolor>
+     <scolor>#000000</scolor>
+     <shade_type>solid</shade_type>
+ </wallpaper>
+ <wallpaper>
+     <name>Sparkfabrik 1280x720</name>
+     <filename>/usr/share/backgrounds/sparkfabrik/1280x720.jpg</filename>
+     <options>zoom</options>
+     <pcolor>#000000</pcolor>
+     <scolor>#000000</scolor>
+     <shade_type>solid</shade_type>
+ </wallpaper>
+ <wallpaper>
+     <name>Sparkfabrik 1280x800</name>
+     <filename>/usr/share/backgrounds/sparkfabrik/1280x800.jpg</filename>
+     <options>zoom</options>
+     <pcolor>#000000</pcolor>
+     <scolor>#000000</scolor>
+     <shade_type>solid</shade_type>
+ </wallpaper>
+ <wallpaper>
+     <name>Sparkfabrik 1280x900</name>
+     <filename>/usr/share/backgrounds/sparkfabrik/1280x900.jpg</filename>
+     <options>zoom</options>
+     <pcolor>#000000</pcolor>
+     <scolor>#000000</scolor>
+     <shade_type>solid</shade_type>
+ </wallpaper>
+ <wallpaper>
+     <name>Sparkfabrik 1280x1024</name>
+     <filename>/usr/share/backgrounds/sparkfabrik/1280x1024.jpg</filename>
+     <options>zoom</options>
+     <pcolor>#000000</pcolor>
+     <scolor>#000000</scolor>
+     <shade_type>solid</shade_type>
+ </wallpaper>
+ <wallpaper>
+     <name>Sparkfabrik 1440x900</name>
+     <filename>/usr/share/backgrounds/sparkfabrik/1440x900.jpg</filename>
+     <options>zoom</options>
+     <pcolor>#000000</pcolor>
+     <scolor>#000000</scolor>
+     <shade_type>solid</shade_type>
+ </wallpaper>
+ <wallpaper>
+     <name>Sparkfabrik 1600x1200</name>
+     <filename>/usr/share/backgrounds/sparkfabrik/1600x1200.jpg</filename>
+     <options>zoom</options>
+     <pcolor>#000000</pcolor>
+     <scolor>#000000</scolor>
+     <shade_type>solid</shade_type>
+ </wallpaper>
+ <wallpaper>
+     <name>Sparkfabrik 1680x1050</name>
+     <filename>/usr/share/backgrounds/sparkfabrik/1680x1050.jpg</filename>
+     <options>zoom</options>
+     <pcolor>#000000</pcolor>
+     <scolor>#000000</scolor>
+     <shade_type>solid</shade_type>
+ </wallpaper>
+ <wallpaper>
+     <name>Sparkfabrik 1920x1080</name>
+     <filename>/usr/share/backgrounds/sparkfabrik/1920x1080.jpg</filename>
+     <options>zoom</options>
+     <pcolor>#000000</pcolor>
+     <scolor>#000000</scolor>
+     <shade_type>solid</shade_type>
+ </wallpaper>
+ <wallpaper>
+     <name>Sparkfabrik 2650x1440</name>
+     <filename>/usr/share/backgrounds/sparkfabrik/2650x1440.jpg</filename>
+     <options>zoom</options>
+     <pcolor>#000000</pcolor>
+     <scolor>#000000</scolor>
+     <shade_type>solid</shade_type>
+ </wallpaper>
+</wallpapers>
