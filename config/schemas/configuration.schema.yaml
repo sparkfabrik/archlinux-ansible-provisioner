@@ -121,6 +121,8 @@ properties:
             kernel: standard
             timezone: Europe/Rome
             username: foobar
+            bluetooth:
+                controllerMode: dual
         properties:
             hostname:
                 $id: '#/properties/system/properties/hostname'
@@ -154,11 +156,18 @@ properties:
                 - foobar
                 title: The username schema
                 type: string
-        required:
-        - hostname
-        - username
-        title: The system schema
-        type: object
+            bluetooth:
+                $id: '#/properties/system/properties/bluetooth'
+                additionalProperties: true
+                type: object
+                properties:
+                    controllerMode:
+                        $id: '#/properties/system/bluetooth/controllerMode'
+                        default: dual
+                        description: Set the controllerMode, this is useful when some bluetooth headsets like airpods does not pair.
+                        examples:
+                        - dual
+                        type: string
     timeshift:
         $id: '#/properties/timeshift'
         additionalProperties: true
