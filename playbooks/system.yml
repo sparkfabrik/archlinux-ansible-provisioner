@@ -2,6 +2,8 @@
   roles:
     - role: system
     - role: packages
+    - role: docker
     - role: nvidia
     - role: gnome
     - role: logitech
+    - role: sparkfabrik

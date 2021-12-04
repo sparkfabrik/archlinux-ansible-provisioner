@@ -25,18 +25,6 @@
           - tmate
       become: yes
       become_user: aur_builder
-    - name: Install docker
-      community.general.pacman:
-        name:
-          - docker
-          - docker-compose
-    - name: Add user to docker group
-      user:
-        name: '{{ system.username }}'
-        groups: docker
-        append: yes
-    - name: Enable docker service
-      shell: systemctl enable docker
 
 - name: Install development packages
   tags: [packages, dev]

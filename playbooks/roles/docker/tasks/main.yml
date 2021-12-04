@@ -1,0 +1,48 @@
+---
+- name: Install and configure docker
+  tags: [packages, dev, cloudnative, docker]
+  block:
+    - name: Install docker
+      community.general.pacman:
+        name:
+          - docker
+          - docker-compose
+
+    - name: Add user to docker group
+      user:
+        name: '{{ system.username }}'
+        groups: docker
+        append: yes
+
+    - name: Enable docker service
+      shell: systemctl enable docker
+
+    - name: Configure systemd-resolved to play well with dnsdock
+      copy:
+        dest: '/etc/systemd/resolved.conf.d/docker-dev-dns.conf'
+        content: |
+          [Resolve]
+          DNS=172.17.0.1
+          Domains=~loc
+
+    - name: Copy dnsdock start script
+      copy:
+        src: "spark-run-dnsdock"
+        dest: /usr/local/bin/spark-run-dnsdock
+        force: yes
+        mode: u+rwx,g-wx,o-rwx
+        owner: "{{ system.username }}"
+
+    - name: Copy dinghy-http-proxy start script
+      copy:
+        src: "spark-run-dinghy-proxy"
+        dest: /usr/local/bin/spark-run-dinghy-proxy
+        force: yes
+        mode: u+rwx,g-wx,o-rwx
+        owner: "{{ system.username }}"
+
+    - name: Restart systemd-resolved
+      ansible.builtin.systemd:
+        state: restarted
+        daemon_reload: yes
+        name: systemd-resolved

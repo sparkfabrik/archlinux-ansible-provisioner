@@ -22,3 +22,4 @@ desktop:
   x11_gestures: false
   office: false
 debug: false
+sparkfabrik: false
