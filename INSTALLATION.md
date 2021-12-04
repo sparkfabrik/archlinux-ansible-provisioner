@@ -142,7 +142,7 @@ umount /mnt
 mount -o noatime,compress=zstd,subvol=@ ${LUKS_PARTITION} /mnt
 
 # Mount boot partition.
-mkdir -p /mnt/boot/uefi
+mkdir -p /mnt/boot
 mount ${UEFI_PARTITION} /mnt/boot
 
 # Mount home.

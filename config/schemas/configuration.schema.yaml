@@ -15,6 +15,7 @@ examples:
             - workspace-indicator@gnome-shell-extensions.gcampax.github.com
             - dash-to-dock@micxgx.gmail.com
             - ding@rastersoft.com
+            use_mouse_natural_scroll: true
         office: false
         x11_gestures: false
     system:
@@ -23,7 +24,7 @@ examples:
         timezone: Europe/Rome
         username: foobar
     timeshift:
-        maxSnaphots: 10
+        maxSnapshots: 10
 properties:
     debug:
         $id: '#/properties/debug'
