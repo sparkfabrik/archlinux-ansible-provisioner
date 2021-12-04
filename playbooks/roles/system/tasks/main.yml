@@ -82,7 +82,7 @@
         section: null
         no_extra_spaces: true
         option: maxSnapshots
-        value: "{{ timeshift.maxSnapshots }}"
+        value: "{{ timeshift.maxSnapshots | default('10') }}"
         exclusive: yes
 
 - name: Set up grub

@@ -6,6 +6,8 @@ system:
   timezone: Europe/Rome
 timeshift:
   maxSnapshots: 10
+bluetooth:
+  controllerMode: dual
 desktop:
   gnome:
     extensions:
