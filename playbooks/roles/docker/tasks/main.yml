@@ -17,13 +17,18 @@
     - name: Enable docker service
       shell: systemctl enable docker
 
+    - name: Create /etc/systemd/resolved.conf.d if not exists
+      file:
+        path: /etc/systemd/resolved.conf.d
+        state: directory
+
     - name: Configure systemd-resolved to play well with dnsdock
       copy:
         dest: '/etc/systemd/resolved.conf.d/docker-dev-dns.conf'
         content: |
           [Resolve]
           DNS=172.17.0.1
-          Domains=~loc
+          Domains=~loc ~docker
 
     - name: Copy dnsdock start script
       copy:
