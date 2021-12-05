@@ -1,0 +1,9 @@
+- name: Install flameshot
+  tags: [packages, gnome, flameshot]
+  block:
+    - name: Install flameshot
+      community.general.pacman:
+        name:
+          - flameshot
+        state: present
+        update_cache: yes
