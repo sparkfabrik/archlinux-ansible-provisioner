@@ -1,8 +1,5 @@
-ifndef CONFIG
-	CONFIG=./config/default.yaml
-endif
-
-DOCKER_IMAGE=paolomainardi/archlinux-provisioner-tools:latest
+CONFIG ?= ./config/default.yaml
+DOCKER_IMAGE ?= paolomainardi/archlinux-provisioner-tools:latest
 
 install-githooks:
 	cp git-hooks/pre-commit .git/hooks/pre-commit
