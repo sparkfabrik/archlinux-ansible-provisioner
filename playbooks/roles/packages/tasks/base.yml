@@ -8,6 +8,7 @@
         - dnsutils
         - dhcpcd
         - iproute2
+        - gnu-netcat
         - net-tools
         - tcpdump
         - wpa_supplicant
