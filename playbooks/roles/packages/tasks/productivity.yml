@@ -7,6 +7,8 @@
       name:
         - thefuck
         - yadm
+        - gnupg
+        - pinentry
         - telegram-desktop
 
   - name: Install productivity packages from aur
