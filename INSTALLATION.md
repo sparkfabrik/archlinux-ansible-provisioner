@@ -99,7 +99,7 @@ Just to be sure about the partitions, you can always run `lsblk` to see partitio
 
 We are going to encrypt the entire root filesystem:
 
-1. Run `cryptsetup -y -v luksFormat ${ROOT_PARTITION}` and then type `YES` and the new encryption password to encrypt the root partition
+1. Run `cryptsetup -y -v --pbkdf=pbkdf2 luksFormat ${ROOT_PARTITION}` and then type `YES` and the new encryption password to encrypt the root partition
 1. Run `cryptsetup open ${ROOT_PARTITION} cryptroot` to open the encrypted partition
 
 ### UEFI Partition
