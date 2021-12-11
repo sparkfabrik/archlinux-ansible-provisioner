@@ -10,6 +10,10 @@
   shell: /usr/bin/pacstrap /mnt linux-zen linux-zen-headers linux-firmware
   when: system.kernel == "zen"
 
+- name: "Installs linux lts kernel"
+  shell: /usr/bin/pacstrap /mnt linux-lts linux-lts-headers linux-firmware
+  when: system.kernel == "lts"
+  
 - name: "Get cpu type"
   shell: "cat /proc/cpuinfo | grep vendor_id | head -n1 | awk '{print $3}'"
   register: cpu_type
