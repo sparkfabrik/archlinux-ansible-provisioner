@@ -1,6 +1,4 @@
 ---
-
-
 - name: Configure multitouch gestures
   when: desktop.x11_gestures
   tags: [gnome, gestures]
@@ -22,8 +20,15 @@
     dconf:
       key: "/org/gnome/shell/enabled-extensions"
       value: "{{ desktop.gnome.extensions + gesture_ext }}"
+    become: yes
+    become_user: '{{ system.username }}'
+  
+  - name: Enable touchegg
+    shell: systemctl enable touchegg
 
   - name: debug
     debug:
       msg: "Installed extensions: {{ desktop.gnome.extensions + gesture_ext }}"
     when: debug
+    become: yes
+    become_user: '{{ system.username }}'

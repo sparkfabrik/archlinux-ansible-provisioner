@@ -1,6 +1,6 @@
 ---
 - name: Configure gnome
-  tags: [gnome, gnome-config]
+  tags: [gnome, gnome-config, dconf]
   become: yes
   become_user: '{{ system.username }}'
   block:
@@ -53,6 +53,12 @@
       dconf:
         key: "/org/gnome/desktop/interface/clock-show-seconds"
         value: "true"
+      when: desktop.gnome.dconf.clock_show_seconds | default(true)
+    - name: Show seconds on clock
+      dconf:
+        key: "/org/gnome/desktop/interface/clock-show-seconds"
+        value: "false"
+      when: not (desktop.gnome.dconf.clock_show_seconds | default(true))
 
     - name: Show weekdays on calendar
       dconf:
@@ -77,7 +83,7 @@
     - name: Enable mouse natural scroll
       dconf:
         key: "/org/gnome/desktop/peripherals/mouse/natural-scroll"
-        value: "'{{ desktop.gnome.use_mouse_natural_scroll }}'"
+        value: "'{{ desktop.gnome.dconf.use_mouse_natural_scroll }}'"
 
     - name: Disable hot corners
       dconf:

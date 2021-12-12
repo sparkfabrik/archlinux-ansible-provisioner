@@ -90,6 +90,19 @@
     dconf:
       key: "/org/gnome/desktop/wm/keybindings/close"
       value: "['<Shift><Super>q']"
+    when: desktop.gnome.dconf.alter_close_window == true
+
+  - name: Close windows with default shortcut
+    dconf:
+      key: "/org/gnome/desktop/wm/keybindings/close"
+      state: absent
+    when: desktop.gnome.dconf.alter_close_window == false
+
+  - name: Don't group applications with alt+tab
+    dconf:
+      key: "/org/gnome/desktop/wm/keybindings/switch-windows"
+      value: "['<Alt>Tab']"
+    when: desktop.gnome.dconf.alt_tab_avoid_grouping == false
 
   - name: Open terminal with <Super>+Return name
     dconf:
@@ -98,7 +111,7 @@
   - name: Open terminal with <Super>+Return binding
     dconf:
       key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/binding"
-      value: "'<Super>Return'"
+      value: "'{{ desktop.gnome.keybindings.open_terminal_shortcut }}'"
   - name: Open terminal with <Super>+Return command
     dconf:
       key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/command"
@@ -130,8 +143,40 @@
       key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/command"
       value: "'nautilus'"
 
+  # Flameshot keybinding
+  - name: Unbind default screenshot binding
+    dconf:
+      key: "/org/gnome/settings-daemon/plugins/media-keys/screenshot"
+      value: "@as []"
+  - name: Flameshot binding
+    dconf:
+      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/name"
+      value: "'Screenshot with Flameshot'"
+  - name: Flameshot shortcut
+    dconf:
+      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/binding"
+      value: "'Print'"
+  - name: Flameshot command
+    dconf:
+      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/command"
+      value: "'/usr/bin/flameshot gui'"
+
+  # toggle-touchpad keybinding
+  - name: toggle-touchpad binding
+    dconf:
+      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/name"
+      value: "'Toggle touchpad state'"
+  - name: toggle-touchpad shortcut
+    dconf:
+      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/binding"
+      value: "'<Super>t'"
+  - name: toggle-touchpad command
+    dconf:
+      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/command"
+      value: "'/usr/local/bin/toggle_touchpad.sh'"
+
   ## PLEASE BE AWARE: This is a static list that needs to be updated for each new custom shortcut.
   - name: Set custom keybindings list
     dconf:
       key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings"
-      value: "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/']"
+      value: "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/']"
