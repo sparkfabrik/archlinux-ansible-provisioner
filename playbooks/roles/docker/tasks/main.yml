@@ -51,3 +51,11 @@
         state: restarted
         daemon_reload: yes
         name: systemd-resolved
+
+    - name: Install docker-credential-gcr to authenticate in Google Container Registry
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - docker-credential-gcr-bin
+      become: yes
+      become_user: aur_builder

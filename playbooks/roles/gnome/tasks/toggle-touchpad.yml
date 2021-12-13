@@ -1,0 +1,14 @@
+---
+# The toggle-touchpad keybinding is created in keybindings.yml
+- name: Configure gnome toggle-touchpad script
+  tags: [gnome, gnome-config, toggle-touchpad]
+  block:
+    - name: Copy toggle_touchpad.sh to /usr/local/bin
+      copy:
+        src: "toggle_touchpad.sh"
+        dest: /usr/local/bin/toggle_touchpad.sh
+        force: yes
+        mode: u+rwx,g-wx,o-rwx
+        owner: "{{ system.username }}"
+      become: yes
+      become_user: 'root'

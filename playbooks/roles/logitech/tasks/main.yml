@@ -22,8 +22,8 @@
     become_user: aur_builder
     when: is_logitech_unifying.stdout != ""
 
-  - name: Configure logiops (for MX Master 2S)
+  - name: Configure logiops (for MX Master 2S and MX Master 3)
     ansible.builtin.copy:
-      src: logitech/logid-mx-master2s.cfg
+      src: logitech/logid-mx-master.cfg
       dest: /etc/logid.cfg
     when: is_logitech_unifying.stdout != ""

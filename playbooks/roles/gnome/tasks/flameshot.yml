@@ -1,3 +1,4 @@
+# The flameshot keybinding is created in keybindings.yml
 - name: Install flameshot
   tags: [packages, gnome, flameshot]
   block:

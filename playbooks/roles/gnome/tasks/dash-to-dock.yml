@@ -39,10 +39,10 @@
       key: "/org/gnome/shell/extensions/dash-to-dock/intellihide-mode"
       value: "'ALL_WINDOWS'"
 
-  - name: Disable show favorites
+  - name: Set show favorites
     dconf:
       key: "/org/gnome/shell/extensions/dash-to-dock/show-favorites"
-      value: "false"
+      value: "{{ desktop.gnome.dconf.dash_to_dock_show_favorites | default('false') }}"
 
   - name: Disable hot keys
     dconf:
