@@ -65,6 +65,13 @@
     state: present
     update_cache: yes
 
+- name: Install network packages
+  community.general.pacman:
+    name:
+      - whois
+    state: present
+    update_cache: yes
+
 - name: Install and configure timeshift
   tags: [timeshift]
   block:
