@@ -22,6 +22,14 @@
     become: yes
     become_user: aur_builder
 
+  - name: Clipboard manager
+    kewlfft.aur.aur:
+      use: paru
+      name:
+        - clipman
+    become: yes
+    become_user: aur_builder
+
   - name: Network utilities
     community.general.pacman:
       name:
