@@ -42,10 +42,13 @@
         - dunst
 
   - name: Screenshot system
-    community.general.pacman:
+    kewlfft.aur.aur:
       name:
         - slurp
         - grim
+        - grimshot
+    become: yes
+    become_user: aur_builder
 
   - name: Screensharing
     community.general.pacman:
