@@ -49,6 +49,14 @@
         - grimshot
     become: yes
     become_user: aur_builder
+  
+  - name: Multimedia controls
+    kewlfft.aur.aur:
+      name:
+        - light
+    become: yes
+    become_user: aur_builder
+
 
   - name: Screensharing
     community.general.pacman:
