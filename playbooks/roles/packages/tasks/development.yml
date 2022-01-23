@@ -11,6 +11,7 @@
           - kubectl
           - k9s
           - helm
+          - kustomize
     - name: Install cloud native packages from aur
       kewlfft.aur.aur:
         use: paru
