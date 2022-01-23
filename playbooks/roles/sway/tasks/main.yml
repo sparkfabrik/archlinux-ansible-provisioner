@@ -1,0 +1,53 @@
+---
+- name: Install sway
+  tags: [wm, sway]
+  when: desktop.sway.enable == true
+  block:
+  - name: Install sway wm
+    community.general.pacman:
+      name:
+        - alacritty
+        - network-manager-applet
+        - sway
+        - swayidle
+        - swaylock
+        - wofi
+        - wl-clipboard
+
+  - name: Display server gui
+    kewlfft.aur.aur:
+      use: paru
+      name:
+        - wdisplays
+    become: yes
+    become_user: aur_builder
+
+  - name: Network utilities
+    community.general.pacman:
+      name:
+        - network-manager-applet
+        - blueman
+
+  - name: Notification system
+    community.general.pacman:
+      name:
+        - dunst
+
+  - name: Screenshot system
+    community.general.pacman:
+      name:
+        - slurp
+        - grim
+
+  - name: Screensharing
+    community.general.pacman:
+      name:
+        - xdg-desktop-portal-wlr
+        - xdg-desktop-portal
+
+  - name: Waybar
+    when: desktop.sway.waybar == true
+    community.general.pacman:
+      name:
+        - waybar
+        - otf-font-awesome

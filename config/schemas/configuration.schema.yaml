@@ -100,6 +100,22 @@ properties:
                 - extensions
                 title: The gnome schema
                 type: object
+            sway:
+                $id: '#/properties/desktop/properties/sway'
+                additionalProperties: true
+                default: {}
+                description: Install sway tiling manager
+                properties:
+                    enable:
+                        $id: '#/properties/desktop/properties/sway/properties/enable'
+                        default: false
+                        description: Install sway when true
+                        type: boolean
+                    waybar:
+                        $id: '#/properties/desktop/properties/sway/properties/waybar'
+                        default: true
+                        description: Install an alternative and more extensible status bar
+                        type: boolean
             office:
                 $id: '#/properties/desktop/properties/office'
                 default: false
