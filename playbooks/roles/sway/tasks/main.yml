@@ -8,6 +8,7 @@
       name:
         - alacritty
         - network-manager-applet
+        - ranger
         - sway
         - swayidle
         - swaylock
