@@ -46,6 +46,7 @@
     kewlfft.aur.aur:
       use: paru
       name:
+        - downgrade
         - inxi
         - glxinfo
     become: yes
