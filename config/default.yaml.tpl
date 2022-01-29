@@ -25,6 +25,9 @@ desktop:
       clock_show_seconds: true
       dash_to_dock_show_favorites: "false" # Note that this is a string, not a boolean
       alt_tab_avoid_grouping: false
+  sway:
+    enable: false
+    waybar: true
   x11_gestures: false
   office: false
 debug: false

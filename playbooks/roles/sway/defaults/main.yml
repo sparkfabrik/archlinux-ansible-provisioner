@@ -1,0 +1,4 @@
+desktop:
+  sway:
+    enable: false
+    waybar: true

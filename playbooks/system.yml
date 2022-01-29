@@ -7,3 +7,4 @@
     - role: gnome
     - role: logitech
     - role: sparkfabrik
+    - role: sway
