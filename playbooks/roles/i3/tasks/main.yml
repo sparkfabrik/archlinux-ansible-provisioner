@@ -43,9 +43,7 @@
   - name: Screenshot system
     kewlfft.aur.aur:
       name:
-        - slurp
-        - grim
-        - grimshot
+        - scrot
     become: yes
     become_user: aur_builder
 

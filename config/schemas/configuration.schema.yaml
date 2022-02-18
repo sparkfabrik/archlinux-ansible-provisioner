@@ -116,6 +116,17 @@ properties:
                         default: true
                         description: Install an alternative and more extensible status bar
                         type: boolean
+            i3:
+                $id: '#/properties/desktop/properties/i3'
+                additionalProperties: true
+                default: {}
+                description: Install i3 tiling manager
+                properties:
+                    enable:
+                        $id: '#/properties/desktop/properties/i3/properties/enable'
+                        default: false
+                        description: Install i3 when true
+                        type: boolean
             office:
                 $id: '#/properties/desktop/properties/office'
                 default: false

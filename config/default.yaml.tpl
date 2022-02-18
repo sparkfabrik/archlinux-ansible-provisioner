@@ -28,6 +28,8 @@ desktop:
   sway:
     enable: false
     waybar: true
+  i3:
+    enable: false
   x11_gestures: false
   office: false
 debug: false
