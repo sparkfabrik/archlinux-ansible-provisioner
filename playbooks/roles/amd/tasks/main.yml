@@ -1,0 +1,22 @@
+---
+- name: Configure amd cards
+  tags: [amd]
+  block:
+  - name: "Detect NVIDIA"
+    shell: "lspci | grep -i vga | grep -i amd"
+    ignore_errors: yes
+    register: is_amd
+
+  - name: Install amd libraries
+    when: is_amd.stdout != ""
+    block:
+     - name: Install dkms drivers
+       community.general.pacman:
+         name:
+           - vulkan-radeon
+           - libva-mesa-driver
+           - mesa-vdpau
+           - radeontop
+         state: present
+         update_cache: yes
+

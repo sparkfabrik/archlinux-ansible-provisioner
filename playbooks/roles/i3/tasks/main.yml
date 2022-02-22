@@ -48,6 +48,7 @@
         - scrot
         - maim
         - xclip
+        - xdotool
     become: yes
     become_user: aur_builder
 
