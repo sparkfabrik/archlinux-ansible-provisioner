@@ -5,7 +5,7 @@
   block:
 
   - name: Install i3 wm
-    community.general.pacman:
+    kewlfft.aur.aur:
       name:
         - alacritty
         - arandr
@@ -20,6 +20,8 @@
         - feh
         - dex
         - xkb-switch
+    become: yes
+    become_user: aur_builder
 
   - name: Clipboard manager
     kewlfft.aur.aur:
@@ -44,6 +46,8 @@
     kewlfft.aur.aur:
       name:
         - scrot
+        - maim
+        - xclip
     become: yes
     become_user: aur_builder
 
