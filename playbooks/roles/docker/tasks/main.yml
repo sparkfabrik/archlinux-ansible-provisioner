@@ -59,3 +59,20 @@
           - docker-credential-gcr-bin
       become: yes
       become_user: aur_builder
+
+    - name: Install qemu packages in order to cross-compile docker images
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - qemu-user-static
+          - binfmt-qemu-static
+      become: yes
+      become_user: aur_builder
+      when: qemu_for_buildx | default(true)
+
+    - name: Restart systemd-binfmt
+      ansible.builtin.systemd:
+        state: restarted
+        daemon_reload: yes
+        name: systemd-binfmt
+      when: qemu_for_buildx | default(true)
