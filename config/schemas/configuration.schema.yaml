@@ -217,6 +217,14 @@ properties:
         - false
         title: Install Sparkfabrik custom stuff
         type: boolean
+    qemu_for_buildx:
+        $id: "#/properties/qemu_for_buildx"
+        default: true
+        description: Install qemu packages in order to cross-compile docker images.
+        examples:
+        - true
+        title: Install qemu-user-static and binfmt-qemu-static AUR packages
+        type: boolean
 required:
 - system
 title: The root schema

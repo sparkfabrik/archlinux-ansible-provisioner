@@ -32,3 +32,4 @@ desktop:
   office: false
 debug: false
 sparkfabrik: false
+qemu_for_buildx: true
