@@ -4,7 +4,9 @@
     - role: packages
     - role: docker
     - role: nvidia
+    - role: amd
     - role: gnome
     - role: logitech
     - role: sparkfabrik
     - role: sway
+    - role: i3

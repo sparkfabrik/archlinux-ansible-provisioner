@@ -1,25 +1,25 @@
 ---
-- name: Install sway
-  tags: [wm, sway]
-  when: desktop.sway.enable == true
+- name: Install i3
+  tags: [wm, i3]
+  when: desktop.i3.enable == true
   block:
-  - name: Install sway wm
-    community.general.pacman:
+
+  - name: Install i3 wm
+    kewlfft.aur.aur:
       name:
         - alacritty
+        - arandr
         - network-manager-applet
         - ranger
-        - sway
-        - swayidle
-        - swaylock
-        - wofi
-        - wl-clipboard
-
-  - name: Display server gui
-    kewlfft.aur.aur:
-      use: paru
-      name:
-        - wdisplays
+        - i3-gaps
+        - i3blocks
+        - i3lock
+        - i3status
+        - rofi
+        - picom
+        - feh
+        - dex
+        - xkb-switch
     become: yes
     become_user: aur_builder
 
@@ -45,9 +45,10 @@
   - name: Screenshot system
     kewlfft.aur.aur:
       name:
-        - slurp
-        - grim
-        - grimshot
+        - scrot
+        - maim
+        - xclip
+        - xdotool
     become: yes
     become_user: aur_builder
 
@@ -58,24 +59,3 @@
         - ttf-meslo-nerd-font-powerlevel10k
     become: yes
     become_user: aur_builder
-
-  - name: Multimedia controls
-    kewlfft.aur.aur:
-      name:
-        - light
-    become: yes
-    become_user: aur_builder
-
-
-  - name: Screensharing
-    community.general.pacman:
-      name:
-        - xdg-desktop-portal-wlr
-        - xdg-desktop-portal
-
-  - name: Waybar
-    when: desktop.sway.waybar == true
-    community.general.pacman:
-      name:
-        - waybar
-        - otf-font-awesome
