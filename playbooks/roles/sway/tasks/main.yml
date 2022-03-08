@@ -38,9 +38,12 @@
         - blueman
 
   - name: Notification system
-    community.general.pacman:
+    kewlfft.aur.aur:
+      use: paru
       name:
-        - dunst
+        - swaync
+    become: yes
+    become_user: aur_builder
 
   - name: Screenshot system
     kewlfft.aur.aur:
