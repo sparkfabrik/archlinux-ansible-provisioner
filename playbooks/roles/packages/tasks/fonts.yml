@@ -36,6 +36,8 @@
         - nerd-fonts-ubuntu-mono
         - ttf-monaco
         - ttf-meslo-nerd-font-powerlevel10k
+        - nerd-fonts-inconsolata
+        - nerd-fonts-droid-sans-mono
     become: yes
     become_user: aur_builder
 
