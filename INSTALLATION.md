@@ -6,7 +6,7 @@
 
 If you use an ethernet connection, you do not need to do nothing, it works.
 
-If you want to use a WI-FI connection, you should use `iwctl`, you can find all the 
+If you want to use a WI-FI connection, you should use `iwctl`, you can find all the
 information you need here: https://wiki.archlinux.org/title/Iwd
 
 ### Activate SSH
@@ -41,8 +41,8 @@ nvme0n1 (Volume)
 |
 - @ (Subvolume - It will be the current /)
 - @home (Subvolume - it will be the current /home)
-- @snapshots (Subvolume -  It will contain the root snaphosts)
-- @home.snapshots (Subvolume -  It will contain the home directories snaphosts)
+- @snapshots (Subvolume -  It will contain the root snapshots)
+- @home.snapshots (Subvolume -  It will contain the home directories snapshots)
 ```
 
 I don't know if this layout is the best choice, but AFAIK this is the simplest
@@ -59,7 +59,7 @@ What i've used as a reference:
 
 This is the most flexible way to keep the things well separated and giving me the chance
 to automatically snapshot the root or home volumes separately and using `grub-btrfs`
-to automatically from snapshots (TO BE TESTED).
+to automatically from snapshots.
 
 This is my current disk layout (using `cfdisk`):
 
@@ -72,8 +72,6 @@ This is my current disk layout (using `cfdisk`):
 >>  /dev/nvme0n1p1                         2048              487423              485376           237M EFI System
     /dev/nvme0n1p2                       487424          1139156991          1138669568           543G Linux filesystem
     /dev/nvme0n1p3                   1139156992          1206265855            67108864            32G Linux swap
-    /dev/nvme0n1p4                   1206265856          1881548799           675282944           322G Linux filesystem
-    /dev/nvme0n1p5                   1881548800          1953525134            71976335          34.3G Linux swap
 ```
 
 I will use `/dev/nvme0n1p4` and `/dev/nvme0n1p5` respectively for `/` and `swap` partitions.
@@ -83,14 +81,15 @@ Export the following variables, that we'll be used by next installation steps:
 
 ```shell
 export UEFI_PARTITION=/dev/nvme0n1p1
-export ROOT_PARTITION=/dev/nvme0n1p4
-export SWAP_PARTITION=/dev/nvme0n1p5
+export ROOT_PARTITION=/dev/nvme0n1p2
+export SWAP_PARTITION=/dev/nvme0n1p3
 export LUKS_PARTITION=/dev/mapper/cryptroot
 ```
 
 Just to be sure about the partitions, you can always run `lsblk` to see partitions per disk.
 
-> ***VERY IMPORTANT***: From now on i'll use `/dev/nvme0n1p4` for the root partition and `/dev/nvme0n1p5` and `/dev/nvme0n1p5` for the swap one. Adjust them according to your setup.
+> ***VERY IMPORTANT***: From now on i'll use `/dev/nvme0n1p2` for the root partition and `/dev/nvme0n1p3` for the swap one.
+   Adjust them according to your setup.
 
 ### ROOT LUKS encryption (optional)
 
@@ -212,7 +211,7 @@ playbooks/roles
 └── system
 ```
 
-* `bootstrap`: Bootstrap the base system using pacstrap, configure locales, hostname, time and create the first sudoer user. 
+* `bootstrap`: Bootstrap the base system using pacstrap, configure locales, hostname, time and create the first sudoer user.
 * `system`: Configure system services (bluetooth, audio, printing) and install some system dependencies.
 * `gnome`: Install and configure Gnome DE with some extra packages, extensions and some custom shortcuts.
 * `logitech`: Configure Logitech MX Master 2s mices with logid+solaar.
@@ -239,7 +238,7 @@ vim config/default.yaml
 CONFIG=./config/default.yaml make system
 ```
 
-> ***VERY IMPORTANT***: Ansible will use the default values specified by the roles, you should change it or pass it, at the moment 
+> ***VERY IMPORTANT***: Ansible will use the default values specified by the roles, you should change it or pass it, at the moment
 > the later option is not supported by the Makefile.
 
 ### Configure GRUB to the encrypted disk (only for encrypted installations)
@@ -247,7 +246,7 @@ CONFIG=./config/default.yaml make system
 1. Run `vim /mnt/etc/mkinitcpio.conf` and, to the `HOOKS` array, add `keyboard` between `autodetect` and `modconf` and add `encrypt` between `block` and `filesystems`
    * It should look like this: `HOOKS=(base udev autodetect keyboard modconf block encrypt filesystems keyboard fsck)`
 1. Run `arch-chroot /mnt mkinitcpio -P`
-1. Run `blkid -s UUID -o value ${ROOT_PARTITION}` to get the `UUID` of the device 
+1. Run `blkid -s UUID -o value ${ROOT_PARTITION}` to get the `UUID` of the device
 1. Run `vim /mnt/etc/default/grub` and set `GRUB_CMDLINE_LINUX="cryptdevice=UUID=xxxx:cryptroot /dev/mapper/cryptroot"` while replacing `xxxx` with the `UUID` of the `$ROOT_PARTITION` device to tell GRUB about our encrypted file system.
    * It should look like this: `GRUB_CMDLINE_LINUX="cryptdevice=UUID=1aa4277d-f942-49d1-b5b4-74641941dd9c:cryptroot /dev/mapper/cryptroot"`
 
