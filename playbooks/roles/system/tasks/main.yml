@@ -56,12 +56,15 @@
   community.general.pacman:
     name:
       - btrfs-progs
+      - coreutils
       - efibootmgr
       - git
       - grub-btrfs
       - os-prober
+      - procps-ng
       - ntfs-3g
       - sudo
+      - util-linux
     state: present
     update_cache: yes
 
