@@ -3,7 +3,7 @@
   tags: [system, audio]
   block:
     - name: Install pipewire packages (to replace Pulseaudio)
-      shell: yes | pacman -Syu pipewire-pulse pipewire-media-session # there isn't a way to install conflicting packages.
+      shell: yes | pacman -Syu pipewire-pulse wireplumber # there isn't a way to install conflicting packages.
     - name: Install audio system dependencies
       community.general.pacman:
         name:
