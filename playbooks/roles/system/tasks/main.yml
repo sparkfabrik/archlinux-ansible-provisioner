@@ -79,6 +79,7 @@
 - name: Install network packages
   community.general.pacman:
     name:
+      - inetutils
       - whois
     state: present
     update_cache: yes
