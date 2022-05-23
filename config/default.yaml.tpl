@@ -17,6 +17,7 @@ desktop:
     - user-theme@gnome-shell-extensions.gcampax.github.com
     - dash-to-dock@micxgx.gmail.com
     - ding@rastersoft.com
+    - Vitals@CoreCoding.com
     keybindings:
       open_terminal_shortcut: "<Super>Return" # "<Primary><Alt>t"
     dconf:
