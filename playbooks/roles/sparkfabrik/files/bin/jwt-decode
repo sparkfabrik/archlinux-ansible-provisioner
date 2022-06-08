@@ -1,0 +1,29 @@
+#!/bin/sh
+
+if [ -z "${1}" ]; then
+  echo "Usage: ${0} <jwt> [piece]"
+  exit 1
+fi
+
+PIECE=2
+if [ -n "${2}" ]; then
+  PIECE="${2}"
+fi
+
+if [ "${PIECE}" != "1" ] && [ "${PIECE}" != "2" ] && [ "${PIECE}" != "3" ]; then
+  echo "The piece option must be 1, 2, or 3"
+  echo "Usage: ${0} <jwt> [piece]"
+  exit 2
+fi
+
+decode_base64_url() {
+  len=$((${#1} % 4))
+  result="$1"
+  if [ $len -eq 2 ]; then result="$1"'=='
+  elif [ $len -eq 3 ]; then result="$1"'=' 
+  fi
+  # echo "$result" | tr '_-' '/+' | openssl enc -d -base64
+  echo "$result" | tr '_-' '/+' | base64 -d
+}
+
+decode_base64_url "$(echo "${1}" | cut -d "." -f "${PIECE}")"
