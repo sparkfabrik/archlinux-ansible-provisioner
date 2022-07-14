@@ -19,6 +19,7 @@
         - timeshift
         - timeshift-autosnap
         - visual-studio-code-bin
+        - icu69-bin
         - toggldesktop
         - zoom
         - xournalpp
