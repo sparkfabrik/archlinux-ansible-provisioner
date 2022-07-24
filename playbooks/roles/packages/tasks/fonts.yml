@@ -34,6 +34,7 @@
       use: paru
       name:
         - nerd-fonts-ubuntu-mono
+        - nerd-fonts-fira-code
         - ttf-monaco
         - ttf-meslo-nerd-font-powerlevel10k
         - nerd-fonts-inconsolata
