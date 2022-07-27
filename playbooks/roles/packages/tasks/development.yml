@@ -12,6 +12,7 @@
           - k9s
           - helm
           - kustomize
+          - terraform
     - name: Install cloud native packages from aur
       kewlfft.aur.aur:
         use: paru
