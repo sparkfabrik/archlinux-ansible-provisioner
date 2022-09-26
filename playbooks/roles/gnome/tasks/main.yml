@@ -30,10 +30,10 @@
       kewlfft.aur.aur:
         use: paru
         name:
-          - gnome-shell-extension-system-monitor-git
+          - gnome-shell-extension-system-monitor
           - gnome-shell-extension-dash-to-dock
           - gnome-shell-extension-desktop-icons-ng
-          - gnome-shell-extension-just-perfection-desktop-git
+          - gnome-shell-extension-just-perfection-desktop
           - chrome-gnome-shell
           - gnome-shell-extension-vitals
       become: yes
