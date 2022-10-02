@@ -4,239 +4,242 @@ additionalProperties: true
 default: {}
 description: The root schema comprises the entire JSON document.
 examples:
--   debug: false
+  - debug: false
     desktop:
-        gnome:
-            extensions:
+      gnome:
+        extensions:
+          - appindicatorsupport@rgcjonas.gmail.com
+          - just-perfection-desktop@just-perfection
+          - screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com
+          - user-theme@gnome-shell-extensions.gcampax.github.com
+          - dash-to-dock@micxgx.gmail.com
+          - ding@rastersoft.com
+        keybindings:
+          open_terminal_shortcut: "<Super>Return"
+        dconf:
+          use_mouse_natural_scroll: true
+          alter_close_window: true
+          clock_show_seconds: true
+          dash_to_dock_show_favorites: "false"
+          alt_tab_avoid_grouping: false
+      office: false
+      x11_gestures: false
+    system:
+      hostname: foobar
+      kernel: standard
+      timezone: Europe/Rome
+      username: foobar
+    timeshift:
+      maxSnapshots: 10
+properties:
+  debug:
+    $id: "#/properties/debug"
+    default: false
+    description: An explanation about the purpose of this instance.
+    examples:
+      - false
+    title: The debug schema
+    type: boolean
+  desktop:
+    $id: "#/properties/desktop"
+    additionalProperties: true
+    default: {}
+    description: An explanation about the purpose of this instance.
+    required:
+      - x11_gestures
+      - office
+    examples:
+      - gnome:
+          extensions:
             - appindicatorsupport@rgcjonas.gmail.com
             - just-perfection-desktop@just-perfection
             - screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com
             - user-theme@gnome-shell-extensions.gcampax.github.com
             - dash-to-dock@micxgx.gmail.com
             - ding@rastersoft.com
-            keybindings:
-                open_terminal_shortcut: "<Super>Return"
-            dconf:
-                use_mouse_natural_scroll: true
-                alter_close_window: true
-                clock_show_seconds: true
-                dash_to_dock_show_favorites: "false"
-                alt_tab_avoid_grouping: false
         office: false
         x11_gestures: false
-    system:
-        hostname: foobar
+    properties:
+      gnome:
+        $id: "#/properties/desktop/properties/gnome"
+        additionalProperties: true
+        default: {}
+        description: An explanation about the purpose of this instance.
+        examples:
+          - extensions:
+              - appindicatorsupport@rgcjonas.gmail.com
+              - just-perfection-desktop@just-perfection
+              - screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com
+              - user-theme@gnome-shell-extensions.gcampax.github.com
+              - dash-to-dock@micxgx.gmail.com
+              - ding@rastersoft.com
+        properties:
+          extensions:
+            $id: "#/properties/desktop/properties/gnome/properties/extensions"
+            additionalItems: true
+            default: []
+            description: An explanation about the purpose of this instance.
+            examples:
+              - - appindicatorsupport@rgcjonas.gmail.com
+                - just-perfection-desktop@just-perfection
+            items:
+              $id: "#/properties/desktop/properties/gnome/properties/extensions/items"
+              anyOf:
+                - $id: "#/properties/desktop/properties/gnome/properties/extensions/items/anyOf/0"
+                  default: ""
+                  description: An explanation about the purpose of this
+                    instance.
+                  examples:
+                    - appindicatorsupport@rgcjonas.gmail.com
+                    - just-perfection-desktop@just-perfection
+                  title: The first anyOf schema
+                  type: string
+            title: The extensions schema
+            type: array
+        required:
+          - extensions
+        title: The gnome schema
+        type: object
+      sway:
+        $id: "#/properties/desktop/properties/sway"
+        additionalProperties: true
+        default: {}
+        description: Install sway tiling manager
+        properties:
+          enable:
+            $id: "#/properties/desktop/properties/sway/properties/enable"
+            default: false
+            description: Install sway when true
+            type: boolean
+          waybar:
+            $id: "#/properties/desktop/properties/sway/properties/waybar"
+            default: true
+            description: Install an alternative and more extensible status bar
+            type: boolean
+      i3:
+        $id: "#/properties/desktop/properties/i3"
+        additionalProperties: true
+        default: {}
+        description: Install i3 tiling manager
+        properties:
+          enable:
+            $id: "#/properties/desktop/properties/i3/properties/enable"
+            default: false
+            description: Install i3 when true
+            type: boolean
+      office:
+        $id: "#/properties/desktop/properties/office"
+        default: false
+        description: An explanation about the purpose of this instance.
+        examples:
+          - false
+        title: The office schema
+        type: boolean
+      x11_gestures:
+        $id: "#/properties/desktop/properties/x11_gestures"
+        default: false
+        description: An explanation about the purpose of this instance.
+        examples:
+          - false
+        title: The x11_gestures schema
+        type: boolean
+    title: The desktop schema
+    type: object
+  system:
+    $id: "#/properties/system"
+    additionalProperties: true
+    examples:
+      - hostname: foobar
         kernel: standard
         timezone: Europe/Rome
         username: foobar
-    timeshift:
-        maxSnapshots: 10
-properties:
-    debug:
-        $id: '#/properties/debug'
-        default: false
+        bluetooth:
+          controllerMode: dual
+    properties:
+      hostname:
+        $id: "#/properties/system/properties/hostname"
+        default: ""
         description: An explanation about the purpose of this instance.
         examples:
-        - false
-        title: The debug schema
-        type: boolean
-    desktop:
-        $id: '#/properties/desktop'
+          - foobar
+        title: The hostname schema
+        type: string
+      kernel:
+        $id: "#/properties/system/properties/kernel"
+        default: ""
+        description: An explanation about the purpose of this instance.
+        examples:
+          - standard
+        title: The kernel schema
+        type: string
+      timezone:
+        $id: "#/properties/system/properties/timezone"
+        default: ""
+        description: An explanation about the purpose of this instance.
+        examples:
+          - Europe/Rome
+        title: The timezone schema
+        type: string
+      username:
+        $id: "#/properties/system/properties/username"
+        default: ""
+        description: An explanation about the purpose of this instance.
+        examples:
+          - foobar
+        title: The username schema
+        type: string
+      bluetooth:
+        $id: "#/properties/system/properties/bluetooth"
         additionalProperties: true
-        default: {}
-        description: An explanation about the purpose of this instance.
-        required:
-        - x11_gestures
-        - office
-        examples:
-        -   gnome:
-                extensions:
-                - appindicatorsupport@rgcjonas.gmail.com
-                - just-perfection-desktop@just-perfection
-                - screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com
-                - user-theme@gnome-shell-extensions.gcampax.github.com
-                - dash-to-dock@micxgx.gmail.com
-                - ding@rastersoft.com
-            office: false
-            x11_gestures: false
-        properties:
-            gnome:
-                $id: '#/properties/desktop/properties/gnome'
-                additionalProperties: true
-                default: {}
-                description: An explanation about the purpose of this instance.
-                examples:
-                -   extensions:
-                    - appindicatorsupport@rgcjonas.gmail.com
-                    - just-perfection-desktop@just-perfection
-                    - screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com
-                    - user-theme@gnome-shell-extensions.gcampax.github.com
-                    - dash-to-dock@micxgx.gmail.com
-                    - ding@rastersoft.com
-                properties:
-                    extensions:
-                        $id: '#/properties/desktop/properties/gnome/properties/extensions'
-                        additionalItems: true
-                        default: []
-                        description: An explanation about the purpose of this instance.
-                        examples:
-                        -   - appindicatorsupport@rgcjonas.gmail.com
-                            - just-perfection-desktop@just-perfection
-                        items:
-                            $id: '#/properties/desktop/properties/gnome/properties/extensions/items'
-                            anyOf:
-                            -   $id: '#/properties/desktop/properties/gnome/properties/extensions/items/anyOf/0'
-                                default: ''
-                                description: An explanation about the purpose of this
-                                    instance.
-                                examples:
-                                - appindicatorsupport@rgcjonas.gmail.com
-                                - just-perfection-desktop@just-perfection
-                                title: The first anyOf schema
-                                type: string
-                        title: The extensions schema
-                        type: array
-                required:
-                - extensions
-                title: The gnome schema
-                type: object
-            sway:
-                $id: '#/properties/desktop/properties/sway'
-                additionalProperties: true
-                default: {}
-                description: Install sway tiling manager
-                properties:
-                    enable:
-                        $id: '#/properties/desktop/properties/sway/properties/enable'
-                        default: false
-                        description: Install sway when true
-                        type: boolean
-                    waybar:
-                        $id: '#/properties/desktop/properties/sway/properties/waybar'
-                        default: true
-                        description: Install an alternative and more extensible status bar
-                        type: boolean
-            i3:
-                $id: '#/properties/desktop/properties/i3'
-                additionalProperties: true
-                default: {}
-                description: Install i3 tiling manager
-                properties:
-                    enable:
-                        $id: '#/properties/desktop/properties/i3/properties/enable'
-                        default: false
-                        description: Install i3 when true
-                        type: boolean
-            office:
-                $id: '#/properties/desktop/properties/office'
-                default: false
-                description: An explanation about the purpose of this instance.
-                examples:
-                - false
-                title: The office schema
-                type: boolean
-            x11_gestures:
-                $id: '#/properties/desktop/properties/x11_gestures'
-                default: false
-                description: An explanation about the purpose of this instance.
-                examples:
-                - false
-                title: The x11_gestures schema
-                type: boolean
-        title: The desktop schema
         type: object
-    system:
-        $id: '#/properties/system'
-        additionalProperties: true
-        default: {}
-        description: An explanation about the purpose of this instance.
-        examples:
-        -   hostname: foobar
-            kernel: standard
-            timezone: Europe/Rome
-            username: foobar
-            bluetooth:
-                controllerMode: dual
         properties:
-            hostname:
-                $id: '#/properties/system/properties/hostname'
-                default: ''
-                description: An explanation about the purpose of this instance.
-                examples:
-                - foobar
-                title: The hostname schema
-                type: string
-            kernel:
-                $id: '#/properties/system/properties/kernel'
-                default: ''
-                description: An explanation about the purpose of this instance.
-                examples:
-                - standard
-                title: The kernel schema
-                type: string
-            timezone:
-                $id: '#/properties/system/properties/timezone'
-                default: ''
-                description: An explanation about the purpose of this instance.
-                examples:
-                - Europe/Rome
-                title: The timezone schema
-                type: string
-            username:
-                $id: '#/properties/system/properties/username'
-                default: ''
-                description: An explanation about the purpose of this instance.
-                examples:
-                - foobar
-                title: The username schema
-                type: string
-            bluetooth:
-                $id: '#/properties/system/properties/bluetooth'
-                additionalProperties: true
-                type: object
-                properties:
-                    controllerMode:
-                        $id: '#/properties/system/bluetooth/controllerMode'
-                        default: dual
-                        description: Set the controllerMode, this is useful when some bluetooth headsets like airpods does not pair.
-                        examples:
-                        - dual
-                        type: string
-    timeshift:
-        $id: '#/properties/timeshift'
-        additionalProperties: true
-        default: {}
-        description: An explanation about the purpose of this instance.
+          controllerMode:
+            $id: "#/properties/system/bluetooth/controllerMode"
+            default: dual
+            description: Set the controllerMode, this is useful when some bluetooth headsets like airpods does not pair.
+            examples:
+              - dual
+            type: string
+  timeshift:
+    $id: "#/properties/timeshift"
+    additionalProperties: true
+    description: Timeshift configurations.
+    properties:
+      maxSnaphots:
+        $id: "#/properties/timeshift/autosnap/properties/maxSnaphots"
+        default: 10
+        description: The number of timeshift snapshot to keep.
         examples:
-        -   maxSnaphots: 10
-        properties:
-            maxSnaphots:
-                $id: '#/properties/timeshift/properties/maxSnaphots'
-                default: 10
-                description: An explanation about the purpose of this instance.
-                examples:
-                - 10
-                title: The maxSnaphots schema
-                type: integer
-        title: The timeshift schema
-        type: object
-    sparkfabrik:
-        $id: '#/properties/sparkfabrik'
-        default: false
-        description: Install Sparkfabrik.
-        examples:
-        - false
-        title: Install Sparkfabrik custom stuff
-        type: boolean
-    qemu_for_buildx:
-        $id: "#/properties/qemu_for_buildx"
+          - 10
+        title: The maxSnaphots schema
+        type: integer
+      enabled:
+        $id: "#/properties/timeshift/autosnap/propertie/enabled"
         default: true
-        description: Install qemu packages in order to cross-compile docker images.
+        description: An explanation about the purpose of this instance.
         examples:
-        - true
-        title: Install qemu-user-static and binfmt-qemu-static AUR packages
-        type: boolean
+          - 10
+        title: The maxSnaphots schema
+        type: integer
+    title: The timeshift schema
+    type: object
+  sparkfabrik:
+    $id: "#/properties/sparkfabrik"
+    default: false
+    description: Install Sparkfabrik.
+    examples:
+      - false
+    title: Install Sparkfabrik custom stuff
+    type: boolean
+  qemu_for_buildx:
+    $id: "#/properties/qemu_for_buildx"
+    default: true
+    description: Install qemu packages in order to cross-compile docker images.
+    examples:
+      - true
+    title: Install qemu-user-static and binfmt-qemu-static AUR packages
+    type: boolean
 required:
-- system
+  - system
 title: The root schema
 type: object

@@ -5,7 +5,9 @@ system:
   kernel: standard # standard|lts|zen
   timezone: Europe/Rome
 timeshift:
-  maxSnapshots: 10
+  autosnap:
+    enabled: true
+    maxSnapshots: 10
 bluetooth:
   controllerMode: dual
 desktop:

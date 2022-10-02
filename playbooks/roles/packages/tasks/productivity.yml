@@ -2,26 +2,25 @@
 - name: Productivity
   tags: [packages, productivity]
   block:
-  - name: Install productivity packages
-    community.general.pacman:
-      name:
-        - thefuck
-        - yadm
-        - gnupg
-        - pinentry
-        - telegram-desktop
+    - name: Install productivity packages
+      community.general.pacman:
+        name:
+          - thefuck
+          - yadm
+          - gnupg
+          - pinentry
+          - telegram-desktop
 
-  - name: Install productivity packages from aur
-    kewlfft.aur.aur:
-      use: paru
-      name:
-        - slack-desktop
-        - timeshift
-        - timeshift-autosnap
-        - visual-studio-code-bin
-        - icu69-bin
-        - toggldesktop
-        - zoom
-        - xournalpp
-    become: yes
-    become_user: aur_builder
+    - name: Install productivity packages from aur
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - slack-desktop
+          - timeshift
+          - visual-studio-code-bin
+          - icu69-bin
+          - toggldesktop
+          - zoom
+          - xournalpp
+      become: yes
+      become_user: aur_builder
