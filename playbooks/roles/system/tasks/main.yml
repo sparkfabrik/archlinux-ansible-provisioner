@@ -2,45 +2,45 @@
 - name: Create an aur_builder user to install aur packages without password
   tags: [system, paru]
   block:
-  - name: Create the `aur_builder` user
-    ansible.builtin.user:
-      name: aur_builder
-      create_home: yes
-      group: wheel
+    - name: Create the `aur_builder` user
+      ansible.builtin.user:
+        name: aur_builder
+        create_home: yes
+        group: wheel
 
-  - name: Allow the `aur_builder` user to run `sudo pacman` without a password
-    ansible.builtin.lineinfile:
-      path: /etc/sudoers.d/11-install-aur_builder
-      line: 'aur_builder ALL=(ALL) NOPASSWD: /usr/bin/pacman'
-      create: yes
-      validate: 'visudo -cf %s'
+    - name: Allow the `aur_builder` user to run `sudo pacman` without a password
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers.d/11-install-aur_builder
+        line: "aur_builder ALL=(ALL) NOPASSWD: /usr/bin/pacman"
+        create: yes
+        validate: "visudo -cf %s"
 
-  - name: Allow the `aur_builder` user to run `sudo makepkg` without a password
-    ansible.builtin.lineinfile:
-      path: /etc/sudoers.d/11-install-aur_builder
-      line: 'aur_builder ALL=(ALL) NOPASSWD: /usr/bin/makepkg'
-      create: yes
-      validate: 'visudo -cf %s'
+    - name: Allow the `aur_builder` user to run `sudo makepkg` without a password
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers.d/11-install-aur_builder
+        line: "aur_builder ALL=(ALL) NOPASSWD: /usr/bin/makepkg"
+        create: yes
+        validate: "visudo -cf %s"
 
-  - name: Detect if paru is installed
-    stat: path=/usr/bin/paru
-    register: paru
+    - name: Detect if paru is installed
+      stat: path=/usr/bin/paru
+      register: paru
 
-  - name: Checkout paru
-    ansible.builtin.git:
-      repo: 'https://aur.archlinux.org/paru.git'
-      dest: /tmp/paru
-    become: yes
-    become_user: aur_builder
-    when: paru.stat.exists == false
+    - name: Checkout paru
+      ansible.builtin.git:
+        repo: "https://aur.archlinux.org/paru.git"
+        dest: /tmp/paru
+      become: yes
+      become_user: aur_builder
+      when: paru.stat.exists == false
 
-  - name: Build and install paru
-    shell: makepkg -si --noconfirm
-    args:
-      chdir: /tmp/paru
-    become: yes
-    become_user: aur_builder
-    when: paru.stat.exists == false
+    - name: Build and install paru
+      shell: makepkg -si --noconfirm
+      args:
+        chdir: /tmp/paru
+      become: yes
+      become_user: aur_builder
+      when: paru.stat.exists == false
 
 - name: Install and setup reflector
   tags: [system, pacman]
@@ -92,6 +92,17 @@
         use: paru
         name:
           - timeshift
+      become: yes
+      become_user: aur_builder
+
+- name: Install and configure timeshift-autosnap
+  tags: [timeshift]
+  when: timeshift.autosnap.enabled == true
+  block:
+    - name: Install
+      kewlfft.aur.aur:
+        use: paru
+        name:
           - timeshift-autosnap
       become: yes
       become_user: aur_builder
@@ -101,7 +112,7 @@
         section: null
         no_extra_spaces: true
         option: maxSnapshots
-        value: "{{ timeshift.maxSnapshots | default('10') }}"
+        value: "{{ timeshift.autosnap.maxSnapshots | default('10') }}"
         exclusive: yes
 
 - name: Set up grub

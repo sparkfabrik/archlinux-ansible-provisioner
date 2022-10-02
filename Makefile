@@ -5,7 +5,8 @@ install-githooks:
 	cp git-hooks/pre-commit .git/hooks/pre-commit
 
 build-docker-tools:
-	docker build -q -t $(DOCKER_IMAGE) .
+	@echo "Building container....."
+	@docker build -q -t $(DOCKER_IMAGE) .
 
 yaml-to-json: build-docker-tools
 	docker run --rm -it -u $$UID -v $$PWD:$$PWD -w $$PWD $(DOCKER_IMAGE) js-yaml config/default.yaml.tpl
