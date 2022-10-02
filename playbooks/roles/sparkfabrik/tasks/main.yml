@@ -3,24 +3,30 @@
   tags: [vendor, sparkfabrik]
   when: sparkfabrik | default(false)
   block:
-  - name: Install wallpapers
-    synchronize:
-      src: wallpapers/
-      dest: /usr/share/backgrounds/sparkfabrik
-      delete: no
-      recursive: yes
+    - name: Install wallpapers
+      synchronize:
+        src: wallpapers/
+        dest: /usr/share/backgrounds/sparkfabrik
+        delete: no
+        recursive: yes
 
-  - name: Install wallpapers xml
-    copy:
-      src: gnome-spark-wallpapers.xml
-      dest: /usr/share/gnome-background-properties
+    - name: Install wallpapers xml
+      copy:
+        src: gnome-spark-wallpapers.xml
+        dest: /usr/share/gnome-background-properties
 
-  - name: Copy ayse-get-sm binary to print serial-number
-    copy:
-      src: "bin/ayse-get-sm"
-      dest: /usr/local/bin/ayse-get-sm
-      force: yes
-      mode: u+rwx,g-wx,o-rwx
-      owner: "{{ system.username }}"
+    - name: Copy ayse-get-sm binary to print serial-number
+      copy:
+        src: "bin/ayse-get-sm"
+        dest: /usr/local/bin/ayse-get-sm
+        force: yes
+        mode: u+rwx,g-wx,o-rwx
+        owner: "{{ system.username }}"
 
-
+    - name: Copy jwt-decode script
+      copy:
+        src: "bin/jwt-decode"
+        dest: /usr/local/bin/jwt-decode
+        force: yes
+        mode: u+rwx,g-wx,o-rwx
+        owner: "{{ system.username }}"

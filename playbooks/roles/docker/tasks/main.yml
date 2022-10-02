@@ -10,7 +10,7 @@
 
     - name: Add user to docker group
       user:
-        name: '{{ system.username }}'
+        name: "{{ system.username }}"
         groups: docker
         append: yes
 
@@ -24,7 +24,7 @@
 
     - name: Configure systemd-resolved to play well with dnsdock
       copy:
-        dest: '/etc/systemd/resolved.conf.d/docker-dev-dns.conf'
+        dest: "/etc/systemd/resolved.conf.d/docker-dev-dns.conf"
         content: |
           [Resolve]
           DNS=172.17.0.1
