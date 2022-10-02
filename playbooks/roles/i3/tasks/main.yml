@@ -3,59 +3,60 @@
   tags: [wm, i3]
   when: desktop.i3.enable == true
   block:
+    - name: Install i3 wm
+      kewlfft.aur.aur:
+        name:
+          - alacritty
+          - arandr
+          - network-manager-applet
+          - ranger
+          - i3-gaps
+          - i3blocks
+          - i3lock
+          - i3status
+          - polybar
+          - rofi
+          - picom
+          - feh
+          - dex
+          - xkb-switch
+          - xss-lock
+      become: yes
+      become_user: aur_builder
 
-  - name: Install i3 wm
-    kewlfft.aur.aur:
-      name:
-        - alacritty
-        - arandr
-        - network-manager-applet
-        - ranger
-        - i3-gaps
-        - i3blocks
-        - i3lock
-        - i3status
-        - rofi
-        - picom
-        - feh
-        - dex
-        - xkb-switch
-    become: yes
-    become_user: aur_builder
+    - name: Clipboard manager
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - clipman
+      become: yes
+      become_user: aur_builder
 
-  - name: Clipboard manager
-    kewlfft.aur.aur:
-      use: paru
-      name:
-        - clipman
-    become: yes
-    become_user: aur_builder
+    - name: Network utilities
+      community.general.pacman:
+        name:
+          - network-manager-applet
+          - blueman
 
-  - name: Network utilities
-    community.general.pacman:
-      name:
-        - network-manager-applet
-        - blueman
+    - name: Notification system
+      community.general.pacman:
+        name:
+          - dunst
 
-  - name: Notification system
-    community.general.pacman:
-      name:
-        - dunst
+    - name: Screenshot system
+      kewlfft.aur.aur:
+        name:
+          - scrot
+          - maim
+          - xclip
+          - xdotool
+      become: yes
+      become_user: aur_builder
 
-  - name: Screenshot system
-    kewlfft.aur.aur:
-      name:
-        - scrot
-        - maim
-        - xclip
-        - xdotool
-    become: yes
-    become_user: aur_builder
-
-  - name: Install fonts from aur
-    kewlfft.aur.aur:
-      use: paru
-      name:
-        - ttf-meslo-nerd-font-powerlevel10k
-    become: yes
-    become_user: aur_builder
+    - name: Install fonts from aur
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - ttf-meslo-nerd-font-powerlevel10k
+      become: yes
+      become_user: aur_builder
