@@ -200,6 +200,14 @@ properties:
             examples:
               - dual
             type: string
+      closing_lid_action_ext_power:
+        $id: "#/properties/system/properties/closing_lid_action_ext_power"
+        type: string
+        default: ignore
+        description: Set HandleLidSwitchExternalPower, the default `ignore` is suitable when you use an external display with lid closed. See https://www.freedesktop.org/software/systemd/man/logind.conf.html#HandlePowerKey=
+        examples:
+          - ignore
+          - suspend
   timeshift:
     $id: "#/properties/timeshift"
     additionalProperties: true

@@ -4,6 +4,7 @@ system:
   username: foobar
   kernel: standard # standard|lts|zen
   timezone: Europe/Rome
+  closing_lid_action_ext_power: ignore
 timeshift:
   autosnap:
     enabled: true

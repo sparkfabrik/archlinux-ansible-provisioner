@@ -22,11 +22,11 @@
       line: 'HandleLidSwitch=suspend'
       mode: 0644
       backup: yes
-  - name: Suspend on lid closing with external power
+  - name: Action on lid closing with external power
     lineinfile:
       dest: /etc/systemd/logind.conf
       regexp: '^HandleLidSwitchExternalPower='
-      line: 'HandleLidSwitchExternalPower=suspend'
+      line: 'HandleLidSwitchExternalPower={{ system.closing_lid_action_ext_power }}'
       mode: 0644
       backup: yes
   - name: Do nothing on lid closing when docked
