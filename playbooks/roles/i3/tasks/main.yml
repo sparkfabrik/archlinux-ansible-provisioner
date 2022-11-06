@@ -8,6 +8,7 @@
         name:
           - alacritty
           - arandr
+          - dex
           - network-manager-applet
           - ranger
           - i3-gaps
@@ -18,7 +19,7 @@
           - rofi
           - picom
           - feh
-          - dex
+          - thunar
           - xkb-switch
           - xss-lock
       become: yes
