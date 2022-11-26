@@ -1,6 +1,6 @@
 ---
 - name: "Installs base system using pacstrap"
-  shell: /usr/bin/pacstrap /mnt base base-devel btrfs-progs efibootmgr vim git grub-btrfs os-prober ansible sudo
+  shell: /usr/bin/pacstrap /mnt base base-devel btrfs-progs efibootmgr vim git grub-btrfs os-prober ansible sudo usbutils
 
 - name: "Installs linux kernel"
   shell: /usr/bin/pacstrap /mnt linux linux-headers linux-firmware
@@ -13,7 +13,7 @@
 - name: "Installs linux lts kernel"
   shell: /usr/bin/pacstrap /mnt linux-lts linux-lts-headers linux-firmware
   when: system.kernel == "lts"
-  
+
 - name: "Get cpu type"
   shell: "cat /proc/cpuinfo | grep vendor_id | head -n1 | awk '{print $3}'"
   register: cpu_type
@@ -41,11 +41,11 @@
 - name: Configure locale.gen
   lineinfile:
     dest: /mnt/etc/locale.gen
-    regexp: '{{ item.regex }}'
-    line: '{{ item.line }}'
+    regexp: "{{ item.regex }}"
+    line: "{{ item.line }}"
   loop:
-    - {regex: en_US\.UTF-8 UTF-8, line: en_US.UTF-8 UTF-8}
-    - {regex: en_US ISO-8859-1, line: en_US ISO-8859-1}
+    - { regex: en_US\.UTF-8 UTF-8, line: en_US.UTF-8 UTF-8 }
+    - { regex: en_US ISO-8859-1, line: en_US ISO-8859-1 }
 
 - name: Create locale.conf
   copy:
@@ -60,24 +60,24 @@
 
 - name: Configure /etc/hosts
   block:
-  - name: Add hostname
-    lineinfile:
-      regexp: "^127.0.1.1"
-      line: "127.0.1.1	{{ system.hostname }}.localdomain {{ system.hostname }}"
-      state: present
-      path: "/mnt/etc/hosts"
+    - name: Add hostname
+      lineinfile:
+        regexp: "^127.0.1.1"
+        line: "127.0.1.1	{{ system.hostname }}.localdomain {{ system.hostname }}"
+        state: present
+        path: "/mnt/etc/hosts"
 
-  - name: Add default 127.0.0.1 to localhost
-    lineinfile:
-      line: "127.0.0.1	localhost"
-      state: present
-      path: "/mnt/etc/hosts"
+    - name: Add default 127.0.0.1 to localhost
+      lineinfile:
+        line: "127.0.0.1	localhost"
+        state: present
+        path: "/mnt/etc/hosts"
 
-  - name: Add default ::1 to localhost
-    lineinfile:
-      line: "::1		localhost"
-      state: present
-      path: "/mnt/etc/hosts"
+    - name: Add default ::1 to localhost
+      lineinfile:
+        line: "::1		localhost"
+        state: present
+        path: "/mnt/etc/hosts"
 
 - name: Create user and add to sudoers
   shell: arch-chroot /mnt useradd -m -G wheel -s /bin/bash {{ system.username }}
@@ -86,9 +86,9 @@
 - name: Allow 'wheel' group to become sudoer
   lineinfile:
     path: /mnt/etc/sudoers.d/01-wheel-group
-    line: '%wheel ALL=(ALL) ALL'
+    line: "%wheel ALL=(ALL) ALL"
     create: yes
-    validate: 'visudo -cf %s'
+    validate: "visudo -cf %s"
 
 - name: Enable time synchronization
   command: arch-chroot /mnt systemctl enable systemd-timesyncd.service
