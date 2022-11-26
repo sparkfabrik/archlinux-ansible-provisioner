@@ -28,6 +28,7 @@ system: bootstrap
 	mkdir -p /mnt/root/provisioner
 	cp -aR . /mnt/root/provisioner
 	arch-chroot /mnt ansible-galaxy collection install -r /root/provisioner/requirements.yml
+	arch-chroot /mnt sh -c "CONFIG= pacman-key --populate archlinux"
 	arch-chroot /mnt ansible-playbook /root/provisioner/playbooks/system.yml -i localhost, -c local --extra-vars "@/root/provisioner/$(CONFIG)"
 
 install-grub-with-encryption:
