@@ -5,7 +5,7 @@
     - name: Install cloud native packages
       community.general.pacman:
         name:
-          - aws-cli
+          - aws-cli-v2
           - yq
           - jq
           - kubectl
@@ -32,11 +32,11 @@
 - name: Install development packages
   tags: [packages, dev]
   block:
-  - name: Install development packages
-    community.general.pacman:
-      name:
-        - nodejs-lts-gallium
-        - npm
-        - yarn
-        - php
-        - go
+    - name: Install development packages
+      community.general.pacman:
+        name:
+          - nodejs-lts-gallium
+          - npm
+          - yarn
+          - php
+          - go
