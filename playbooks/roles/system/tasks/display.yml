@@ -3,7 +3,6 @@
   tags: [system, display]
   community.general.pacman:
     name:
-      - libpipewire02
       - xorg
       - xorg-server
       - xorg-xwayland
