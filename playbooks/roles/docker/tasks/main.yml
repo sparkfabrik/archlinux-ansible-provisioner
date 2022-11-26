@@ -65,7 +65,7 @@
         use: paru
         name:
           - qemu-user-static
-          - binfmt-qemu-static
+          - qemu-user-static-binfmt
       become: yes
       become_user: aur_builder
       when: qemu_for_buildx | default(true)
