@@ -6,10 +6,9 @@
 
 - name: Configure energy system
   tags: [system, energy]
-  when: cpu_type.stdout == "GenuineIntel"
-  block:  
-  - name: "Install energy saving tools (powertop and power-profiles-daemon)"
-    community.general.pacman:
-      name: 
-        - power-profiles-daemon
-        - powertop
+  block:
+    - name: "Install energy saving tools (powertop and power-profiles-daemon)"
+      community.general.pacman:
+        name:
+          - power-profiles-daemon
+          - powertop
