@@ -27,7 +27,6 @@
           - ttf-dejavu
           - ttf-hack
           - ttf-inconsolata
-          - tamsyn-font
 
     - name: Install fonts from aur
       kewlfft.aur.aur:
