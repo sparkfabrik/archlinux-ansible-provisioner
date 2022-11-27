@@ -3,80 +3,81 @@
   tags: [wm, sway]
   when: desktop.sway.enable == true
   block:
-  - name: Install sway wm
-    community.general.pacman:
-      name:
-        - alacritty
-        - polkit-gnome
-        - network-manager-applet
-        - ranger
-        - sway
-        - swayidle
-        - swaylock
-        - wofi
-        - wl-clipboard
+    - name: Install sway wm
+      community.general.pacman:
+        name:
+          - alacritty
+          - polkit-gnome
+          - network-manager-applet
+          - ranger
+          - sway
+          - swaybg
+          - swayidle
+          - swaylock
+          - wofi
+          - wl-clipboard
 
-  - name: Display server gui
-    kewlfft.aur.aur:
-      use: paru
-      name:
-        - wdisplays
-    become: yes
-    become_user: aur_builder
+    - name: Display server gui
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - wdisplays
+      become: yes
+      become_user: aur_builder
 
-  - name: Clipboard manager
-    kewlfft.aur.aur:
-      use: paru
-      name:
-        - clipman
-    become: yes
-    become_user: aur_builder
+    - name: Clipboard manager
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - clipman
+      become: yes
+      become_user: aur_builder
 
-  - name: Network utilities
-    community.general.pacman:
-      name:
-        - network-manager-applet
-        - blueman
+    - name: Network utilities
+      community.general.pacman:
+        name:
+          - network-manager-applet
+          - blueman
 
-  - name: Notification system
-    community.general.pacman:
-      name:
-        - dunst
+    - name: Notification system
+      community.general.pacman:
+        name:
+          - dunst
 
-  - name: Screenshot system
-    kewlfft.aur.aur:
-      name:
-        - slurp
-        - grim
-        - grimshot
-    become: yes
-    become_user: aur_builder
+    - name: Screenshot system
+      kewlfft.aur.aur:
+        name:
+          - slurp
+          - grim
+          - grimshot
+      become: yes
+      become_user: aur_builder
 
-  - name: Install fonts from aur
-    kewlfft.aur.aur:
-      use: paru
-      name:
-        - ttf-meslo-nerd-font-powerlevel10k
-    become: yes
-    become_user: aur_builder
+    - name: Install fonts from aur
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - ttf-meslo-nerd-font-powerlevel10k
+      become: yes
+      become_user: aur_builder
 
-  - name: Multimedia controls
-    kewlfft.aur.aur:
-      name:
-        - light
-        - libinput-gestures
-    become: yes
-    become_user: aur_builder
+    - name: Multimedia controls
+      kewlfft.aur.aur:
+        name:
+          - light
+          - libinput-gestures
+      become: yes
+      become_user: aur_builder
 
-  - name: Screensharing
-    community.general.pacman:
-      name:
-        - xdg-desktop-portal-wlr
-        - xdg-desktop-portal
+    - name: Screensharing
+      community.general.pacman:
+        name:
+          - xdg-desktop-portal-wlr
+          - xdg-desktop-portal
 
-  - name: Waybar
-    when: desktop.sway.waybar == true
-    community.general.pacman:
-      name:
-        - waybar
-        - otf-font-awesome
+    - name: Waybar
+      when: desktop.sway.waybar == true
+      community.general.pacman:
+        name:
+          - waybar
+          - otf-font-awesome
