@@ -31,6 +31,14 @@
       backup: yes
       backrefs: yes
       regexp: '^GRUB_DEFAULT='
+  - name: Grus save default
+    lineinfile:
+      dest: /etc/default/grub
+      line: GRUB_SAVEDEFAULT=true
+      mode: 0644
+      backup: yes
+      backrefs: yes
+      regexp: '^GRUB_SAVEDEFAULT='
 
   - name: "Configuring GRUB cmdline"
     lineinfile:
