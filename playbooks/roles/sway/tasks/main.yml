@@ -64,6 +64,7 @@
     - name: Multimedia controls
       kewlfft.aur.aur:
         name:
+          - gammastep
           - light
           - libinput-gestures
       become: yes

@@ -32,6 +32,10 @@ mount -o noatime,compress=zstd,subvol=@ ${LUKS_PARTITION} /mnt
 mkdir -p /mnt/boot
 mount ${UEFI_PARTITION} /mnt/boot
 
+# Mount boot partition like this when using this provisioner without encryption.
+# mkdir -p /mnt/boot/efi
+# mount ${UEFI_PARTITION} /mnt/boot/efi
+
 # Mount home.
 mkdir -p /mnt/home
 mount -o noatime,compress=zstd,subvol=@home ${LUKS_PARTITION} /mnt/home

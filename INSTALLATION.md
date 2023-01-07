@@ -50,12 +50,12 @@ way to start and most compatible layout with tools like snapper or timeshift.
 
 What i've used as a reference:
 
-* https://forum.manjaro.org/t/default-btrfs-mount-options-and-subvolume-layout/43250/33
-* https://www.reddit.com/r/archlinux/comments/fkcamq/noob_btrfs_subvolume_layout_help/fks5mph/?utm_source=share&utm_medium=web2x&context=3
-* https://btrfs.wiki.kernel.org/index.php/SysadminGuide#Layout
-* https://www.jwillikers.com/btrfs-layout
-* https://en.opensuse.org/SDB:BTRFS#Default_Subvolumes
-* https://wiki.archlinux.org/title/User:M0p/LUKS_Root_on_Btrfs
+- https://forum.manjaro.org/t/default-btrfs-mount-options-and-subvolume-layout/43250/33
+- https://www.reddit.com/r/archlinux/comments/fkcamq/noob_btrfs_subvolume_layout_help/fks5mph/?utm_source=share&utm_medium=web2x&context=3
+- https://btrfs.wiki.kernel.org/index.php/SysadminGuide#Layout
+- https://www.jwillikers.com/btrfs-layout
+- https://en.opensuse.org/SDB:BTRFS#Default_Subvolumes
+- https://wiki.archlinux.org/title/User:M0p/LUKS_Root_on_Btrfs
 
 This is the most flexible way to keep the things well separated and giving me the chance
 to automatically snapshot the root or home volumes separately and using `grub-btrfs`
@@ -88,8 +88,8 @@ export LUKS_PARTITION=/dev/mapper/cryptroot
 
 Just to be sure about the partitions, you can always run `lsblk` to see partitions per disk.
 
-> ***VERY IMPORTANT***: From now on i'll use `/dev/nvme0n1p2` for the root partition and `/dev/nvme0n1p3` for the swap one.
-   Adjust them according to your setup.
+> **_VERY IMPORTANT_**: From now on i'll use `/dev/nvme0n1p2` for the root partition and `/dev/nvme0n1p3` for the swap one.
+> Adjust them according to your setup.
 
 ### ROOT LUKS encryption (optional)
 
@@ -103,8 +103,8 @@ We are going to encrypt the entire root filesystem:
 
 ### UEFI Partition
 
-> ***VERY IMPORTANT***: This step is only required when creating a new EFI partition, if you are installing
-beside another Linux distribution or Windows and you already have an EFI partition, you can skip it.
+> **_VERY IMPORTANT_**: This step is only required when creating a new EFI partition, if you are installing
+> beside another Linux distribution or Windows and you already have an EFI partition, you can skip it.
 
 Run this command: `mkfs.fat -F32 ${UEFI_PARTITION}`
 
@@ -112,10 +112,10 @@ Run this command: `mkfs.fat -F32 ${UEFI_PARTITION}`
 
 The swap partition once formatted and activated will be automatically mounted by `systemd` on the live system:
 
- ```
- mkswap ${SWAP_PARTITION}
- swapon ${SWAP_PARTITION}
- ```
+```
+mkswap ${SWAP_PARTITION}
+swapon ${SWAP_PARTITION}
+```
 
 ### BTRFS Setup with encryption
 
@@ -177,7 +177,7 @@ umount /mnt
 mount -o noatime,compress=zstd,subvol=@ ${ROOT_PARTITION} /mnt
 
 # Mount boot partition.
-mkdir -p /mnt/boot/uefi
+mkdir -p /mnt/boot/efi
 mount ${UEFI_PARTITION} /mnt/boot/efi
 
 # Mount home.
@@ -189,8 +189,8 @@ mkdir -p /mnt/mnt/allvolumes
 mount -o noatime,compress=zstd,subvol=/ ${ROOT_PARTITION} /mnt/mnt/allvolumes
 ```
 
-> ***Please note*** that we are mounting btrfs with compression enabled to reduce writes (and ssd lifespan)
-and performance [here](https://wiki.archlinux.org/title/btrfs#Compression) and [here](https://fedoraproject.org/wiki/Changes/BtrfsByDefault#Compression) some refs.
+> **_Please note_** that we are mounting btrfs with compression enabled to reduce writes (and ssd lifespan)
+> and performance [here](https://wiki.archlinux.org/title/btrfs#Compression) and [here](https://fedoraproject.org/wiki/Changes/BtrfsByDefault#Compression) some refs.
 
 Done, we can now run the provisioner.
 
@@ -211,12 +211,12 @@ playbooks/roles
 └── system
 ```
 
-* `bootstrap`: Bootstrap the base system using pacstrap, configure locales, hostname, time and create the first sudoer user.
-* `system`: Configure system services (bluetooth, audio, printing) and install some system dependencies.
-* `gnome`: Install and configure Gnome DE with some extra packages, extensions and some custom shortcuts.
-* `logitech`: Configure Logitech MX Master 2s mices with logid+solaar.
-* `nvidia`: Install Nvidia drivers with nvidia-prime autodetection in case of hybrid graphics system
-* `packages`: Install all needed packages for development, multimedia, utilities and so on.
+- `bootstrap`: Bootstrap the base system using pacstrap, configure locales, hostname, time and create the first sudoer user.
+- `system`: Configure system services (bluetooth, audio, printing) and install some system dependencies.
+- `gnome`: Install and configure Gnome DE with some extra packages, extensions and some custom shortcuts.
+- `logitech`: Configure Logitech MX Master 2s mices with logid+solaar.
+- `nvidia`: Install Nvidia drivers with nvidia-prime autodetection in case of hybrid graphics system
+- `packages`: Install all needed packages for development, multimedia, utilities and so on.
 
 Start by cloning the repo:
 
@@ -238,17 +238,17 @@ vim config/default.yaml
 CONFIG=./config/default.yaml make system
 ```
 
-> ***VERY IMPORTANT***: Ansible will use the default values specified by the roles, you should change it or pass it, at the moment
+> **_VERY IMPORTANT_**: Ansible will use the default values specified by the roles, you should change it or pass it, at the moment
 > the later option is not supported by the Makefile.
 
 ### Configure GRUB to the encrypted disk (only for encrypted installations)
 
 1. Run `vim /mnt/etc/mkinitcpio.conf` and, to the `HOOKS` array, add `keyboard` between `autodetect` and `modconf` and add `encrypt` between `block` and `filesystems`
-   * It should look like this: `HOOKS=(base udev autodetect keyboard modconf block encrypt filesystems keyboard fsck)`
+   - It should look like this: `HOOKS=(base udev autodetect keyboard modconf block encrypt filesystems keyboard fsck)`
 1. Run `arch-chroot /mnt mkinitcpio -P`
 1. Run `blkid -s UUID -o value ${ROOT_PARTITION}` to get the `UUID` of the device
 1. Run `vim /mnt/etc/default/grub` and set `GRUB_CMDLINE_LINUX="cryptdevice=UUID=xxxx:cryptroot /dev/mapper/cryptroot"` while replacing `xxxx` with the `UUID` of the `$ROOT_PARTITION` device to tell GRUB about our encrypted file system.
-   * It should look like this: `GRUB_CMDLINE_LINUX="cryptdevice=UUID=1aa4277d-f942-49d1-b5b4-74641941dd9c:cryptroot /dev/mapper/cryptroot"`
+   - It should look like this: `GRUB_CMDLINE_LINUX="cryptdevice=UUID=1aa4277d-f942-49d1-b5b4-74641941dd9c:cryptroot /dev/mapper/cryptroot"`
 
 #### Set the user password
 
