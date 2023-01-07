@@ -26,6 +26,7 @@
           - rancher-k3d-bin
           - stern
           - tmate
+          - act
       become: yes
       become_user: aur_builder
 
