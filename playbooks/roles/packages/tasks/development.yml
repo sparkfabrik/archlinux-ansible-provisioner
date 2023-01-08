@@ -6,6 +6,7 @@
       community.general.pacman:
         name:
           - aws-cli-v2
+          - github-cli
           - yq
           - jq
           - kubectl
