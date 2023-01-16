@@ -6,6 +6,7 @@
       community.general.pacman:
         name:
           - docker
+          - docker-buildx
           - docker-compose
 
     - name: Add user to docker group
