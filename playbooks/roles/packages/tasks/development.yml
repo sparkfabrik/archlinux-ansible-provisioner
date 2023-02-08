@@ -28,6 +28,7 @@
           - stern
           - tmate
           - act
+          - flux-bin
       become: yes
       become_user: aur_builder
 
