@@ -18,6 +18,7 @@
       kewlfft.aur.aur:
         use: paru
         name:
+          - crane
           - pack-cli-bin
           - google-cloud-sdk
           - google-cloud-sdk-gke-gcloud-auth-plugin
