@@ -9,6 +9,7 @@
           - github-cli
           - yq
           - jq
+          - jless
           - kubectl
           - k9s
           - helm
@@ -18,7 +19,6 @@
       kewlfft.aur.aur:
         use: paru
         name:
-          - jless
           - crane
           - pack-cli-bin
           - google-cloud-sdk
