@@ -18,6 +18,7 @@
       kewlfft.aur.aur:
         use: paru
         name:
+          - jless
           - crane
           - pack-cli-bin
           - google-cloud-sdk
