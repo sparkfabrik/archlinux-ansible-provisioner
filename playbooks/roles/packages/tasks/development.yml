@@ -30,8 +30,21 @@
           - stern
           - tmate
           - act
+          - cosign
+          - grype-bin
+          - syft
       become: yes
       become_user: aur_builder
+
+    - name: Install cloud native security packages
+      tags: [packages, security]
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - cosign
+          - grype-bin
+          - syft
+          - trivy
 
 - name: Install development packages
   tags: [packages, dev]
