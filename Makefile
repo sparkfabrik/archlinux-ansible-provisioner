@@ -43,7 +43,7 @@ local-install: validate-json-schema
 	sudo ansible-galaxy collection install -r ./requirements.yml
 	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --extra-vars "@$(CONFIG)"
 
-local-install-tags: validate-json-schema
+local-install-tags: 
 	sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local --tags $(TAGS) --extra-vars "@$(CONFIG)"
 
 local-install-apps: validate-json-schema

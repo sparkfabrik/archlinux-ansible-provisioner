@@ -7,6 +7,13 @@
       name:
         - guvcview
 
+  - name: Install audio plugins
+    community.general.pacman:
+	name:
+	  - easyeffects
+	  - lsp-plugins
+          - calf
+
   - name: Install media packages (aur)
     kewlfft.aur.aur:
       use: paru
