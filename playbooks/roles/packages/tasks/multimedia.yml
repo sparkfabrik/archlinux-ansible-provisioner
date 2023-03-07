@@ -8,6 +8,7 @@
         - guvcview
 
   - name: Install audio plugins
+    tags: [audio]
     community.general.pacman:
 	name:
 	  - easyeffects
