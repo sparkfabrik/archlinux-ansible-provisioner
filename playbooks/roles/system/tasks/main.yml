@@ -60,10 +60,12 @@
       - efibootmgr
       - git
       - grub-btrfs
+      - nvme-cli
       - os-prober
       - procps-ng
       - ntfs-3g
       - sudo
+      - udisks2
       - util-linux
     state: present
     update_cache: yes
