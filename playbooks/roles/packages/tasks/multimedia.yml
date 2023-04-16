@@ -1,6 +1,6 @@
 ---
 - name: Install multimedia packages
-  tags: [packages, media]
+  tags: [packages, media, multimedia]
   block:
   - name: Install media packages
     community.general.pacman:
@@ -10,10 +10,10 @@
   - name: Install audio plugins
     tags: [audio]
     community.general.pacman:
-	name:
-	  - easyeffects
-	  - lsp-plugins
-          - calf
+      name:
+        - easyeffects
+        - lsp-plugins
+        - calf
 
   - name: Install media packages (aur)
     kewlfft.aur.aur:

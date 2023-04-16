@@ -12,7 +12,6 @@
   - name: Configure bluetooth ControllerMode
     community.general.ini_file:
       path: /etc/bluetooth/main.conf
-      section: null
       no_extra_spaces: false
       option: ControllerMode
       value: "{{ system.bluetooth.controllerMode | default('dual') }}"
