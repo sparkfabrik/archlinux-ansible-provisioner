@@ -27,17 +27,17 @@
           - ttf-dejavu
           - ttf-hack
           - ttf-inconsolata
+          - ttf-ubuntu-nerd
+          - ttf-firacode-nerd
+          - ttf-inconsolata-nerd
+          - otf-droid-nerd
 
     - name: Install fonts from aur
       kewlfft.aur.aur:
         use: paru
         name:
-          - nerd-fonts-ubuntu
-          - otf-nerd-fonts-fira-code
           - ttf-monaco
           - ttf-meslo-nerd-font-powerlevel10k
-          - nerd-fonts-inconsolata
-          - nerd-fonts-droid-sans-mono
       become: yes
       become_user: aur_builder
 
