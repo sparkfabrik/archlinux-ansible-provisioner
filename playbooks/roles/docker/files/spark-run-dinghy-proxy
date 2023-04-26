@@ -1,5 +1,5 @@
 #!/bin/bash
-DINGHY_HTTP_PROXY_VERSION=${1:-codekitchen\/dinghy-http-proxy:2.6.2}
+DINGHY_HTTP_PROXY_VERSION=${1:-codekitchen\/dinghy-http-proxy:2.7.1}
 if docker ps -a | grep 'dnsdock' > /dev/null; then
     echo -n "Found a dnsdock container, removing it..."
     docker rm -vf dnsdock 1> /dev/null
