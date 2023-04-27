@@ -2,96 +2,95 @@
 - name: Install Kernel
   tags: [system, kernel]
   block:
-  - name: "Check if grub is installed"
-    block:
-    - stat: path=/boot/grub
-      register: grubcfg
+    - name: "Check if grub is installed"
+      block:
+        - stat: path=/boot/grub
+          register: grubcfg
 
-  - name: "Install linux-lts kernel"
-    when: system.kernel == "standard"
-    block:
-    - name: Install lts kernel
-      community.general.pacman:
-        name:
-          - linux-lts
-          - linux-lts-headers
-          - linux-firmware
-        state: present
-        update_cache: yes
+    - name: "Install linux-lts kernel"
+      when: system.kernel == "standard"
+      block:
+        - name: Install lts kernel
+          community.general.pacman:
+            name:
+              - linux-lts
+              - linux-lts-headers
+              - linux-firmware
+            state: present
+            update_cache: yes
 
-    - name: Install linux kernel
-      community.general.pacman:
-        name:
-          - linux
-          - linux-headers
-          - linux-firmware
-        state: present
-        update_cache: yes
+        - name: Install linux kernel
+          community.general.pacman:
+            name:
+              - linux
+              - linux-headers
+              - linux-firmware
+            state: present
+            update_cache: yes
 
-    - name: Ensure other kernel are not installed
-      community.general.pacman:
-        name:
-          - linux-zen
-          - linux-zen-headers
-        state: absent
-        update_cache: yes
-      ignore_errors: yes
+        - name: Ensure other kernel are not installed
+          community.general.pacman:
+            name:
+              - linux-zen
+              - linux-zen-headers
+            state: absent
+            update_cache: yes
+          ignore_errors: yes
 
-  - name: "Linux zen kernel"
-    when: system.kernel == "zen"
-    block:
-    - name: Install linux zen kernel
-      community.general.pacman:
-        name:
-          - linux-zen
-          - linux-zen-headers
-          - linux-firmware
-        state: present
-        update_cache: yes
-    - name: Ensure other kernel are not installed
-      community.general.pacman:
-        name:
-          - linux
-          - linux-headers
-        state: absent
-        update_cache: yes
-      ignore_errors: yes
+    - name: "Linux zen kernel"
+      when: system.kernel == "zen"
+      block:
+        - name: Install linux zen kernel
+          community.general.pacman:
+            name:
+              - linux-zen
+              - linux-zen-headers
+              - linux-firmware
+            state: present
+            update_cache: yes
+        - name: Ensure other kernel are not installed
+          community.general.pacman:
+            name:
+              - linux
+              - linux-headers
+            state: absent
+            update_cache: yes
+          ignore_errors: yes
 
-  - name: "Linux lts kernel"
-    when: system.kernel == "lts"
-    block:
-    - name: Install linux lts kernel
-      community.general.pacman:
-        name:
-          - linux-lts
-          - linux-lts-headers
-          - linux-firmware
-        state: present
-        update_cache: yes
-    - name: Ensure other kernel are not installed (standard and zen)
-      community.general.pacman:
-        name:
-          - linux
-          - linux-zen
-          - linux-headers
-        state: absent
-        update_cache: yes
-      ignore_errors: yes
+    - name: "Linux lts kernel"
+      when: system.kernel == "lts"
+      block:
+        - name: Install linux lts kernel
+          community.general.pacman:
+            name:
+              - linux-lts
+              - linux-lts-headers
+              - linux-firmware
+            state: present
+            update_cache: yes
+        - name: Ensure other kernel are not installed (standard and zen)
+          community.general.pacman:
+            name:
+              - linux
+              - linux-zen
+              - linux-headers
+            state: absent
+            update_cache: yes
+          ignore_errors: yes
 
-  - name: Copy provided mkinitcpio.conf
-    tags: [system, mkinitcpio]
-    vars:
-      enable_encrypt: "{{ (encryption == true) | ternary('encrypt', '') }}"
-    ansible.builtin.copy:
-      src: files/mkinitcpio.conf
-      dest: /etc/mkinitcpio.conf
-    #ansible.builtin.template:
-    #  src: files/mkinitcpio.conf.j2
-    #  dest: /etc/mkinitcpio.conf
+    - name: Copy provided mkinitcpio.conf
+      tags: [system, mkinitcpio]
+      vars:
+        enable_encrypt: "{{ (encryption == true) | ternary('encrypt', '') }}"
+      ansible.builtin.copy:
+        src: files/mkinitcpio.conf
+        dest: /etc/mkinitcpio.conf
 
-  - name: Regenerate mkinitcpio.conf
-    shell: mkinitcpio -P
+    - name: Regenerate mkinitcpio.conf
+      tags: [system, mkinitcpio]
+      shell: mkinitcpio -P
 
-  - name: Regenerate grub config
-    shell: grub-mkconfig -o /boot/grub/grub.cfg
-    when: grubcfg.stat.isdir is defined and grubcfg.stat.isdir
+    - name: Regenerate grub config
+      tags: [system, mkinitcpio]
+      shell: grub-mkconfig -o /boot/grub/grub.cfg
+      when: grubcfg.stat.isdir is defined and grubcfg.stat.isdir

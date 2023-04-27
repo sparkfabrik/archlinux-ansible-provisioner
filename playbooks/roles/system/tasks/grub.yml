@@ -2,52 +2,57 @@
 - name: Configure grub
   tags: [system, grub]
   block:
-  - stat: path=/boot/grub
-    register: grubcfg
-  - name: "Configuring GRUB to print the OEM logo"
-    lineinfile:
-      dest: /etc/default/grub
-      regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
-      line: 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet splash"'
-      mode: 0644
-      backup: yes
-  - name: Enable OS_PROBER
-    lineinfile:
-      dest: /etc/default/grub
-      line: GRUB_DISABLE_OS_PROBER=false
-      mode: 0644
-      backup: yes
-  - name: Enable GRUB recovery mode GRUB_DISABLE_RECOVERY
-    lineinfile:
-      dest: /etc/default/grub
-      line: GRUB_DISABLE_RECOVERY=false
-      mode: 0644
-      backup: yes
-  - name: Remember last choice
-    lineinfile:
-      dest: /etc/default/grub
-      line: GRUB_DEFAULT=saved
-      mode: 0644
-      backup: yes
-      backrefs: yes
-      regexp: '^GRUB_DEFAULT='
-  - name: Grus save default
-    lineinfile:
-      dest: /etc/default/grub
-      line: GRUB_SAVEDEFAULT=true
-      mode: 0644
-      backup: yes
-      backrefs: yes
-      regexp: '^GRUB_SAVEDEFAULT='
+    - stat: path=/boot/grub
+      register: grubcfg
 
-  - name: "Configuring GRUB cmdline"
-    lineinfile:
-      dest: /etc/default/grub
-      regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
-      line: 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet splash"'
-      mode: 0644
-      backup: yes
+    - name: "Configuring GRUB to print the OEM logo"
+      lineinfile:
+        dest: /etc/default/grub
+        regexp: "^GRUB_CMDLINE_LINUX_DEFAULT="
+        line: 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet splash resume=PARTLABEL=swap"'
+        mode: 0644
+        backup: yes
 
-  - name: "Regenerate GRUB config"
-    command: grub-mkconfig -o /boot/grub/grub.cfg
-    when: grubcfg.stat.isdir is defined and grubcfg.stat.isdir
+    - name: Enable OS_PROBER
+      lineinfile:
+        dest: /etc/default/grub
+        line: GRUB_DISABLE_OS_PROBER=false
+        mode: 0644
+        backup: yes
+
+    - name: Enable GRUB recovery mode GRUB_DISABLE_RECOVERY
+      lineinfile:
+        dest: /etc/default/grub
+        line: GRUB_DISABLE_RECOVERY=false
+        mode: 0644
+        backup: yes
+
+    - name: Remember last choice
+      lineinfile:
+        dest: /etc/default/grub
+        line: GRUB_DEFAULT=saved
+        mode: 0644
+        backup: yes
+        backrefs: yes
+        regexp: "^GRUB_DEFAULT="
+
+    - name: Grus save default
+      lineinfile:
+        dest: /etc/default/grub
+        line: GRUB_SAVEDEFAULT=true
+        mode: 0644
+        backup: yes
+        backrefs: yes
+        regexp: "^GRUB_SAVEDEFAULT="
+
+    - name: "Configuring GRUB cmdline"
+      lineinfile:
+        dest: /etc/default/grub
+        regexp: "^GRUB_CMDLINE_LINUX_DEFAULT="
+        line: 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet splash"'
+        mode: 0644
+        backup: yes
+
+    - name: "Regenerate GRUB config"
+      command: grub-mkconfig -o /boot/grub/grub.cfg
+      when: grubcfg.stat.isdir is defined and grubcfg.stat.isdir
