@@ -49,7 +49,7 @@
       lineinfile:
         dest: /etc/default/grub
         regexp: "^GRUB_CMDLINE_LINUX_DEFAULT="
-        line: 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet splash"'
+        line: 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet splash resume=PARTLABEL=swap"'
         mode: 0644
         backup: yes
 
