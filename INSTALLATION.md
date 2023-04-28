@@ -91,6 +91,57 @@ Just to be sure about the partitions, you can always run `lsblk` to see partitio
 > **_VERY IMPORTANT_**: From now on i'll use `/dev/nvme0n1p2` for the root partition and `/dev/nvme0n1p3` for the swap one.
 > Adjust them according to your setup.
 
+### Hybernation
+
+System will be configured to use the the partition labeled as `swap` as the swap partition.
+You must be sure to add this label to the swap partition, it should be like this:
+
+```
+❯ sudo gdisk -l /dev/nvme0n1
+GPT fdisk (gdisk) version 1.0.9.1
+
+Number  Start (sector)    End (sector)  Size       Code  Name
+   1            2048         2099199   1024.0 MiB  EF00
+   2         2099200      1849670069   881.0 GiB   8300
+   3      1849670070      1953525134   49.5 GiB    8200  swap <----- THIS IS THE LABEL
+```
+
+If you don't have it, you can add it with the following commands:
+
+```shell
+❯ sudo gdisk /dev/nvme0n1
+GPT fdisk (gdisk) version 1.0.9.1
+
+Partition table scan:
+  MBR: protective
+  BSD: not present
+  APM: not present
+  GPT: present
+
+Found valid GPT with protective MBR; using GPT.
+
+Command (? for help): c
+Partition number (1-3): 3
+Enter name: swap
+
+Command (? for help): w
+
+Final checks complete. About to write GPT data. THIS WILL OVERWRITE EXISTING
+PARTITIONS!!
+
+Do you want to proceed? (Y/N): y
+OK; writing new GUID partition table (GPT) to /dev/nvme0n1.
+Warning: The kernel is still using the old partition table.
+The new table will be used at the next reboot or after you
+run partprobe(8) or kpartx(8)
+The operation has completed successfully.
+
+❯ sudo partprobe
+
+❯ blkid | grep swap
+/dev/nvme0n1p3: UUID="29ddcc21-8a13-49b5-8dc1-767ff387b15a" TYPE="swap" PARTLABEL="swap" PARTUUID="30b47a33-c1b3-924d-9c1c-0adff8f018fd"
+```
+
 ### ROOT LUKS encryption (optional)
 
 1. Archlinux wiki: https://wiki.archlinux.org/title/Dm-crypt/Encrypting_an_entire_system#LUKS_on_a_partition
