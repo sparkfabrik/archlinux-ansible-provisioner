@@ -14,7 +14,7 @@
           - gnome-sound-recorder
           - dconf-editor
           - python-psutil
-          - gnome-software-packagekit-plugin
+          - gnome-software
           - networkmanager
           - networkmanager-openvpn
           - seahorse
