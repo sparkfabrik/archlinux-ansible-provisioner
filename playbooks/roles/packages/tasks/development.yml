@@ -21,8 +21,8 @@
         name:
           - crane
           - pack-cli-bin
-          - google-cloud-sdk
-          - google-cloud-sdk-gke-gcloud-auth-plugin
+          - google-cloud-cli
+          - google-cloud-cli-gke-gcloud-auth-plugin
           - kind
           - kubectx
           - kubetail
