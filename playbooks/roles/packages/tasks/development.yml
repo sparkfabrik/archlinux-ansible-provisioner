@@ -54,6 +54,7 @@
         name:
           - nodejs-lts-gallium
           - npm
+          - python-pipx
           - yarn
           - php
           - go
