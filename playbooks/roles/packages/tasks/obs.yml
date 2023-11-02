@@ -1,7 +1,7 @@
 ---
 - name: Install and configure obs
   tags: [packages, obs]
-  when: packages.packages == true
+  when: packages.obs == true
   block:
     - name: Install obs
       community.general.pacman:
