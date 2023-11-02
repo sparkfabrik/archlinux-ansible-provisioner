@@ -1,0 +1,17 @@
+---
+- name: Install and configure obs
+  tags: [packages, obs]
+  when: packages.packages == true
+  block:
+    - name: Install obs
+      community.general.pacman:
+        name:
+          - obs-studio
+
+    - name: Install obs plugins
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - obs-backgroundremoval
+      become: yes
+      become_user: aur_builder

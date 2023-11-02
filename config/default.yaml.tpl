@@ -4,12 +4,15 @@ system:
   username: foobar
   kernel: standard # standard|lts|zen
   timezone: Europe/Rome
+  bluetooth:
+    controllerMode: dual
 timeshift:
   autosnap:
     enabled: true
     maxSnapshots: 10
-bluetooth:
-  controllerMode: dual
+
+packages:
+  obs: false
 desktop:
   gnome:
     extensions:

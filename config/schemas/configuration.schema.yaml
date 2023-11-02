@@ -239,6 +239,18 @@ properties:
       - true
     title: Install qemu-user-static and binfmt-qemu-static AUR packages
     type: boolean
+  packages:
+    $id: "#/properties/packages"
+    default: true
+    description: Configure packages.
+    additionalProperties: true
+    properties:
+      obs:
+        $id: "#/properties/packages/properties/obs"
+        default: "false"
+        description: Install obs studio and plugins.
+        title: OBS Studio and plugins
+        type: boolean
 required:
   - system
 title: The root schema
