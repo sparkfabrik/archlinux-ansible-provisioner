@@ -70,6 +70,12 @@
     state: present
     update_cache: yes
 
+- name: Install and setup reflector
+  tags: [system, btrfs]
+  block:
+    - name: Enable btrfs monthly scrub
+      shell: systemctl enable btrfs-scrub@-.timer
+
 - name: Install fwupd
   community.general.pacman:
     name:
