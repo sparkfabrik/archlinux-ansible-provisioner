@@ -83,3 +83,8 @@
         name:
           - waybar
           - otf-font-awesome
+
+    - name: Configure login launcher due to this issue - https://github.com/swaywm/sway/issues/3109
+      ansible.builtin.copy:
+        src: sway-shell.desktop
+        dest: /usr/share/wayland-sessions/sway-shell.desktop
