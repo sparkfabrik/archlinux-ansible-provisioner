@@ -88,3 +88,8 @@
       ansible.builtin.copy:
         src: sway-shell.desktop
         dest: /usr/share/wayland-sessions/sway-shell.desktop
+
+    - name: Install the openrgb flatpak
+      flatpak:
+        name: org.openrgb.OpenRGB
+        state: present
