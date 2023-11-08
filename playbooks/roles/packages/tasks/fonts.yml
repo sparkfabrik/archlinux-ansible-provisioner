@@ -9,8 +9,11 @@
           - fontconfig
           - adobe-source-sans-fonts
           - cantarell-fonts
+          - otf-libertinus
           - noto-fonts
+          - noto-fonts-emoji
           - terminus-font
+          - tex-gyre-fonts
           - ttf-anonymous-pro
           - ttf-droid
           - ttf-liberation
