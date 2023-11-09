@@ -7,7 +7,7 @@ if docker ps -a | grep 'dnsdock' > /dev/null; then
     echo ""
 fi
 if docker ps -a | grep 'dinghy-http-proxy' > /dev/null; then
-    echo "Found a dnsdock container, removing it..."
+    echo "Found a dinghy-http-proxy container, removing it..."
     docker rm -vf dinghy-http-proxy 1> /dev/null
 fi
 
