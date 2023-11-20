@@ -76,6 +76,12 @@
     - name: Enable btrfs monthly scrub
       shell: systemctl enable btrfs-scrub@-.timer
 
+- name: Enable fstrim.timer
+  tags: [system, btrfs]
+  block:
+    - name: Enable fstrim.timer
+      shell: systemctl enable fstrim.timer
+
 - name: Install fwupd
   community.general.pacman:
     name:
