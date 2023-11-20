@@ -59,6 +59,11 @@
         src: "/usr/share/fontconfig/conf.avail/11-lcdfilter-default.conf"
         dest: "/etc/fonts/conf.d/11-lcdfilter-default.conf"
         state: link
+    - name: Disable bitmaps
+      file:
+        src: "/usr/share/fontconfig/conf.avail/70-no-bitmaps.conf"
+        dest: "/etc/fonts/conf.d/70-no-bitmaps.conf"
+        state: link
     - name: Enable freetype2
       ansible.builtin.lineinfile:
         path: /etc/profile.d/freetype2.sh
