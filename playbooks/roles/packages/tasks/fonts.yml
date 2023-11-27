@@ -4,6 +4,7 @@
   block:
     - name: Install fonts
       community.general.pacman:
+        update_cache: true
         name:
           - freetype2
           - fontconfig
@@ -31,6 +32,7 @@
           - ttf-hack
           - ttf-inconsolata
           - ttf-ubuntu-nerd
+          - ttf-ubuntu-mono-nerd
           - ttf-firacode-nerd
           - ttf-inconsolata-nerd
           - otf-droid-nerd
