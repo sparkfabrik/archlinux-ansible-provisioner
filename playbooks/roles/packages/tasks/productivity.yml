@@ -19,7 +19,6 @@
           - timeshift
           - visual-studio-code-bin
           - icu69-bin
-          - toggldesktop
           - zoom
           - xournalpp
       become: yes
