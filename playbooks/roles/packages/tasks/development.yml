@@ -15,6 +15,12 @@
           - helm
           - kustomize
           - terraform
+          
+    - name: Install Github Copilot CLI 
+      ansible.builtin.command: gh extension install github/gh-copilot
+      become: yes
+      become_user: "{{ system.username }}"
+  
     - name: Install cloud native packages from aur
       kewlfft.aur.aur:
         use: paru
