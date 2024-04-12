@@ -10,9 +10,9 @@
         delete: no
         recursive: yes
 
-    - name: Install wallpapers xml
+    - name: Install gnome wallpapers configuration file
       copy:
-        src: gnome-spark-wallpapers.xml
+        src: wallpapers/gnome-spark-wallpapers.xml
         dest: /usr/share/gnome-background-properties
 
     - name: Copy ayse-get-sm binary to print serial-number
