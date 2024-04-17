@@ -1,9 +1,15 @@
 ---
 - name: "Detect fingerprint reader"
   tags: [system, thinkpad]
-  shell: "lsusb | grep -i \"fingerprint\""
+  shell: 'lsusb | grep -i "fingerprint"'
   ignore_errors: yes
   register: is_fingerprint_reader
+
+- name: Detect ThinkPad Z16 Gen2 fingerprint reader
+  tags: [system, thinkpad]
+  shell: 'lsusb  | grep "06cb:0123"'
+  ignore_errors: yes
+  register: is_fingerprint_reader_z16
 
 - name: "Detect if device has a lid"
   tags: [system, thinkpad]
@@ -15,30 +21,31 @@
   tags: [system, thinkpad]
   when: has_lid.stdout != ""
   block:
-  - name: Suspend on lid closing
-    lineinfile:
-      dest: /etc/systemd/logind.conf
-      regexp: '^HandleLidSwitch='
-      line: 'HandleLidSwitch=suspend'
-      mode: 0644
-      backup: yes
-  - name: Do nothing on lid closing with external power
-    lineinfile:
-      dest: /etc/systemd/logind.conf
-      regexp: '^HandleLidSwitchExternalPower='
-      line: 'HandleLidSwitchExternalPower=ignore'
-      mode: 0644
-      backup: yes
-  - name: Do nothing on lid closing when docked
-    lineinfile:
-      dest: /etc/systemd/logind.conf
-      regexp: '^HandleLidSwitchDocked='
-      line: 'HandleLidSwitchDocked=ignore'
-      mode: 0644
-      backup: yes
+    - name: Suspend on lid closing
+      lineinfile:
+        dest: /etc/systemd/logind.conf
+        regexp: "^HandleLidSwitch="
+        line: "HandleLidSwitch=suspend"
+        mode: 0644
+        backup: yes
+    - name: Do nothing on lid closing with external power
+      lineinfile:
+        dest: /etc/systemd/logind.conf
+        regexp: "^HandleLidSwitchExternalPower="
+        line: "HandleLidSwitchExternalPower=ignore"
+        mode: 0644
+        backup: yes
+    - name: Do nothing on lid closing when docked
+      lineinfile:
+        dest: /etc/systemd/logind.conf
+        regexp: "^HandleLidSwitchDocked="
+        line: "HandleLidSwitchDocked=ignore"
+        mode: 0644
+        backup: yes
 
 - name: Install fingerprint reader (if hw is available)
   tags: [system, fingerprint]
+  when: is_fingerprint_reader.rc == 0 or is_fingerprint_reader_z16.rc == 0
   block:
     - name: Install fprintd
       community.general.pacman:
@@ -46,7 +53,6 @@
           - fprintd
     - name: Add user to input group
       user:
-        name: '{{ system.username }}'
+        name: "{{ system.username }}"
         groups: input
         append: yes
-

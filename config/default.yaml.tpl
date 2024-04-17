@@ -6,23 +6,34 @@ system:
   timezone: Europe/Rome
   bluetooth:
     controllerMode: dual
+  grub:
+    gfxmode: 1920x1080x32
 timeshift:
   autosnap:
     enabled: true
     maxSnapshots: 10
+swapfile:
+  enabled: false
+  btrfs_temporary_mount_point: /mnt/btrfs
+  btrfs_device: /dev/mapper/cryptroot
+  btrfs_volume_name: "@swap" # Quote the name if it contains special characters
+  btrfs_volume_mountpoint: /swap
+  filename: swapfile
+  size: 16G
+  configure_hibernate: false
 
 packages:
   obs: false
 desktop:
   gnome:
     extensions:
-    - appindicatorsupport@rgcjonas.gmail.com
-    - just-perfection-desktop@just-perfection
-    - screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com
-    - user-theme@gnome-shell-extensions.gcampax.github.com
-    - dash-to-dock@micxgx.gmail.com
-    - ding@rastersoft.com
-    - Vitals@CoreCoding.com
+      - appindicatorsupport@rgcjonas.gmail.com
+      - just-perfection-desktop@just-perfection
+      - screenshot-window-sizer@gnome-shell-extensions.gcampax.github.com
+      - user-theme@gnome-shell-extensions.gcampax.github.com
+      - dash-to-dock@micxgx.gmail.com
+      - ding@rastersoft.com
+      - Vitals@CoreCoding.com
     keybindings:
       open_terminal_shortcut: "<Super>Return" # "<Primary><Alt>t"
     dconf:

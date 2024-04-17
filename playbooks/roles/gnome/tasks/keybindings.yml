@@ -2,181 +2,197 @@
 - name: Configure gnome keybindings
   tags: [gnome, gnome-config, keybindings]
   become: yes
-  become_user: '{{ system.username }}'
+  become_user: "{{ system.username }}"
   block:
-  - name: Set 'move to workspace 1' keyboard shortcut
-    dconf:
-      key: "/org/gnome/desktop/wm/keybindings/move-to-workspace-1"
-      value: "['<Shift><Super>F1']"
+    - name: Detect laptop version
+      shell: "dmidecode -s system-version"
+      register: laptop_version
+      changed_when: false
+      failed_when: false
+      become: yes
+      become_user: "root"
 
-  - name: Set 'move to workspace 2' keyboard shortcut
-    dconf:
-      key: "/org/gnome/desktop/wm/keybindings/move-to-workspace-2"
-      value: "['<Shift><Super>F2']"
+    - name: Set 'move to workspace 1' keyboard shortcut
+      dconf:
+        key: "/org/gnome/desktop/wm/keybindings/move-to-workspace-1"
+        value: "['<Shift><Super>F1']"
 
-  - name: Set 'move to workspace 3' keyboard shortcut
-    dconf:
-      key: "/org/gnome/desktop/wm/keybindings/move-to-workspace-3"
-      value: "['<Shift><Super>F3']"
+    - name: Set 'move to workspace 2' keyboard shortcut
+      dconf:
+        key: "/org/gnome/desktop/wm/keybindings/move-to-workspace-2"
+        value: "['<Shift><Super>F2']"
 
-  - name: Set 'move to workspace 4' keyboard shortcut
-    dconf:
-      key: "/org/gnome/desktop/wm/keybindings/move-to-workspace-4"
-      value: "['<Shift><Super>F4']"
+    - name: Set 'move to workspace 3' keyboard shortcut
+      dconf:
+        key: "/org/gnome/desktop/wm/keybindings/move-to-workspace-3"
+        value: "['<Shift><Super>F3']"
 
-  - name: Set 'switch to workspace 1' keyboard shortcut
-    dconf:
-      key: "/org/gnome/desktop/wm/keybindings/switch-to-workspace-1"
-      value: "['<Super>1']"
+    - name: Set 'move to workspace 4' keyboard shortcut
+      dconf:
+        key: "/org/gnome/desktop/wm/keybindings/move-to-workspace-4"
+        value: "['<Shift><Super>F4']"
 
-  - name: Set 'switch to workspace 2' keyboard shortcut
-    dconf:
-      key: "/org/gnome/desktop/wm/keybindings/switch-to-workspace-2"
-      value: "['<Super>2']"
+    - name: Set 'switch to workspace 1' keyboard shortcut
+      dconf:
+        key: "/org/gnome/desktop/wm/keybindings/switch-to-workspace-1"
+        value: "['<Super>1']"
 
-  - name: Set 'switch to workspace 3' keyboard shortcut
-    dconf:
-      key: "/org/gnome/desktop/wm/keybindings/switch-to-workspace-3"
-      value: "['<Super>3']"
+    - name: Set 'switch to workspace 2' keyboard shortcut
+      dconf:
+        key: "/org/gnome/desktop/wm/keybindings/switch-to-workspace-2"
+        value: "['<Super>2']"
 
-  - name: Set 'switch to workspace 4' keyboard shortcut
-    dconf:
-      key: "/org/gnome/desktop/wm/keybindings/switch-to-workspace-4"
-      value: "['<Super>4']"
+    - name: Set 'switch to workspace 3' keyboard shortcut
+      dconf:
+        key: "/org/gnome/desktop/wm/keybindings/switch-to-workspace-3"
+        value: "['<Super>3']"
 
-  - name: Disable 'switch-to-application-1' keyboard shortcut
-    dconf:
-      key: "/org/gnome/shell/keybindings/switch-to-application-1"
-      value: "@as []"
-  - name: Disable 'switch-to-application-2' keyboard shortcut
-    dconf:
-      key: "/org/gnome/shell/keybindings/switch-to-application-2"
-      value: "@as []"
-  - name: Disable 'switch-to-application-3' keyboard shortcut
-    dconf:
-      key: "/org/gnome/shell/keybindings/switch-to-application-3"
-      value: "@as []"
-  - name: Disable 'switch-to-application-4' keyboard shortcut
-    dconf:
-      key: "/org/gnome/shell/keybindings/switch-to-application-4"
-      value: "@as []"
+    - name: Set 'switch to workspace 4' keyboard shortcut
+      dconf:
+        key: "/org/gnome/desktop/wm/keybindings/switch-to-workspace-4"
+        value: "['<Super>4']"
 
-  - name: Disable dash-to-dock hotkeys-1
-    dconf:
-      key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-1"
-      value: "@as []"
-  - name: Disable dash-to-dock hotkeys-2
-    dconf:
-      key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-2"
-      value: "@as []"
-  - name: Disable dash-to-dock hotkeys-3
-    dconf:
-      key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-3"
-      value: "@as []"
-  - name: Disable dash-to-dock hotkeys-4
-    dconf:
-      key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-4"
-      value: "@as []"
-  - name: Disable dash-to-dock hotkeys-5
-    dconf:
-      key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-5"
-      value: "@as []"
-  - name: Disable dash-to-dock hotkeys-6
-    dconf:
-      key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-6"
-      value: "@as []"
+    - name: Disable 'switch-to-application-1' keyboard shortcut
+      dconf:
+        key: "/org/gnome/shell/keybindings/switch-to-application-1"
+        value: "@as []"
+    - name: Disable 'switch-to-application-2' keyboard shortcut
+      dconf:
+        key: "/org/gnome/shell/keybindings/switch-to-application-2"
+        value: "@as []"
+    - name: Disable 'switch-to-application-3' keyboard shortcut
+      dconf:
+        key: "/org/gnome/shell/keybindings/switch-to-application-3"
+        value: "@as []"
+    - name: Disable 'switch-to-application-4' keyboard shortcut
+      dconf:
+        key: "/org/gnome/shell/keybindings/switch-to-application-4"
+        value: "@as []"
 
-  - name: Close windows with super+shift+q
-    dconf:
-      key: "/org/gnome/desktop/wm/keybindings/close"
-      value: "['<Shift><Super>q']"
-    when: desktop.gnome.dconf.alter_close_window == true
+    - name: Disable dash-to-dock hotkeys-1
+      dconf:
+        key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-1"
+        value: "@as []"
+    - name: Disable dash-to-dock hotkeys-2
+      dconf:
+        key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-2"
+        value: "@as []"
+    - name: Disable dash-to-dock hotkeys-3
+      dconf:
+        key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-3"
+        value: "@as []"
+    - name: Disable dash-to-dock hotkeys-4
+      dconf:
+        key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-4"
+        value: "@as []"
+    - name: Disable dash-to-dock hotkeys-5
+      dconf:
+        key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-5"
+        value: "@as []"
+    - name: Disable dash-to-dock hotkeys-6
+      dconf:
+        key: "/org/gnome/shell/extensions/dash-to-dock/app-hotkey-6"
+        value: "@as []"
 
-  - name: Close windows with default shortcut
-    dconf:
-      key: "/org/gnome/desktop/wm/keybindings/close"
-      state: absent
-    when: desktop.gnome.dconf.alter_close_window == false
+    - name: Close windows with super+shift+q
+      dconf:
+        key: "/org/gnome/desktop/wm/keybindings/close"
+        value: "['<Shift><Super>q']"
+      when: desktop.gnome.dconf.alter_close_window == true
 
-  - name: Don't group applications with alt+tab
-    dconf:
-      key: "/org/gnome/desktop/wm/keybindings/switch-windows"
-      value: "['<Alt>Tab']"
-    when: desktop.gnome.dconf.alt_tab_avoid_grouping == false
+    - name: Close windows with default shortcut
+      dconf:
+        key: "/org/gnome/desktop/wm/keybindings/close"
+        state: absent
+      when: desktop.gnome.dconf.alter_close_window == false
 
-  - name: Open terminal with <Super>+Return name
-    dconf:
-      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/name"
-      value: "'Open terminal'"
-  - name: Open terminal with <Super>+Return binding
-    dconf:
-      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/binding"
-      value: "'{{ desktop.gnome.keybindings.open_terminal_shortcut }}'"
-  - name: Open terminal with <Super>+Return command
-    dconf:
-      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/command"
-      value: "'gnome-terminal'"
+    - name: Don't group applications with alt+tab
+      dconf:
+        key: "/org/gnome/desktop/wm/keybindings/switch-windows"
+        value: "['<Alt>Tab']"
+      when: desktop.gnome.dconf.alt_tab_avoid_grouping == false
 
-  - name: Open browser shortcut
-    dconf:
-      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/name"
-      value: "'Open browser'"
-  - name: Open browser binding
-    dconf:
-      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/binding"
-      value: "'<Shift><Super>Return'"
-  - name: Open browser binding command
-    dconf:
-      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/command"
-      value: "'google-chrome-stable'"
+    # Remove the default Print keybinding
+    - name: Remove default Print keybinding
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/media-keys/screenshot/command"
+        value: "'[]'"
 
-  - name: Open nautilus shortcut
-    dconf:
-      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/name"
-      value: "'Open nautilus'"
-  - name: Open nautilus shortcut
-    dconf:
-      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/binding"
-      value: "'<Shift><Super>n'"
-  - name: Open nautilus command
-    dconf:
-      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/command"
-      value: "'nautilus'"
+    # Custom keybindings
+    - name: Open terminal with configured shortcut name
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/name"
+        value: "'Open terminal'"
+    - name: Open terminal with configured shortcut binding
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/binding"
+        value: "'{{ desktop.gnome.keybindings.open_terminal_shortcut }}'"
+    - name: Open terminal with configured shortcut command
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/command"
+        value: "'kgx'"
 
-  # Flameshot keybinding
-  - name: Unbind default screenshot binding
-    dconf:
-      key: "/org/gnome/settings-daemon/plugins/media-keys/screenshot"
-      value: "@as []"
-  - name: Flameshot binding
-    dconf:
-      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/name"
-      value: "'Screenshot with Flameshot'"
-  - name: Flameshot shortcut
-    dconf:
-      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/binding"
-      value: "'Print'"
-  - name: Flameshot command
-    dconf:
-      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/command"
-      value: "'/usr/bin/flameshot gui'"
+    - name: Open browser shortcut
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/name"
+        value: "'Open browser'"
+    - name: Open browser binding
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/binding"
+        value: "'<Shift><Super>Return'"
+    - name: Open browser binding command
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/command"
+        value: "'google-chrome-stable'"
 
-  # toggle-touchpad keybinding
-  - name: toggle-touchpad binding
-    dconf:
-      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/name"
-      value: "'Toggle touchpad state'"
-  - name: toggle-touchpad shortcut
-    dconf:
-      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/binding"
-      value: "'<Super>t'"
-  - name: toggle-touchpad command
-    dconf:
-      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/command"
-      value: "'/usr/local/bin/toggle_touchpad.sh'"
+    - name: Open nautilus shortcut
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/name"
+        value: "'Open nautilus'"
+    - name: Open nautilus shortcut
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/binding"
+        value: "'<Shift><Super>n'"
+    - name: Open nautilus command
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/command"
+        value: "'nautilus'"
 
-  ## PLEASE BE AWARE: This is a static list that needs to be updated for each new custom shortcut.
-  - name: Set custom keybindings list
-    dconf:
-      key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings"
-      value: "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/']"
+    - name: Flameshot shortcut name
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/name"
+        value: "'Flameshot screenshot'"
+    - name: Flameshot shortcut binding
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/binding"
+        value: "'Print'"
+    - name: Flameshot shortcut command
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/command"
+        value: "'/usr/bin/flameshot gui'"
+
+    # toggle-touchpad keybinding
+    - name: toggle-touchpad binding
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/name"
+        value: "'Toggle touchpad state'"
+    - name: toggle-touchpad shortcut
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/binding"
+        value: "'<Super>t'"
+    - name: toggle-touchpad command for non Z16 Gen 2 laptops
+      when: laptop_version.stdout.find("Z16 Gen 2") == -1
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/command"
+        value: "'/usr/local/bin/x1_toggle_touchpad.sh'"
+    - name: toggle-touchpad command for Z16 Gen 2 laptops
+      when: laptop_version.stdout.find("Z16 Gen 2") != -1
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/command"
+        value: "'/usr/local/bin/z16_toggle_touchpad.sh'"
+
+    ## PLEASE BE AWARE: This is a static list that needs to be updated for each new custom shortcut.
+    - name: Set custom keybindings list
+      dconf:
+        key: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings"
+        value: "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/']"

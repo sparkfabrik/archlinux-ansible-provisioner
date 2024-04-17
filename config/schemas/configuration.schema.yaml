@@ -200,6 +200,19 @@ properties:
             examples:
               - dual
             type: string
+      grub:
+        $id: "#/properties/system/properties/grub"
+        additionalProperties: true
+        type: object
+        properties:
+          gfxmode:
+            $id: "#/properties/system/grub/properties/gfxmode"
+            default: 1920x1080x32
+            description: Set the gfxmode of the grub screen.
+            examples:
+              - 1920x1080x32
+              - 1280x720x32
+            type: string
   timeshift:
     $id: "#/properties/timeshift"
     additionalProperties: true
@@ -214,7 +227,7 @@ properties:
         title: The maxSnaphots schema
         type: integer
       enabled:
-        $id: "#/properties/timeshift/autosnap/propertie/enabled"
+        $id: "#/properties/timeshift/autosnap/properties/enabled"
         default: true
         description: An explanation about the purpose of this instance.
         examples:
@@ -223,6 +236,45 @@ properties:
         type: integer
     title: The timeshift schema
     type: object
+  swapfile:
+    $id: "#/properties/swapfile"
+    description: Swapfile configurations.
+    additionalProperties: true
+    properties:
+      enabled:
+        $id: "#/properties/swapfile/properties/enabled"
+        type: boolean
+        default: false
+        title: Enable swapfile
+        description: Activate the swapfile feature instead of a swap partition.
+        examples:
+          - true
+      path:
+        $id: "#/properties/swapfile/properties/path"
+        type: string
+        default: /swapfile
+        title: The path of the swapfile
+        description: The path where the swapfile will be created.
+        examples:
+          - /swapfile
+          - /path/of/the/swapfile
+      size:
+        $id: "#/properties/swapfile/properties/size"
+        type: string
+        default: 16G
+        title: The size of the swapfile
+        description: The size of the swapfile.
+        examples:
+          - 2G
+          - 8G
+      configure_hibernate:
+        $id: "#/properties/swapfile/properties/configure_hibernate"
+        type: boolean
+        default: false
+        title: Configure hibernate to use the swapfile
+        description: Use the swapfile for hibernation.
+        examples:
+          - true
   sparkfabrik:
     $id: "#/properties/sparkfabrik"
     default: false
