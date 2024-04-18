@@ -69,12 +69,12 @@ This is my current disk layout (using `cfdisk`):
                                  Label: gpt, identifier: 4BAEBBEA-64DB-4DE6-A7F2-04E8972BF153
 
     Device                                Start                 End             Sectors           Size Type
->>  /dev/nvme0n1p1                         2048              487423              485376           237M EFI System
+    /dev/nvme0n1p1                         2048              487423              485376           237M EFI System
     /dev/nvme0n1p2                       487424          1139156991          1138669568           543G Linux filesystem
     /dev/nvme0n1p3                   1139156992          1206265855            67108864            32G Linux swap
 ```
 
-I will use `/dev/nvme0n1p4` and `/dev/nvme0n1p5` respectively for `/` and `swap` partitions.
+I will use `/dev/nvme0n1p4` and `/dev/nvme0n1p5` respectively for `/` and `swap` partitions. **The swap partition is optional**, you can use a [Swap file](https://wiki.archlinux.org/title/Swap#Swap_file) if you want the ability to vary its size on-the-fly.
 The rest is a Ubuntu 20.04 LTS installation. I'll share the EFI partition too between the two distros.
 
 Export the following variables, that we'll be used by next installation steps:
@@ -86,15 +86,41 @@ export SWAP_PARTITION=/dev/nvme0n1p3
 export LUKS_PARTITION=/dev/mapper/cryptroot
 ```
 
+> **NOTE**: the `/dev/mapper/cryptroot` is the open decrypted partition. The `cryptsetup open` command described below will create the proper device and it will link it to this path. At the moment of the execution of the export commands the device is not present yet, so the `ls /dev/mapper` command will not show it.
+
 Just to be sure about the partitions, you can always run `lsblk` to see partitions per disk.
 
 > **_VERY IMPORTANT_**: From now on i'll use `/dev/nvme0n1p2` for the root partition and `/dev/nvme0n1p3` for the swap one.
 > Adjust them according to your setup.
 
-### Hybernation
+### Windows dual boot
+
+If you are going to install Archlinux beside Windows, you should shrink the Windows partition to make space for the new installation. You can do this directly from Windows 11 Disk Management tool and **without the need of disabling the BitLocker encryption**.
+
+As described [here](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot), you must disable Secure Boot in the UEFI settings. After this process, you have to recover the Windows BitLocker encryption using the recovery key. The recovery process of the Windows BitLocker encryption has to be re-taken after the installation of Archlinux, booting into Windows using GRUB. If you bootstrap Windows using a Microsoft account, you can find the recovery key in the Microsoft account page [here](https://account.microsoft.com/devices/recoverykey).
+
+Just for reference, the following is the disk layout of a dual boot system:
+
+```bash
+Device              Start        End    Sectors   Size Type
+/dev/nvme0n1p1       2048     534527     532480   260M EFI System
+/dev/nvme0n1p2     534528     567295      32768    16M Microsoft reserved
+/dev/nvme0n1p3     567296  315140095  314572800   150G Microsoft basic data
+/dev/nvme0n1p4 1996312576 2000408575    4096000     2G Windows recovery environment
+/dev/nvme0n1p5  315140096  315652095     512000   250M EFI System
+/dev/nvme0n1p6  315652096 1996312575 1680660480 801.4G Linux filesystem
+```
+
+The `/dev/nvme0n1p5` is is the EFI partition for the Archlinux installation, and the `/dev/nvme0n1p6` is the encrypted partition that hosts the btrfs filesystem and contains all the subvolumes. **In this case, the swap partition is not present, and the swap file is used instead**.
+
+### Hibernation
+
+Suspend to disk (aka hibernate) feature is a process where the contents of RAM are written to the swap partition (or file) before the system is powered off. It saves the machine's state into swap space and completely powers off the machine. When the machine is powered on, the state is restored. Until then, there is zero power consumption. [Here](https://wiki.archlinux.org/title/Power_management/Suspend_and_hibernate#Hibernation) you can find more information about hibernation.
+
+#### Swap partition
 
 System will be configured to use the the partition labeled as `swap` as the swap partition.
-You must be sure to add this label to the swap partition, it should be like this:
+You must make sure to add this label to the swap partition, it should be like this:
 
 ```
 ❯ sudo gdisk -l /dev/nvme0n1
@@ -142,6 +168,12 @@ The operation has completed successfully.
 /dev/nvme0n1p3: UUID="29ddcc21-8a13-49b5-8dc1-767ff387b15a" TYPE="swap" PARTLABEL="swap" PARTUUID="30b47a33-c1b3-924d-9c1c-0adff8f018fd"
 ```
 
+#### Swap file
+
+If you decide to use a swap file instead of a swap partition, you have to configure some additional parameters to make hibernation work. You can find the information about configuring the swap file offset [here](https://wiki.archlinux.org/title/Power_management/Suspend_and_hibernate#Acquire_swap_file_offset).
+
+In this provisioner, you can configure `swapfile.enabled` and `swapfile.configure_hibernate` to `true` and all the other parameters according to your needs in the `config/default.yaml` file. The ansible role will take care of creating the swap file and configuring the system to use it.
+
 ### ROOT LUKS encryption (optional)
 
 1. Archlinux wiki: https://wiki.archlinux.org/title/Dm-crypt/Encrypting_an_entire_system#LUKS_on_a_partition
@@ -168,7 +200,7 @@ mkswap ${SWAP_PARTITION}
 swapon ${SWAP_PARTITION}
 ```
 
-### BTRFS Setup with encryption
+### BTRFS Setup with encryption (STRONGLY RECOMMENDED)
 
 We are going to create btrfs volumes and subvolumes:
 
@@ -204,7 +236,11 @@ mkdir -p /mnt/mnt/allvolumes
 mount -o noatime,compress=zstd,subvol=/ ${LUKS_PARTITION} /mnt/mnt/allvolumes
 ```
 
-### BTRFS Setup without encryption
+### BTRFS Setup without encryption (DISCOURAGED)
+
+> **NOTE**: if you have installed the system with encryption, you can skip this step and go to [Install Archlinux using the provisioner](#install-archlinux-using-the-provisioner).
+
+⚠️ **Please avoid this kind of configuration, it's not secure and it's not recommended. Use it only for testing purposes.** ⚠️
 
 We are going to create btrfs volumes and subvolumes:
 
@@ -273,7 +309,7 @@ Start by cloning the repo:
 
 ```bash
 cd /root
-git clone https://github.com/paolomainardi/archlinux-ansible-provisioner.git provisioner
+git clone https://github.com/sparkfabrik/archlinux-ansible-provisioner.git provisioner
 cd provisioner
 ```
 
@@ -286,13 +322,18 @@ You can find [here](./config/docs/configuration.md) the schema documentation.
 cp config/default.yaml.tpl config/default.yaml
 # --- EDIT THIS FILE ACCORDING TO YOUR NEEDS ---
 vim config/default.yaml
+# Install the base Arch Linux system using `pacstrap` and configure some basic system settings.
+CONFIG=./config/default.yaml make bootstrap
+# Install all the packages and configure the system.
 CONFIG=./config/default.yaml make system
 ```
 
 > **_VERY IMPORTANT_**: Ansible will use the default values specified by the roles, you should change it or pass it, at the moment
 > the later option is not supported by the Makefile.
 
-### Configure GRUB to the encrypted disk (only for encrypted installations)
+### Configure GRUB for the encrypted disk (only for encrypted installations)
+
+The following steps are needed to configure GRUB to be able to boot from an encrypted disk:
 
 1. Run `vim /mnt/etc/mkinitcpio.conf` and, to the `HOOKS` array, add `keyboard` between `autodetect` and `modconf` and add `encrypt` between `block` and `filesystems`
    - It should look like this: `HOOKS=(base udev autodetect keyboard modconf block encrypt filesystems keyboard fsck)`

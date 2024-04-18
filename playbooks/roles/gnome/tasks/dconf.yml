@@ -2,8 +2,15 @@
 - name: Configure gnome
   tags: [gnome, gnome-config, dconf]
   become: yes
-  become_user: '{{ system.username }}'
+  become_user: "{{ system.username }}"
   block:
+    - name: Install gnome Adwaita-dark theme from aur
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - adwaita-dark
+      become: yes
+      become_user: aur_builder
     - name: Use gtk theme 'Yaru-dark'
       dconf:
         key: "/org/gnome/desktop/interface/gtk-theme"
@@ -104,4 +111,3 @@
       debug:
         msg: "Installed extensions: {{ desktop.gnome.extensions }}"
       when: debug
-

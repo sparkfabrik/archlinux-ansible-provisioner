@@ -15,7 +15,7 @@
           - helm
           - kustomize
           - terraform
-          
+
     - name: Install cloud native packages from aur
       kewlfft.aur.aur:
         use: paru
@@ -53,7 +53,7 @@
     - name: Install development packages
       community.general.pacman:
         name:
-          - nodejs-lts-gallium
+          - nodejs-lts-iron
           - npm
           - python-pipx
           - yarn

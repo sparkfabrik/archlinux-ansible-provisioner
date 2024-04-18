@@ -5,6 +5,8 @@
     - stat: path=/boot/grub
       register: grubcfg
 
+    # The resume configuration could be changed if swapfile and the hibernation on swapfile is enabled.
+    # See swapfile.yml for more details.
     - name: "Configuring GRUB to print the OEM logo"
       lineinfile:
         dest: /etc/default/grub
@@ -12,6 +14,12 @@
         line: 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet splash resume=PARTLABEL=swap"'
         mode: 0644
         backup: yes
+
+    - name: Set the GRUB_GFXMODE
+      replace:
+        path: /etc/default/grub
+        regexp: "^GRUB_GFXMODE=.*$"
+        replace: GRUB_GFXMODE={{ system.grub.gfxmode | default('auto') }}
 
     - name: Enable OS_PROBER
       lineinfile:
