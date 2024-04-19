@@ -143,6 +143,20 @@ properties:
           - false
         title: The x11_gestures schema
         type: boolean
+      browser:
+        $id: "#/properties/desktop/properties/browser"
+        additionalProperties: true
+        default: {}
+        title: The browsers configuration
+        description: Configuration for the browsers.
+        properties:
+          install_chrome_beta:
+            $id: "#/properties/desktop/properties/browser/properties/install_chrome_beta"
+            default: false
+            description: Enable installation of Chrome beta browser.
+            examples:
+              - true
+            type: boolean
     title: The desktop schema
     type: object
   system:

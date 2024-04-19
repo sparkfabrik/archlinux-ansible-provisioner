@@ -21,7 +21,6 @@ swapfile:
   filename: swapfile
   size: 16G
   configure_hibernate: false
-
 packages:
   obs: false
 desktop:
@@ -49,6 +48,8 @@ desktop:
     enable: false
   x11_gestures: false
   office: false
+  browser:
+    install_chrome_beta: false
 debug: false
 sparkfabrik: false
 qemu_for_buildx: true
