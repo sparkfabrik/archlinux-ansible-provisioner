@@ -5,18 +5,19 @@
     - name: Install gnome packages
       community.general.pacman:
         name:
+          - dconf-editor
           - gdm
           - gnome
           - gnome-connections
+          - gnome-software
+          - gnome-sound-recorder
+          - gnome-system-monitor
+          - gnome-themes-extra
           - gnome-tweaks
           - gnome-usage
-          - gnome-system-monitor
-          - gnome-sound-recorder
-          - dconf-editor
-          - python-psutil
-          - gnome-software
           - networkmanager
           - networkmanager-openvpn
+          - python-psutil
           - seahorse
         state: present
         update_cache: yes
