@@ -28,7 +28,7 @@
         - dmidecode
         - glances
         - flatpak
-        - neofetch
+        - fastfetch
         - pacman-contrib
         - gparted
         - htop
