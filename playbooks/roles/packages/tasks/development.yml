@@ -2,6 +2,12 @@
 - name: Install cloud native packages
   tags: [packages, dev, cloudnative]
   block:
+    - name: Ensure not installed packages
+      community.general.pacman:
+        name:
+          - neofetch
+        state: absent
+        
     - name: Install cloud native packages
       community.general.pacman:
         name:
