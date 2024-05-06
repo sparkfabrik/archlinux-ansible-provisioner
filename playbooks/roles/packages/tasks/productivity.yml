@@ -2,6 +2,14 @@
 - name: Productivity
   tags: [packages, productivity]
   block:
+   - name: Ensure not installed
+      kewlfft.aur.aur:
+        name:
+          - slack-desktop
+        ensure: absent
+      become: yes
+      become_user: aur_builder
+  
     - name: Install productivity packages
       community.general.pacman:
         name:
@@ -23,3 +31,9 @@
           - xournalpp
       become: yes
       become_user: aur_builder
+
+    - name: Install flatpak packages
+      flatpak:
+        name: 
+          - com.slack.Slack
+        state: present
