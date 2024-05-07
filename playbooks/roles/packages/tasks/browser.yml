@@ -2,12 +2,18 @@
 - name: Browsers
   tags: [base, browser]
   block:
-  - name: Install web browsers
-    kewlfft.aur.aur:
-      use: paru
-      name:
-        - google-chrome
-        - google-chrome-beta
-        - firefox
-    become: yes
-    become_user: aur_builder
+    - name: Install web browsers
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - google-chrome
+          - firefox
+      become: yes
+      become_user: aur_builder
+    - name: Install Google Chrome beta if requested
+      when: desktop.browser.install_chrome_beta
+      kewlfft.aur.aur:
+        use: paru
+        name: google-chrome-beta
+      become: yes
+      become_user: aur_builder
