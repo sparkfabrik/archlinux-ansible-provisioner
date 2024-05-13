@@ -1,14 +1,20 @@
 ---
 - name: Productivity
   tags: [packages, productivity]
+  vars:
+    unwanted_aur_packages:
+      - slack-desktop
   block:
-   - name: Ensure not installed aur packages
-      kewlfft.aur.aur:
-        name:
-          - slack-desktop
-        ensure: absent
-      become: yes
-      become_user: aur_builder
+    - name: Check presence of unwanted aur packages
+      shell: pacman -Qm "{{ item }}"
+      loop: "{{ unwanted_aur_packages }}"
+      register: aur_packages
+      ignore_errors: yes
+
+    - name: Exit if unwanted aur packages are installed
+      fail:
+        msg: "One or more of the unwanted AUR packages are installed: {{ unwanted_aur_packages | join(', ') }}"
+      when: aur_packages.results | selectattr('rc', 'eq', 0) | list | count > 0
 
     - name: Install productivity packages
       community.general.pacman:
@@ -23,7 +29,6 @@
       kewlfft.aur.aur:
         use: paru
         name:
-          - slack-desktop
           - timeshift
           - visual-studio-code-bin
           - icu69-bin
