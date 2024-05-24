@@ -7,39 +7,40 @@
         name:
           - neofetch
         state: absent
-        
+
     - name: Install cloud native packages
       community.general.pacman:
         name:
           - aws-cli-v2
           - github-cli
-          - yq
-          - jq
-          - jless
-          - kubectl
-          - k9s
           - helm
+          - jless
+          - jq
+          - k9s
+          - kubectl
           - kustomize
           - terraform
+          - yamllint
+          - yq
 
     - name: Install cloud native packages from aur
       kewlfft.aur.aur:
         use: paru
         name:
+          - act
+          - cosign
           - crane
-          - pack-cli-bin
           - google-cloud-cli
           - google-cloud-cli-gke-gcloud-auth-plugin
+          - grype-bin
           - kind
           - kubectx
           - kubetail
+          - pack-cli-bin
           - rancher-k3d-bin
           - stern
-          - tmate
-          - act
-          - cosign
-          - grype-bin
           - syft
+          - tmate
       become: yes
       become_user: aur_builder
 
@@ -59,9 +60,9 @@
     - name: Install development packages
       community.general.pacman:
         name:
+          - go
           - nodejs-lts-iron
           - npm
+          - php
           - python-pipx
           - yarn
-          - php
-          - go
