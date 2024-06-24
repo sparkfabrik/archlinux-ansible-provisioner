@@ -10,6 +10,7 @@
           - fontconfig
           - adobe-source-sans-fonts
           - cantarell-fonts
+          - inter-font
           - otf-libertinus
           - libertinus-font
           - noto-fonts
