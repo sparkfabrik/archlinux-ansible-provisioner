@@ -48,6 +48,11 @@
       become: yes
       become_user: aur_builder
 
+    - name: Ensure absent 70-no-bitmaps.conf alias
+      ansible.builtin.file:
+        path: /usr/share/fontconfig/conf.avail/70-no-bitmaps.conf
+      state: absent
+
     - name: Enable rgb subpixel configuration
       file:
         src: "/usr/share/fontconfig/conf.avail/10-sub-pixel-rgb.conf"
