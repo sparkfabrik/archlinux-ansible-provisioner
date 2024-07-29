@@ -14,6 +14,7 @@
         - easyeffects
         - lsp-plugins
         - calf
+        - libdeep_filter_ladspa-bin
 
   - name: Install media packages (aur)
     kewlfft.aur.aur:
