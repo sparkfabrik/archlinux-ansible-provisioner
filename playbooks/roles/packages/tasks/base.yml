@@ -50,6 +50,7 @@
         - downgrade
         - inxi
         - glxinfo
+        - flatseal
     become: yes
     become_user: aur_builder
 
