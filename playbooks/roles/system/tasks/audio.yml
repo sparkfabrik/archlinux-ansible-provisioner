@@ -7,10 +7,11 @@
     - name: Install audio system dependencies
       community.general.pacman:
         name:
+          - alsa-utils
+          - alsa-ucm-conf
           - helvum
           - pavucontrol
           - sof-firmware
-          - alsa-ucm-conf
     - name: Add user to audio group
       user:
         name: '{{ system.username }}'
