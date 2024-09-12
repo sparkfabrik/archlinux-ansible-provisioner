@@ -8,13 +8,7 @@
           - dconf-editor
           - gdm
           - gnome
-          - gnome-connections
-          - gnome-software
-          - gnome-sound-recorder
-          - gnome-system-monitor
-          - gnome-themes-extra
-          - gnome-tweaks
-          - gnome-usage
+          - gnome-extras
           - networkmanager
           - networkmanager-openvpn
           - python-psutil
