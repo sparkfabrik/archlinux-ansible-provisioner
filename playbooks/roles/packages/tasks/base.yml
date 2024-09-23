@@ -49,6 +49,7 @@
       name:
         - downgrade
         - inxi
+        - git-credential-manager-bin
         - glxinfo
         - flatseal
     become: yes
