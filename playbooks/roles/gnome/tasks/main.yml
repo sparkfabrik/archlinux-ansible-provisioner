@@ -8,7 +8,7 @@
           - dconf-editor
           - gdm
           - gnome
-          - gnome-extras
+          - gnome-extra
           - networkmanager
           - networkmanager-openvpn
           - python-psutil
