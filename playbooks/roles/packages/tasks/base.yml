@@ -32,6 +32,7 @@
         - pacman-contrib
         - gparted
         - htop
+        - mesa
         - p7zip
         - git
         - tree
