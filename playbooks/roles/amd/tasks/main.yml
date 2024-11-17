@@ -14,8 +14,7 @@
        community.general.pacman:
          name:
            - vulkan-radeon
-           - libva-mesa-driver
-           - mesa-vdpau
+           - mesa
            - radeontop
          state: present
          update_cache: yes
