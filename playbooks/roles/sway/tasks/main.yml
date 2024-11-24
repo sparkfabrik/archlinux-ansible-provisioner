@@ -45,12 +45,10 @@
         name:
           - dunst
 
-    - name: Screenshot system
+    - name: Install sway contrib (grim and other utilities)
       kewlfft.aur.aur:
         name:
-          - slurp
-          - grim
-          - grimshot
+          - sway-contrib
       become: yes
       become_user: aur_builder
 
