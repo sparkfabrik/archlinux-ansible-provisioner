@@ -221,7 +221,7 @@ Next, create all the directories needed and mount all the partitions (/boot/efi 
 umount /mnt
 
 # Mount root and create default directories.
-mount -o noatime,compress=zstd,subvol=@ ${LUKS_PARTITION} /mnt
+mount -o rw,noatime,compress=zstd:1,autodefrag,ssd,space_cache,subvol=@ ${LUKS_PARTITION} /mnt
 
 # Mount boot partition.
 mkdir -p /mnt/boot
@@ -229,11 +229,11 @@ mount ${UEFI_PARTITION} /mnt/boot
 
 # Mount home.
 mkdir -p /mnt/home
-mount -o noatime,compress=zstd,subvol=@home ${LUKS_PARTITION} /mnt/home
+mount -o rw,noatime,compress=zstd:1,autodefrag,ssd,space_cache,subvol=@home ${LUKS_PARTITION} /mnt/home
 
 # Mount all subvolumes just for convenience.
 mkdir -p /mnt/mnt/allvolumes
-mount -o noatime,compress=zstd,subvol=/ ${LUKS_PARTITION} /mnt/mnt/allvolumes
+mount -o rw,noatime,compress=zstd:1,autodefrag,ssd,space_cache,subvol=/ ${LUKS_PARTITION} /mnt/mnt/allvolumes
 ```
 
 ### BTRFS Setup without encryption (DISCOURAGED)
