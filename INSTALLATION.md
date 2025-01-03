@@ -221,7 +221,7 @@ Next, create all the directories needed and mount all the partitions (/boot/efi 
 umount /mnt
 
 # Mount root and create default directories.
-mount -o noatime,compress=zstd,subvol=@ ${LUKS_PARTITION} /mnt
+mount -o rw,noatime,compress=zstd:1,autodefrag,ssd,space_cache=v2,subvol=@ ${LUKS_PARTITION} /mnt
 
 # Mount boot partition.
 mkdir -p /mnt/boot
@@ -229,11 +229,11 @@ mount ${UEFI_PARTITION} /mnt/boot
 
 # Mount home.
 mkdir -p /mnt/home
-mount -o noatime,compress=zstd,subvol=@home ${LUKS_PARTITION} /mnt/home
+mount -o rw,noatime,compress=zstd:1,autodefrag,ssd,space_cache=v2,subvol=@home ${LUKS_PARTITION} /mnt/home
 
 # Mount all subvolumes just for convenience.
 mkdir -p /mnt/mnt/allvolumes
-mount -o noatime,compress=zstd,subvol=/ ${LUKS_PARTITION} /mnt/mnt/allvolumes
+mount -o rw,noatime,compress=zstd:1,autodefrag,ssd,space_cache=v2,subvol=/ ${LUKS_PARTITION} /mnt/mnt/allvolumes
 ```
 
 ### BTRFS Setup without encryption (DISCOURAGED)
@@ -261,7 +261,7 @@ Next, create all the directories needed and mount all the partitions (/boot/efi 
 umount /mnt
 
 # Mount root and create default directories.
-mount -o noatime,compress=zstd,subvol=@ ${ROOT_PARTITION} /mnt
+mount -o rw,noatime,compress=zstd:1,autodefrag,ssd,space_cache=v2,subvol=@ ${ROOT_PARTITION} /mnt
 
 # Mount boot partition.
 mkdir -p /mnt/boot/efi
@@ -269,11 +269,11 @@ mount ${UEFI_PARTITION} /mnt/boot/efi
 
 # Mount home.
 mkdir /mnt/home
-mount -o noatime,compress=zstd,subvol=@home ${ROOT_PARTITION} /mnt/home
+mount -o rw,noatime,compress=zstd:1,autodefrag,ssd,space_cache=v2,subvol=@home ${ROOT_PARTITION} /mnt/home
 
 # Mount all subvolumes just for convenience.
 mkdir -p /mnt/mnt/allvolumes
-mount -o noatime,compress=zstd,subvol=/ ${ROOT_PARTITION} /mnt/mnt/allvolumes
+mount -o rw,noatime,compress=zstd:1,autodefrag,ssd,space_cache=v2,subvol=/ ${ROOT_PARTITION} /mnt/mnt/allvolumes
 ```
 
 > **_Please note_** that we are mounting btrfs with compression enabled to reduce writes (and ssd lifespan)
