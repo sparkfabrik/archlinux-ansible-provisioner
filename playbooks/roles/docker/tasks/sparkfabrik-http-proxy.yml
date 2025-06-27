@@ -1,0 +1,54 @@
+---
+- name: Install and configure SparkFabrik HTTP Proxy
+  tags: [packages, dev, cloudnative, docker, spark-http-proxy]
+  block:
+    - name: Install mkcert
+      community.general.pacman:
+        name: mkcert
+        state: present
+        update_cache: yes
+
+    - name: Configure mkcert
+      command: mkcert -install
+
+    - name: Download SparkFabrik HTTP Proxy script
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/sparkfabrik/http-proxy/refs/heads/main/bin/spark-http-proxy
+        dest: /usr/local/bin/spark-http-proxy
+        mode: "0755"
+
+    - name: Create ~/.local/spark/http-proxy directory to host configuration files
+      ansible.builtin.file:
+        path: "{{ system.home }}/.local/spark/http-proxy"
+        state: directory
+        mode: "0755"
+
+    - name: Change ownership of the ~/.local/spark directory
+      ansible.builtin.file:
+        dest: "{{ system.home }}/.local/spark"
+        owner: "{{ system.username }}"
+        group: "{{ system.username }}"
+
+    - name: Change ownership of the ~/.local/spark/http-proxy directory
+      ansible.builtin.file:
+        dest: "{{ system.home }}/.local/spark/http-proxy"
+        owner: "{{ system.username }}"
+        group: "{{ system.username }}"
+
+    - name: Download SparkFabrik HTTP Proxy compose file
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/sparkfabrik/http-proxy/refs/heads/main/bin/compose.yml
+        dest: "{{ system.home }}/.local/spark/http-proxy/compose.yml"
+        mode: "0644"
+
+    - name: Change ownership of the SparkFabrik HTTP Proxy script
+      ansible.builtin.file:
+        dest: /usr/local/bin/spark-http-proxy
+        owner: "{{ system.username }}"
+        group: "{{ system.username }}"
+
+    - name: Change ownership of the SparkFabrik HTTP Proxy compose file
+      ansible.builtin.file:
+        dest: "{{ system.home }}/.local/spark/http-proxy/compose.yml"
+        owner: "{{ system.username }}"
+        group: "{{ system.username }}"

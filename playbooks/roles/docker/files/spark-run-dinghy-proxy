@@ -1,24 +1,25 @@
 #!/bin/bash
 DINGHY_HTTP_PROXY_VERSION=${1:-codekitchen\/dinghy-http-proxy:2.7.1}
-if docker ps -a | grep 'dnsdock' > /dev/null; then
+if docker ps -a | grep 'dnsdock' >/dev/null; then
     echo -n "Found a dnsdock container, removing it..."
-    docker rm -vf dnsdock 1> /dev/null
+    docker rm -vf dnsdock 1>/dev/null
     echo -n "DONE"
     echo ""
 fi
-if docker ps -a | grep 'dinghy-http-proxy' > /dev/null; then
+if docker ps -a | grep 'dinghy-http-proxy' >/dev/null; then
     echo "Found a dinghy-http-proxy container, removing it..."
-    docker rm -vf dinghy-http-proxy 1> /dev/null
+    docker rm -vf dinghy-http-proxy 1>/dev/null
 fi
 
 echo "Now starting a new dinghy-http-proxy container..."
 docker run --restart=always -d -v /var/run/docker.sock:/var/run/docker.sock \
--e DNS_IP=127.0.0.1 \
--e CONTAINER_NAME=dinghy-http-proxy \
--e DOMAIN_TLD=loc \
---name dinghy-http-proxy \
--p 80:80 \
--p 443:443 \
--p 172.17.0.1:53:19322/udp \
--v /var/run/docker.sock:/tmp/docker.sock:ro \
-"${DINGHY_HTTP_PROXY_VERSION}"
+    -e DNS_IP=127.0.0.1 \
+    -e CONTAINER_NAME=dinghy-http-proxy \
+    -e DOMAIN_TLD=loc \
+    --name dinghy-http-proxy \
+    -p 80:80 \
+    -p 443:443 \
+    -p 172.17.0.1:53:19322/udp \
+    -p 172.17.0.1:19322:19322/udp \
+    -v /var/run/docker.sock:/tmp/docker.sock:ro \
+    "${DINGHY_HTTP_PROXY_VERSION}"
