@@ -3,6 +3,12 @@
   tags: [wm, sway]
   when: desktop.sway.enable == true
   block:
+    - name: Ensure deprecated packages are not present.
+      community.general.pacman:
+        name:
+          - dunst
+        state: absent
+      
     - name: Install sway wm
       community.general.pacman:
         name:
@@ -43,7 +49,7 @@
     - name: Notification system
       community.general.pacman:
         name:
-          - dunst
+          - mako
 
     - name: Install sway contrib (grim and other utilities)
       kewlfft.aur.aur:
