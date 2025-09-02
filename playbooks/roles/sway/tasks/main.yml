@@ -43,7 +43,7 @@
     - name: Notification system
       community.general.pacman:
         name:
-          - dunst
+          - mako
 
     - name: Install sway contrib (grim and other utilities)
       kewlfft.aur.aur:
