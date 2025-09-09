@@ -1,20 +1,12 @@
 ---
 - name: Productivity
   tags: [packages, productivity]
-  vars:
-    unwanted_aur_packages:
-      - slack-desktop
   block:
-    - name: Check presence of unwanted aur packages
-      shell: pacman -Qm "{{ item }}"
-      loop: "{{ unwanted_aur_packages }}"
-      register: aur_packages
-      ignore_errors: yes
-
-    - name: Exit if unwanted aur packages are installed
-      fail:
-        msg: "One or more of the unwanted AUR packages are installed: {{ unwanted_aur_packages | join(', ') }}"
-      when: aur_packages.results | selectattr('rc', 'eq', 0) | list | count > 0
+    - name: Ensure not installed packages
+      community.general.pacman:
+        name:
+          - slack-desktop
+        state: absent
 
     - name: Install productivity packages
       community.general.pacman:
