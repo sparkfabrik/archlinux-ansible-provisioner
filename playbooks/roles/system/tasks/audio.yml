@@ -12,6 +12,7 @@
           - helvum
           - pavucontrol
           - sof-firmware
+          - wiremix
     - name: Add user to audio group
       user:
         name: '{{ system.username }}'
