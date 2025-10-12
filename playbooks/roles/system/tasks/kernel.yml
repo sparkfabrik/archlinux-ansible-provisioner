@@ -11,7 +11,7 @@
       block:
         - name: Install kernel-modules-hook
           community.general.pacman:
-            name: 
+            name:
               - kernel-modules-hook
 
     - name: "Install linux-lts kernel"
@@ -85,13 +85,13 @@
             update_cache: yes
           ignore_errors: yes
 
-    - name: Copy provided mkinitcpio.conf
+    - name: Copy provided default mkinitcpio default hooks.
       tags: [system, mkinitcpio]
       vars:
         enable_encrypt: "{{ (encryption == true) | ternary('encrypt', '') }}"
       ansible.builtin.copy:
-        src: files/mkinitcpio.conf
-        dest: /etc/mkinitcpio.conf
+        src: files/sf_default_hooks.conf
+        dest: /etc/mkinitcpio.conf.d/sf_default_hooks.conf
 
     - name: Regenerate mkinitcpio.conf
       tags: [system, mkinitcpio]

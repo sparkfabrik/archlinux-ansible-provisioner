@@ -8,21 +8,25 @@
         name:
           - dunst
         state: absent
-      
+
     - name: Install sway wm
       community.general.pacman:
         name:
-          - alacritty
           - polkit-gnome
-          - network-manager-applet
-          - ranger
           - sway
           - swaybg
           - swayidle
           - swaylock
+
+    - name: System utilities
+      community.general.pacman:
+        name:
+          - alacritty
+          - ghostty
           - thunar
           - wofi
           - wl-clipboard
+          - ranger
 
     - name: Display server gui
       kewlfft.aur.aur:
