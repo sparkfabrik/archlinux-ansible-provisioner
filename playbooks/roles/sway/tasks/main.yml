@@ -73,8 +73,12 @@
           - gammastep
           - light
           - libinput-gestures
+          - swayosd
       become: yes
       become_user: aur_builder
+
+    - name: Enable swayosd-libinput-backend service
+      shell: systemctl enable swayosd-libinput-backend.service
 
     - name: Screensharing
       community.general.pacman:
