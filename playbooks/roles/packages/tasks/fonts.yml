@@ -37,6 +37,7 @@
           - ttf-ubuntu-mono-nerd
           - ttf-firacode-nerd
           - ttf-inconsolata-nerd
+          - ttf-jetbrains-mono-nerd
           - otf-droid-nerd
 
     - name: Install fonts from aur
