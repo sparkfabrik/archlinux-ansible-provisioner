@@ -59,7 +59,7 @@
           - deja-dup
           - vim
 
-    - name: System packges from aur
+    - name: System packages from aur
       kewlfft.aur.aur:
         use: paru
         name:
