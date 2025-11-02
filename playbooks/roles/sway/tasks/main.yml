@@ -12,6 +12,7 @@
     - name: Install sway wm
       community.general.pacman:
         name:
+          - gdm
           - polkit-gnome
           - sway
           - swaybg
@@ -91,6 +92,7 @@
         name:
           - waybar
           - otf-font-awesome
+          - woff2-font-awesome
 
     - name: Configure login launcher due to this issue - https://github.com/swaywm/sway/issues/3109
       ansible.builtin.copy:
