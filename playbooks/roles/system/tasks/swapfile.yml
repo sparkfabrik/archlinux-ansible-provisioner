@@ -72,8 +72,6 @@
 
     - name: Configure hibernate to use the swapfile
       when: swapfile.configure_hibernate == true | default(false)
-      vars:
-        resume_kernel_parameters_comment_line: "# Resume from hibernation using swapfile"
       block:
         - name: Get resume partition UUID
           shell: blkid $(df -T "{{ swapfile.btrfs_volume_mountpoint }}/{{ swapfile.filename }}" | tail -n 1 | awk '{ print $1 }') -s UUID -o value
@@ -83,34 +81,15 @@
           shell: btrfs inspect-internal map-swapfile -r "{{ swapfile.btrfs_volume_mountpoint }}/{{ swapfile.filename }}"
           register: swapfile_offset
 
-        - name: Remove resume comment
-          lineinfile:
-            path: /etc/mkinitcpio.conf
-            regexp: "^{{ resume_kernel_parameters_comment_line }}$"
-            state: absent
-
-        - name: Remove old resume parameter
-          lineinfile:
-            path: /etc/mkinitcpio.conf
-            regexp: "^resume="
-            state: absent
-
-        - name: Remove old resume_offset parameter
-          lineinfile:
-            path: /etc/mkinitcpio.conf
-            regexp: "^resume_offset="
-            state: absent
-
-        - name: Add resume configuration to kernel parameters
-          vars:
-            resume_kernel_paramenters: |
-              {{ resume_kernel_parameters_comment_line }}
+        - name: Create mkinitcpio.d configuration for resume
+          copy:
+            dest: /etc/mkinitcpio.d/resume.conf
+            content: |
+              # Resume from hibernation using swapfile
+              # This file is managed by Ansible
               resume=UUID={{ swapfile_uuid.stdout }}
               resume_offset={{ swapfile_offset.stdout }}
-          lineinfile:
-            path: /etc/mkinitcpio.conf
-            line: "{{ resume_kernel_paramenters }}"
-            state: present
+            mode: "0644"
 
         - name: Regenerate initramfs
           command: mkinitcpio -P

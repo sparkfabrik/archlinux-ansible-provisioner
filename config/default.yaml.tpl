@@ -4,8 +4,6 @@ system:
   username: foobar
   kernel: standard # standard|lts|zen
   timezone: Europe/Rome
-  bluetooth:
-    controllerMode: dual
   grub:
     gfxmode: 1920x1080x32
 timeshift:
@@ -20,7 +18,7 @@ swapfile:
   btrfs_volume_mountpoint: /swap
   filename: swapfile
   size: 16G
-  configure_hibernate: false
+  configure_hibernate: true
 packages:
   obs: false
 desktop:

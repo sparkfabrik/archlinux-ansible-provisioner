@@ -24,7 +24,6 @@
         name:
           - ansible
           - bashtop
-          - bc
           - lm_sensors
           - coreutils
           - usbutils
