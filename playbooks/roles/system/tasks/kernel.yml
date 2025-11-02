@@ -87,8 +87,6 @@
 
     - name: Copy provided default mkinitcpio default hooks.
       tags: [system, mkinitcpio]
-      vars:
-        enable_encrypt: "{{ (encryption == true) | ternary('encrypt', '') }}"
       ansible.builtin.copy:
         src: files/sf_default_hooks.conf
         dest: /etc/mkinitcpio.conf.d/sf_default_hooks.conf
