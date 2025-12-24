@@ -2,6 +2,7 @@
 system:
   hostname: foobar
   username: foobar
+  home: /home/foobar
   kernel: standard # standard|lts|zen
   timezone: Europe/Rome
   bluetooth:

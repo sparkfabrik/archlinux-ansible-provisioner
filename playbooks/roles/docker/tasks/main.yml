@@ -28,7 +28,7 @@
         dest: "/etc/systemd/resolved.conf.d/docker-dev-dns.conf"
         content: |
           [Resolve]
-          DNS=172.17.0.1
+          DNS=172.17.0.1:19322
           Domains=~loc ~docker
 
     - name: Copy dnsdock start script
@@ -77,3 +77,6 @@
         daemon_reload: yes
         name: systemd-binfmt
       when: qemu_for_buildx | default(true)
+
+- name: Install and configure SparkFabrik HTTP Proxy
+  import_tasks: sparkfabrik-http-proxy.yml
