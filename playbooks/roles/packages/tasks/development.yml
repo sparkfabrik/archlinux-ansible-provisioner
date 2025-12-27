@@ -65,4 +65,5 @@
           - npm
           - php
           - python-pipx
+          - shellcheck
           - yarn
