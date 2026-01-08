@@ -53,6 +53,8 @@
           - grype-bin
           - syft
           - trivy
+      become: yes
+      become_user: aur_builder
 
 - name: Install development packages
   tags: [packages, dev]
@@ -66,3 +68,7 @@
           - php
           - python-pipx
           - yarn
+    - name: Install development packages using npm
+      community.general.npm:
+        name: "@github/copilot"
+        global: true
