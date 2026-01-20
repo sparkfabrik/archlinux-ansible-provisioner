@@ -2,9 +2,11 @@
 - name: Install and configure SparkFabrik HTTP Proxy
   tags: [packages, dev, cloudnative, docker, spark-http-proxy]
   block:
-    - name: Install mkcert
+    - name: Install required packages
       community.general.pacman:
-        name: mkcert
+        name:
+          - mkcert
+          - nss
         state: present
         update_cache: yes
 
