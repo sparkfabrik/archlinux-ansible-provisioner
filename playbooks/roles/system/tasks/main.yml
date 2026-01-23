@@ -7,6 +7,8 @@
         name: aur_builder
         create_home: yes
         group: wheel
+        shell: /usr/bin/nologin
+        system: yes
 
     - name: Allow the `aur_builder` user to run `sudo pacman` without a password
       ansible.builtin.lineinfile:

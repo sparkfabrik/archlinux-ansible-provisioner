@@ -9,7 +9,7 @@
           - dunst
           - wofi
         state: absent
-      
+
     - name: Install sway wm
       community.general.pacman:
         name:
@@ -30,7 +30,7 @@
         use: paru
         name:
           - wdisplays
-      become: yes
+      become: true
       become_user: aur_builder
 
     - name: Clipboard manager
@@ -38,7 +38,7 @@
         use: paru
         name:
           - clipman
-      become: yes
+      become: true
       become_user: aur_builder
 
     - name: Network utilities
@@ -56,7 +56,7 @@
       kewlfft.aur.aur:
         name:
           - sway-contrib
-      become: yes
+      become: true
       become_user: aur_builder
 
     - name: Install fonts from aur
@@ -64,7 +64,7 @@
         use: paru
         name:
           - ttf-meslo-nerd-font-powerlevel10k
-      become: yes
+      become: true
       become_user: aur_builder
 
     - name: Multimedia controls
@@ -72,9 +72,8 @@
         name:
           - gammastep
           - light
-          - libinput-gestures
           - swayosd
-      become: yes
+      become: true
       become_user: aur_builder
 
     - name: Enable swayosd-libinput-backend service
