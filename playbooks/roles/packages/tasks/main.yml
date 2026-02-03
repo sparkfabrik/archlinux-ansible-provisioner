@@ -19,3 +19,6 @@
 
 - name: Set up office packages
   import_tasks: office.yml
+
+- name: Set up AI packages
+  import_tasks: ai.yml
