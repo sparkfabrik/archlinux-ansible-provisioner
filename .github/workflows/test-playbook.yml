@@ -26,6 +26,52 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
+      - name: Create CI test configuration
+        run: |
+          cat > /tmp/ci-test.yaml << 'EOF'
+          ---
+          system:
+            hostname: ci-test
+            username: ci-user
+            home: /home/ci-user
+            kernel: standard
+            timezone: UTC
+            bluetooth:
+              controllerMode: dual
+            grub:
+              gfxmode: auto
+          timeshift:
+            autosnap:
+              enabled: false
+          swapfile:
+            enabled: false
+          packages:
+            obs: false
+          desktop:
+            gnome:
+              extensions: []
+              keybindings:
+                open_terminal_shortcut: "<Super>Return"
+              dconf:
+                use_mouse_natural_scroll: false
+                alter_close_window: false
+                clock_show_seconds: false
+                dash_to_dock_show_favorites: "false"
+                alt_tab_avoid_grouping: false
+            sway:
+              enable: false
+              waybar: false
+            i3:
+              enable: false
+            x11_gestures: false
+            office: false
+            browser:
+              install_chrome_beta: false
+          debug: false
+          sparkfabrik: false
+          qemu_for_buildx: false
+          EOF
+      
       - name: Install Ansible
         run: |
           pacman -S --noconfirm ansible
@@ -41,9 +87,9 @@ jobs:
       
       - name: Run playbook in check mode (dry-run)
         run: |
-          ansible-playbook playbooks/ci-test.yml -i localhost, -c local --check --extra-vars "@config/ci-test.yaml"
+          ansible-playbook playbooks/ci-test.yml -i localhost, -c local --check --extra-vars "@/tmp/ci-test.yaml"
         continue-on-error: true
       
       - name: Run playbook with Docker-safe tasks only
         run: |
-          ansible-playbook playbooks/ci-test.yml -i localhost, -c local --extra-vars "@config/ci-test.yaml"
+          ansible-playbook playbooks/ci-test.yml -i localhost, -c local --extra-vars "@/tmp/ci-test.yaml"

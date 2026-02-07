@@ -128,6 +128,7 @@ The CI workflow (`test-playbook.yml`) implements the following strategy:
 2. **Dry-Run Mode**: Test playbooks in check mode to validate logic
 3. **Selective Execution**: Only run Docker-compatible tasks
 4. **Custom Test Playbook**: Use `ci-test.yml` which excludes incompatible tasks
+5. **Generated Configuration**: CI test configuration is generated in the workflow (not committed to repo)
 
 ### Test Coverage
 
@@ -145,7 +146,7 @@ The CI tests cover approximately 40-50% of the playbook functionality:
 1. **Syntax checks**: Run on all playbooks to catch YAML errors
 2. **Check mode**: Use `--check` flag to test without making changes
 3. **Tag-based testing**: Test individual roles using tags
-4. **Mock configurations**: Use minimal test configurations (see `config/ci-test.yaml`)
+4. **Mock configurations**: The CI workflow generates a minimal test configuration
 5. **Manual testing**: Critical features should be tested on real Arch Linux systems
 6. **Scheduled runs**: Run CI weekly to catch dependency issues and breaking changes
 
@@ -161,6 +162,5 @@ To improve test coverage, consider:
 
 ## 📚 Related Files
 
-- `.github/workflows/test-playbook.yml` - GitHub Actions workflow
-- `config/ci-test.yaml` - Minimal test configuration
+- `.github/workflows/test-playbook.yml` - GitHub Actions workflow (includes test configuration generation)
 - `playbooks/ci-test.yml` - Docker-compatible test playbook
