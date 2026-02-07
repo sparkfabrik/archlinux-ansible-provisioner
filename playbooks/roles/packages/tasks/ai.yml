@@ -6,6 +6,7 @@
       community.general.npm:
         name: opencode-ai
         global: true
+        state: present
 
     - name: Install openspec from AUR
       kewlfft.aur.aur:
