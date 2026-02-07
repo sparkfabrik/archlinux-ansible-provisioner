@@ -11,8 +11,7 @@
     - name: Install openspec from AUR
       kewlfft.aur.aur:
         use: paru
-        name:
-          - openspec
+        name: openspec
       become: yes
       become_user: aur_builder
 
