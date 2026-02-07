@@ -10,7 +10,7 @@ The purpose of this repository is to streamline the setup of Archlinux with a fo
 
 This repository includes automated testing via GitHub Actions to ensure the playbook remains functional. The CI workflow tests the playbook against a clean Arch Linux Docker image on every pull request and weekly on a schedule.
 
-**Note:** Due to Docker limitations, not all tasks can be tested in CI. See [DOCKER-TESTING.md](DOCKER-TESTING.md) for details on what can and cannot be tested in a containerized environment.
+**Note:** Due to Docker limitations, not all tasks can be tested in CI. See [DOCKER-TESTING.md](docs/DOCKER-TESTING.md) for details on what can and cannot be tested in a containerized environment.
 
 ## Disclaimer
 
@@ -44,7 +44,7 @@ playbooks/roles
 
 ### Installation Guide
 
-To install and use this provisioner, follow the detailed instructions provided in the [Installation Guide](INSTALLATION.md) section of this repository.
+To install and use this provisioner, follow the detailed instructions provided in the [Installation Guide](docs/INSTALLATION.md) section of this repository.
 
 ### Usage After Installation
 

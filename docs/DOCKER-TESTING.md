@@ -87,17 +87,29 @@ This document outlines what can and cannot be executed when testing the Ansible 
 - Laptop power management
 
 ### Desktop Environment
-- ❌ GNOME installation and configuration
-- ❌ Sway/i3 window manager setup
-- ❌ X11 or Wayland session configuration
-- ❌ Desktop extensions and themes
+- ✅ Desktop manager package installation (GNOME, Sway, i3, etc.)
+- ❌ Running/starting desktop managers and display servers
+- ❌ X11 or Wayland session configuration and testing
+- ❌ Desktop extensions installation and configuration
+- ❌ Theme application and testing
 
-**Reason:** GUI applications and desktop environments cannot run in a standard Docker container without X11 forwarding.
+**Reason:** Desktop manager packages can be installed in Docker, but GUI applications and desktop environments cannot run or be configured without a display server (X11/Wayland). You can test package installation but not runtime configuration or functionality.
+
+**What can be tested:**
+- Package installation for desktop environments
+- Configuration file creation/templating
+- User preferences file generation
+
+**What cannot be tested:**
+- Starting desktop managers
+- Display server configuration
+- Extension functionality
+- Visual theme application
 
 **Affected Roles:**
-- `gnome` role
-- `sway` role
-- `i3` role
+- `gnome` role (packages ✅, runtime config ❌)
+- `sway` role (packages ✅, runtime config ❌)
+- `i3` role (packages ✅, runtime config ❌)
 
 ### Filesystem Operations
 - ❌ Partition management
