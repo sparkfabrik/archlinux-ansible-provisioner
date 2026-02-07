@@ -1,0 +1,49 @@
+---
+name: Test Ansible Playbook
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+  schedule:
+    # Run every Monday at 3:00 AM UTC to ensure playbook remains functional
+    - cron: '0 3 * * 1'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  test-playbook:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    
+    steps:
+      - name: Update system and install dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm git python python-pip sudo base-devel
+      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Install Ansible
+        run: |
+          pacman -S --noconfirm ansible
+      
+      - name: Install Ansible collections
+        run: |
+          ansible-galaxy collection install -r requirements.yml
+      
+      - name: Validate playbook syntax
+        run: |
+          ansible-playbook --syntax-check playbooks/system.yml
+          ansible-playbook --syntax-check playbooks/bootstrap.yml
+      
+      - name: Run playbook in check mode (dry-run)
+        run: |
+          ansible-playbook playbooks/ci-test.yml -i localhost, -c local --check --extra-vars "@config/ci-test.yaml"
+        continue-on-error: true
+      
+      - name: Run playbook with Docker-safe tasks only
+        run: |
+          ansible-playbook playbooks/ci-test.yml -i localhost, -c local --extra-vars "@config/ci-test.yaml"

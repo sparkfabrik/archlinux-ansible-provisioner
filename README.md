@@ -6,6 +6,12 @@ This project provides a comprehensive guide and a set of Ansible roles specifica
 
 The purpose of this repository is to streamline the setup of Archlinux with a focus on personal and professional use.
 
+## Continuous Integration
+
+This repository includes automated testing via GitHub Actions to ensure the playbook remains functional. The CI workflow tests the playbook against a clean Arch Linux Docker image on every pull request and weekly on a schedule.
+
+**Note:** Due to Docker limitations, not all tasks can be tested in CI. See [DOCKER-TESTING.md](DOCKER-TESTING.md) for details on what can and cannot be tested in a containerized environment.
+
 ## Disclaimer
 
 Please be advised that this provisioner is provided **as-is**, with no warranty of any kind, either expressed or implied. It is intended solely for personal use, and its application is entirely at the user's own risk. The author(s) and contributor(s) of this repository are not responsible for any damage or loss resulting from the use of this provisioner.
