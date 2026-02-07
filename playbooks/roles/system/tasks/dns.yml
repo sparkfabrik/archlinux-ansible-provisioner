@@ -15,6 +15,12 @@
         state: link
         force: yes
 
+    - name: Ensure NetworkManager conf.d directory exists
+      ansible.builtin.file:
+        path: /etc/NetworkManager/conf.d
+        state: directory
+        mode: '0755'
+
     - name: Configure NetworkManager to use systemd-resolved
       community.general.ini_file:
         path: /etc/NetworkManager/conf.d/dns.conf
