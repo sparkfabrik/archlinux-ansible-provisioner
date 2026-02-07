@@ -49,11 +49,25 @@
           command: which git
           register: git_check
           changed_when: false
+          
+        - name: Verify git installation
+          assert:
+            that:
+              - git_check.rc == 0
+            fail_msg: "Git is not installed"
+            success_msg: "Git is installed at {{ git_check.stdout }}"
 
         - name: Check vim is installed
           command: which vim
           register: vim_check
           changed_when: false
+          
+        - name: Verify vim installation
+          assert:
+            that:
+              - vim_check.rc == 0
+            fail_msg: "Vim is not installed"
+            success_msg: "Vim is installed at {{ vim_check.stdout }}"
 
         - name: Display verification results
           debug:
