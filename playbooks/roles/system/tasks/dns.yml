@@ -1,0 +1,43 @@
+---
+- name: Configure DNS with systemd-resolved
+  tags: [system, dns, network]
+  block:
+    - name: Enable and start systemd-resolved service
+      ansible.builtin.systemd:
+        name: systemd-resolved
+        enabled: yes
+        state: started
+
+    - name: Create symlink for /etc/resolv.conf to systemd-resolved stub resolver
+      ansible.builtin.file:
+        src: /run/systemd/resolve/stub-resolv.conf
+        dest: /etc/resolv.conf
+        state: link
+        force: yes
+
+    - name: Ensure NetworkManager conf.d directory exists
+      ansible.builtin.file:
+        path: /etc/NetworkManager/conf.d
+        state: directory
+        mode: '0755'
+
+    - name: Configure NetworkManager to use systemd-resolved
+      community.general.ini_file:
+        path: /etc/NetworkManager/conf.d/dns.conf
+        section: main
+        option: dns
+        value: systemd-resolved
+        create: yes
+        mode: '0644'
+
+    - name: Check if NetworkManager is active
+      ansible.builtin.systemd:
+        name: NetworkManager
+      register: nm_status
+      ignore_errors: yes
+
+    - name: Restart NetworkManager to apply DNS configuration
+      ansible.builtin.systemd:
+        name: NetworkManager
+        state: restarted
+      when: nm_status is defined and nm_status.status is defined and nm_status.status.ActiveState == 'active'
