@@ -1,0 +1,31 @@
+---
+- name: Install development AI packages
+  tags: [packages, dev, ai]
+  block:
+    - name: Install opencode from npm
+      community.general.npm:
+        name: opencode-ai
+        global: true
+        state: present
+
+    - name: Install openspec from npm
+      community.general.npm:
+        name: "@fission-ai/openspec"
+        global: true
+        state: present
+
+    - name: Create ~/.config/opencode directory
+      file:
+        path: "{{ system.home }}/.config/opencode"
+        state: directory
+        mode: "0755"
+        owner: "{{ system.username }}"
+        group: "{{ system.username }}"
+
+    - name: Create opencode config file
+      copy:
+        dest: "{{ system.home }}/.config/opencode/opencode.json"
+        src: "files/opencode/opencode.json"
+        mode: "0644"
+        owner: "{{ system.username }}"
+        group: "{{ system.username }}"
