@@ -2,14 +2,17 @@
 - name: Install development AI packages
   tags: [packages, dev, ai]
   block:
-    - name: Install development AI packages
-      kewlfft.aur.aur:
-        use: paru
-        name:
-          - opencode-bin
-          - openspec
-      become: yes
-      become_user: aur_builder
+    - name: Install opencode from npm
+      community.general.npm:
+        name: opencode-ai
+        global: true
+        state: present
+
+    - name: Install openspec from npm
+      community.general.npm:
+        name: "@fission-ai/openspec"
+        global: true
+        state: present
 
     - name: Create ~/.config/opencode directory
       file:
