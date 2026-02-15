@@ -19,7 +19,6 @@
     - name: Install productivity packages
       community.general.pacman:
         name:
-          - thefuck
           - yadm
           - gnupg
           - pinentry

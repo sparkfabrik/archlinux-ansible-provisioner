@@ -2,21 +2,12 @@
 - name: Configure system components
   tags: [system, bluetooth]
   block:
-  - name: Install bluetooth dependencies
-    community.general.pacman:
-      name:
-        - blueman
-        - bluez
-        - bluez-utils
+    - name: Install bluetooth dependencies
+      community.general.pacman:
+        name:
+          - blueman
+          - bluez
+          - bluez-utils
 
-  - name: Configure bluetooth ControllerMode
-    community.general.ini_file:
-      path: /etc/bluetooth/main.conf
-      no_extra_spaces: false
-      option: ControllerMode
-      value: "{{ system.bluetooth.controllerMode | default('dual') }}"
-      exclusive: yes
-      section: General
-
-  - name: Activate bluetooth service
-    command: systemctl enable bluetooth
+    - name: Activate bluetooth service
+      command: systemctl enable bluetooth

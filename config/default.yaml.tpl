@@ -5,8 +5,6 @@ system:
   home: /home/foobar
   kernel: standard # standard|lts|zen
   timezone: Europe/Rome
-  bluetooth:
-    controllerMode: dual
   grub:
     gfxmode: 1920x1080x32
 timeshift:
@@ -21,7 +19,7 @@ swapfile:
   btrfs_volume_mountpoint: /swap
   filename: swapfile
   size: 16G
-  configure_hibernate: false
+  configure_hibernate: true
 packages:
   obs: false
 desktop:
@@ -43,7 +41,7 @@ desktop:
       dash_to_dock_show_favorites: "false" # Note that this is a string, not a boolean
       alt_tab_avoid_grouping: false
   sway:
-    enable: false
+    enable: true
     waybar: true
   i3:
     enable: false
@@ -52,5 +50,5 @@ desktop:
   browser:
     install_chrome_beta: false
 debug: false
-sparkfabrik: false
+sparkfabrik: true
 qemu_for_buildx: true
