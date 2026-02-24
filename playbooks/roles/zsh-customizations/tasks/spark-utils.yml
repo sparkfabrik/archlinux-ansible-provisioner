@@ -10,7 +10,7 @@
         dest: "{{ system.home }}/.zshrc.d/spark-utils.zsh"
         owner: "{{ system.username }}"
         group: "{{ system.username }}"
-        mode: 0755
+        mode: "0755"
 
     - name: Test if script is already included in the zshrc file
       shell: grep -c "spark-utils.zsh" "{{ system.home }}/.zshrc"
