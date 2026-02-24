@@ -5,7 +5,7 @@
     include_string: '[[ ! -f "{{ system.home }}/.zshrc.d/spark-utils.zsh" ]] || source "{{ system.home }}/.zshrc.d/spark-utils.zsh"'
   block:
     - name: Copy the customization scripts
-      copy:
+      ansible.builtin.copy:
         src: "files/spark-utils.zsh"
         dest: "{{ system.home }}/.zshrc.d/spark-utils.zsh"
         owner: "{{ system.username }}"
