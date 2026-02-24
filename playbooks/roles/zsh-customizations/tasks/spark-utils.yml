@@ -19,6 +19,6 @@
 
     - name: Add include string in the zshrc file
       when: script_already_included.rc != 0
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: "{{ system.home }}/.zshrc"
         line: "{{ include_string }}"
