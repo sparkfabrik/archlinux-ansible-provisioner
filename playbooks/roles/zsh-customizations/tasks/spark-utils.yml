@@ -12,13 +12,14 @@
         group: "{{ system.username }}"
         mode: "0755"
 
-    - name: Test if script is already included in the zshrc file
-      shell: grep -c "spark-utils.zsh" "{{ system.home }}/.zshrc"
-      register: script_already_included
-      ignore_errors: yes
+    - name: Check if .zshrc exists
+      ansible.builtin.stat:
+        path: "{{ system.home }}/.zshrc"
+      register: zshrc_stat
 
-    - name: Add include string in the zshrc file
-      when: script_already_included.rc != 0
+    - name: Ensure spark-utils is included in the zshrc file
       ansible.builtin.lineinfile:
         path: "{{ system.home }}/.zshrc"
+        regexp: 'spark-utils\.zsh'
         line: "{{ include_string }}"
+      when: zshrc_stat.stat.exists
