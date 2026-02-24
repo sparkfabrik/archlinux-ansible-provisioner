@@ -1,0 +1,24 @@
+---
+- name: Install utils zsh customizations
+  tags: [zsh-customization, zsh-customization-utils]
+  vars:
+    include_string: '[[ ! -f "{{ system.home }}/.zshrc.d/spark-utils.zsh" ]] || source "{{ system.home }}/.zshrc.d/spark-utils.zsh"'
+  block:
+    - name: Copy the customization scripts
+      copy:
+        src: "files/spark-utils.zsh"
+        dest: "{{ system.home }}/.zshrc.d/spark-utils.zsh"
+        owner: "{{ system.username }}"
+        group: "{{ system.username }}"
+        mode: 0755
+
+    - name: Test if script is already included in the zshrc file
+      shell: grep -c "spark-utils.zsh" "{{ system.home }}/.zshrc"
+      register: script_already_included
+      ignore_errors: yes
+
+    - name: Add include string in the zshrc file
+      when: script_already_included.rc != 0
+      lineinfile:
+        path: "{{ system.home }}/.zshrc"
+        line: "{{ include_string }}"

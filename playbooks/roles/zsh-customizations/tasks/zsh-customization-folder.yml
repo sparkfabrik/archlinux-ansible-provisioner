@@ -1,0 +1,11 @@
+---
+- name: Install zshrc.d
+  tags: [zsh-customization, zsh-customization-folder]
+  block:
+    - name: Create the zshrc.d folder
+      ansible.builtin.file:
+        path: "{{ system.home }}/.zshrc.d"
+        state: directory
+        owner: "{{ system.username }}"
+        group: "{{ system.username }}"
+        mode: "0755"

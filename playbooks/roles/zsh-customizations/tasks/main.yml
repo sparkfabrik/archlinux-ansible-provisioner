@@ -1,0 +1,8 @@
+---
+- name: Install customization zsh customizations folder
+  tags: [zsh-customization, zsh-customization-folder]
+  import_tasks: zsh-customization-folder.yml
+
+- name: Install spark-utils zsh customizations
+  tags: [zsh-customization, zsh-customization-spark-utils]
+  import_tasks: spark-utils.yml

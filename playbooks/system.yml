@@ -10,3 +10,4 @@
     - role: sparkfabrik
     - role: sway
     - role: i3
+    - role: zsh-customizations
