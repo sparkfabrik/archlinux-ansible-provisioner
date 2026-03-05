@@ -1,8 +1,10 @@
 ---
 system:
   hostname: foobar
-  username: foobar
-  home: /home/foobar
+  # username and home are auto-detected from SUDO_USER when omitted.
+  # Uncomment to override:
+  # username: myuser
+  # home: /home/myuser
   kernel: standard # standard|lts|zen
   timezone: Europe/Rome
   bluetooth:

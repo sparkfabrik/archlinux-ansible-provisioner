@@ -21,7 +21,7 @@
         dest: /usr/local/bin/ayse-get-sm
         force: yes
         mode: u+rwx,g-wx,o-rwx
-        owner: "{{ system.username }}"
+        owner: "{{ system.username | default(current_user) }}"
 
     - name: Copy jwt-decode script
       copy:
@@ -29,4 +29,4 @@
         dest: /usr/local/bin/jwt-decode
         force: yes
         mode: u+rwx,g-wx,o-rwx
-        owner: "{{ system.username }}"
+        owner: "{{ system.username | default(current_user) }}"

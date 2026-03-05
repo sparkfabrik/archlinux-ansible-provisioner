@@ -3,32 +3,32 @@
   when: sparkfabrik | default(true)
   tags: [sparkfabrik, sparkdock]
   vars:
-    include_string: '[[ ! -f "{{ system.home }}/.local/spark/sparkdock/config/shell/sparkdock.zshrc" ]] || source "{{ system.home }}/.local/spark/sparkdock/config/shell/sparkdock.zshrc"'
+    include_string: '[[ ! -f "{{ system.home | default(current_home) }}/.local/spark/sparkdock/config/shell/sparkdock.zshrc" ]] || source "{{ system.home | default(current_home) }}/.local/spark/sparkdock/config/shell/sparkdock.zshrc"'
   become: yes
-  become_user: "{{ system.username }}"
+  become_user: "{{ system.username | default(current_user) }}"
   block:
     - name: Ensure ~/.local/share/zsh/site-functions directory exists
       ansible.builtin.file:
-        path: "{{ system.home }}/.local/share/zsh/site-functions"
+        path: "{{ system.home | default(current_home) }}/.local/share/zsh/site-functions"
         state: directory
         mode: "0755"
 
     - name: Git checkout sparkdock
       ansible.builtin.git:
         repo: "https://github.com/sparkfabrik/sparkdock.git"
-        dest: "{{ system.home }}/.local/spark/sparkdock"
+        dest: "{{ system.home | default(current_home) }}/.local/spark/sparkdock"
         version: master
         update: yes
         # version: <PUT THE DESIRED COMMIT SHA HERE FOR TESTING PURPOSES>
 
     - name: Check if .zshrc exists
       ansible.builtin.stat:
-        path: "{{ system.home }}/.zshrc"
+        path: "{{ system.home | default(current_home) }}/.zshrc"
       register: zshrc_stat
 
     - name: Ensure sparkdock zsh customization is included in the zshrc file
       ansible.builtin.lineinfile:
-        path: "{{ system.home }}/.zshrc"
+        path: "{{ system.home | default(current_home) }}/.zshrc"
         regexp: 'sparkdock\.zshrc'
         line: "{{ include_string }}"
       when: zshrc_stat.stat.exists
@@ -52,16 +52,23 @@
 
     - name: Ensure ~/.local/spark/ajust directory exists
       become: yes
-      become_user: "{{ system.username }}"
+      become_user: "{{ system.username | default(current_user) }}"
       ansible.builtin.file:
-        path: "{{ system.home }}/.local/spark/ajust"
+        path: "{{ system.home | default(current_home) }}/.local/spark/ajust"
         state: directory
         mode: "0755"
 
     - name: Copy ajust justfile
       become: yes
-      become_user: "{{ system.username }}"
+      become_user: "{{ system.username | default(current_user) }}"
       ansible.builtin.copy:
         src: ajust/justfile
-        dest: "{{ system.home }}/.local/spark/ajust/justfile"
+        dest: "{{ system.home | default(current_home) }}/.local/spark/ajust/justfile"
         mode: "0644"
+
+    - name: Generate ajust zsh completion
+      become: yes
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.shell: |
+        just --completions zsh | sed -E 's/([\(_" ])just/\1ajust/g' > "{{ system.home | default(current_home) }}/.local/share/zsh/site-functions/_ajust"
+      changed_when: true
