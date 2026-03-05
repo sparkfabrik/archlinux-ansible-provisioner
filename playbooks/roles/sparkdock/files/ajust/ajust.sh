@@ -7,4 +7,4 @@ then
     sudo pacman -S --noconfirm just
 fi
 
-just --justfile "${HOME}/.local/share/ajust/justfile" "${@}"
+just --justfile "${HOME}/.local/spark/ajust/justfile" "${@}"

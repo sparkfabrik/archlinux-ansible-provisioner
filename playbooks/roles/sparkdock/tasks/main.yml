@@ -50,11 +50,11 @@
         dest: /usr/local/bin/ajust
         mode: "0755"
 
-    - name: Ensure ~/.local/share/ajust directory exists
+    - name: Ensure ~/.local/spark/ajust directory exists
       become: yes
       become_user: "{{ system.username }}"
       ansible.builtin.file:
-        path: "{{ system.home }}/.local/share/ajust"
+        path: "{{ system.home }}/.local/spark/ajust"
         state: directory
         mode: "0755"
 
@@ -63,5 +63,5 @@
       become_user: "{{ system.username }}"
       ansible.builtin.copy:
         src: ajust/justfile
-        dest: "{{ system.home }}/.local/share/ajust/justfile"
+        dest: "{{ system.home }}/.local/spark/ajust/justfile"
         mode: "0644"
