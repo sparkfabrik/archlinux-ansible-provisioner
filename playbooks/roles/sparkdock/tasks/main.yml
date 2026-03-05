@@ -1,0 +1,34 @@
+---
+- name: Import sparkdock features
+  when: sparkfabrik | default(false)
+  tags: [sparkfabrik, sparkdock]
+  vars:
+    include_string: '[[ ! -f "{{ system.home }}/.local/spark/sparkdock/config/shell/sparkdock.zshrc" ]] || source "{{ system.home }}/.local/spark/sparkdock/config/shell/sparkdock.zshrc"'
+  become: yes
+  become_user: "{{ system.username }}"
+  block:
+    - name: Ensure ~/.local/share/zsh/site-functions directory exists
+      ansible.builtin.file:
+        path: "{{ system.home }}/.local/share/zsh/site-functions"
+        state: directory
+        mode: "0755"
+
+    - name: Git checkout sparkdock
+      ansible.builtin.git:
+        repo: "https://github.com/sparkfabrik/sparkdock.git"
+        dest: "{{ system.home }}/.local/spark/sparkdock"
+        version: master
+        update: yes
+        # version: <PUT THE DESIRED COMMIT SHA HERE FOR TESTING PURPOSES>
+
+    - name: Check if .zshrc exists
+      ansible.builtin.stat:
+        path: "{{ system.home }}/.zshrc"
+      register: zshrc_stat
+
+    - name: Ensure sparkdock zsh customization is included in the zshrc file
+      ansible.builtin.lineinfile:
+        path: "{{ system.home }}/.zshrc"
+        regexp: 'sparkdock\.zshrc'
+        line: "{{ include_string }}"
+      when: zshrc_stat.stat.exists
