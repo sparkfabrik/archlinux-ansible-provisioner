@@ -32,3 +32,35 @@
         regexp: 'sparkdock\.zshrc'
         line: "{{ include_string }}"
       when: zshrc_stat.stat.exists
+
+- name: Setup ajust (SparkJust for Linux)
+  when: sparkfabrik | default(false)
+  tags: [sparkfabrik, sparkdock, ajust]
+  become: yes
+  block:
+    - name: Install just task runner
+      community.general.pacman:
+        name: just
+        state: present
+
+    - name: Ensure ~/.local/share/ajust directory exists
+      ansible.builtin.file:
+        path: "{{ system.home }}/.local/share/ajust"
+        state: directory
+        mode: "0755"
+        owner: "{{ system.username }}"
+        group: "{{ system.username }}"
+
+    - name: Copy ajust justfile
+      ansible.builtin.copy:
+        src: ajust/justfile
+        dest: "{{ system.home }}/.local/share/ajust/justfile"
+        mode: "0644"
+        owner: "{{ system.username }}"
+        group: "{{ system.username }}"
+
+    - name: Install ajust wrapper script
+      ansible.builtin.copy:
+        src: ajust/ajust.sh
+        dest: /usr/local/bin/ajust
+        mode: "0755"
