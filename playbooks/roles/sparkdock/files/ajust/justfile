@@ -3,8 +3,10 @@
 set allow-duplicate-recipes := true
 set ignore-comments := true
 
-sparkdock_path  := env_var('HOME') + "/.local/spark/sparkdock"
-default_branch  := "master"
+sparkdock_path   := env_var('HOME') + "/.local/spark/sparkdock"
+default_branch   := "master"
+provisioner_path := env_var_or_default('AJUST_PROVISIONER_PATH', env_var('HOME') + '/provisioner')
+config_file      := env_var_or_default('AJUST_CONFIG_FILE', provisioner_path + '/config/default.yaml')
 
 _default:
     #!/usr/bin/env bash
@@ -41,6 +43,17 @@ sparkdock-fetch-updates:
 
 # Skills recipes (only available once sparkdock is cloned)
 import? "~/.local/spark/sparkdock/sjust/recipes/05-skills.just"
+
+# Run the provisioner ansible-playbook with specific tags.
+[group('provisioner')]
+provision-tags tags:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Running ansible with tags: {{tags}}"
+    sudo ansible-playbook "{{provisioner_path}}/playbooks/system.yml" \
+      -i localhost, -c local \
+      --tags "{{tags}}" \
+      --extra-vars "@{{config_file}}"
 
 # User customizations
 import? "~/.config/ajust/100-custom.just"
