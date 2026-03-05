@@ -52,5 +52,5 @@ desktop:
   browser:
     install_chrome_beta: false
 debug: false
-sparkfabrik: false
+sparkfabrik: true
 qemu_for_buildx: true
