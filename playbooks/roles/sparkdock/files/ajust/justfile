@@ -12,6 +12,8 @@ _default:
     #!/usr/bin/env bash
     echo "Welcome to AJust - SparkJust for Linux"
     echo ""
+    echo "👉 Remember you can add your own tasks in ~/.config/ajust/100-custom.just"
+    echo ""
     just --justfile "{{justfile()}}" --list \
       --list-heading $'Available commands:\n' --list-prefix $' - '
 
@@ -67,3 +69,6 @@ provision-tags tags:
 
 # User customizations
 import? "~/.config/ajust/100-custom.just"
+
+# Externally managed tasks (e.g. MDM)
+import? "~/.local/spark/sparkdock/sjust/000-system.just"
