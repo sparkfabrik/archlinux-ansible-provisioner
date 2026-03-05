@@ -18,6 +18,7 @@
         repo: "https://github.com/sparkfabrik/sparkdock.git"
         dest: "{{ system.home }}/.local/spark/sparkdock"
         version: master
+        update: yes
         # version: <PUT THE DESIRED COMMIT SHA HERE FOR TESTING PURPOSES>
 
     - name: Check if .zshrc exists
