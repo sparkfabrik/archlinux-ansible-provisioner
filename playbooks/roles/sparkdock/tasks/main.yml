@@ -1,6 +1,6 @@
 ---
 - name: Import sparkdock features
-  when: sparkfabrik | default(false)
+  when: sparkfabrik | default(true)
   tags: [sparkfabrik, sparkdock]
   vars:
     include_string: '[[ ! -f "{{ system.home }}/.local/spark/sparkdock/config/shell/sparkdock.zshrc" ]] || source "{{ system.home }}/.local/spark/sparkdock/config/shell/sparkdock.zshrc"'
@@ -34,7 +34,7 @@
       when: zshrc_stat.stat.exists
 
 - name: Setup ajust (SparkJust for Linux)
-  when: sparkfabrik | default(false)
+  when: sparkfabrik | default(true)
   tags: [sparkfabrik, sparkdock, ajust]
   block:
     - name: Install just task runner
