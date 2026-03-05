@@ -33,12 +33,12 @@ sparkdock-fetch-updates:
         echo "Already up to date."
         exit 0
     fi
-    if ! git diff --quiet || ! git diff --cached --quiet; then
-        echo "Stashing local changes..."
-        git stash -m "Auto-stash before update $(date)"
-    fi
     echo "Updating to latest {{default_branch}}..."
-    git reset --hard "origin/{{default_branch}}"
+    if ! git pull --ff-only origin "{{default_branch}}"; then
+        echo "Fast-forward failed. Local clone has diverged from origin/{{default_branch}}."
+        echo "Resolve manually in {{sparkdock_path}} or run: git -C {{sparkdock_path}} reset --hard origin/{{default_branch}}"
+        exit 1
+    fi
     echo "Sparkdock updated successfully."
 
 # Skills recipes (only available once sparkdock is cloned)
@@ -49,6 +49,16 @@ import? "~/.local/spark/sparkdock/sjust/recipes/05-skills.just"
 provision-tags tags:
     #!/usr/bin/env bash
     set -euo pipefail
+    if [[ ! -f "{{provisioner_path}}/playbooks/system.yml" ]]; then
+        echo "Provisioner not found at {{provisioner_path}}"
+        echo "Set AJUST_PROVISIONER_PATH to your archlinux-ansible-provisioner checkout."
+        exit 1
+    fi
+    if [[ ! -f "{{config_file}}" ]]; then
+        echo "Config file not found at {{config_file}}"
+        echo "Set AJUST_CONFIG_FILE or create the file. See config/default.yaml.tpl for reference."
+        exit 1
+    fi
     echo "Running ansible with tags: {{tags}}"
     sudo ansible-playbook "{{provisioner_path}}/playbooks/system.yml" \
       -i localhost, -c local \
