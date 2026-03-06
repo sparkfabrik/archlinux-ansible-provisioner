@@ -66,6 +66,14 @@
         dest: "{{ system.home | default(current_home) }}/.local/spark/ajust/justfile"
         mode: "0644"
 
+    - name: Ensure ~/.local/share/zsh/site-functions directory exists
+      become: yes
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.file:
+        path: "{{ system.home | default(current_home) }}/.local/share/zsh/site-functions"
+        state: directory
+        mode: "0755"
+
     - name: Generate ajust zsh completion
       become: yes
       become_user: "{{ system.username | default(current_user) }}"
