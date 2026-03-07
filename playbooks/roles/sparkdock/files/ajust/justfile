@@ -60,8 +60,8 @@ sparkdock-fetch-updates:
     fi
     echo "Sparkdock updated successfully."
 
-# Skills recipes (only available once sparkdock is cloned)
-import? "~/.local/spark/sparkdock/sjust/recipes/05-skills.just"
+# AI coding agent recipes (only available once sparkdock is cloned)
+import? "~/.local/spark/sparkdock/sjust/recipes/05-ai-coding-agents.just"
 
 # Run the provisioner ansible-playbook with specific tags.
 [group('provisioner')]
