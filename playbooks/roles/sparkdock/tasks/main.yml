@@ -93,23 +93,10 @@
         state: directory
         mode: "0755"
 
-    - name: Make sparkdock-agents-sync executable
+    - name: Make sparkdock bin scripts executable
       become: yes
-      ansible.builtin.file:
-        path: "{{ system.home | default(current_home) }}/.local/spark/sparkdock/bin/sparkdock-agents-sync"
-        mode: "0755"
-
-    - name: Make sparkdock-agents-status executable
-      become: yes
-      ansible.builtin.file:
-        path: "{{ system.home | default(current_home) }}/.local/spark/sparkdock/bin/sparkdock-agents-status"
-        mode: "0755"
-
-    - name: Make sparkdock-check-updates executable
-      become: yes
-      ansible.builtin.file:
-        path: "{{ system.home | default(current_home) }}/.local/spark/sparkdock/bin/sparkdock-check-updates"
-        mode: "0755"
+      ansible.builtin.shell: chmod +x "{{ system.home | default(current_home) }}/.local/spark/sparkdock/bin/"*
+      changed_when: false
 
     - name: Run agent resources sync
       become: yes
