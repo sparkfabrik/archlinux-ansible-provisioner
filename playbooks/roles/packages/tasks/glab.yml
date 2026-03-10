@@ -1,0 +1,42 @@
+---
+- name: Install glab (GitLab CLI)
+  tags: [packages, dev, glab]
+  block:
+    - name: Install glab
+      community.general.pacman:
+        name:
+          - glab
+
+    - name: Ensure ~/.local/share/zsh/site-functions directory exists
+      become: yes
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.file:
+        path: "{{ system.home | default(current_home) }}/.local/share/zsh/site-functions"
+        state: directory
+        mode: "0755"
+
+    - name: Generate glab zsh completion
+      become: yes
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.shell: |
+        glab completion -s zsh > "{{ system.home | default(current_home) }}/.local/share/zsh/site-functions/_glab"
+      changed_when: true
+
+- name: Create glab ajust recipe
+  tags: [packages, dev, glab]
+  block:
+    - name: Ensure ~/.local/spark/ajust/recipes directory exists
+      become: yes
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.file:
+        path: "{{ system.home | default(current_home) }}/.local/spark/ajust/recipes"
+        state: directory
+        mode: "0755"
+
+    - name: Create glab ajust recipe
+      become: yes
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.copy:
+        src: glab/01-gitlab.just
+        dest: "{{ system.home | default(current_home) }}/.local/spark/ajust/recipes/01-gitlab.just"
+        mode: "0644"

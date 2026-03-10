@@ -22,3 +22,6 @@
 
 - name: Set up AI packages
   import_tasks: ai.yml
+
+- name: Set up GitLab CLI (glab) and configuration
+  import_tasks: glab.yml
