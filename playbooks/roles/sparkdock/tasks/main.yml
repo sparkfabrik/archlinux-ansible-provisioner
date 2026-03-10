@@ -81,6 +81,14 @@
         just --completions zsh | sed -E 's/([\(_" ])just/\1ajust/g' > "{{ system.home | default(current_home) }}/.local/share/zsh/site-functions/_ajust"
       changed_when: true
 
+    - name: Ensure ~/.local/spark/ajust/recipes directory exists
+      become: yes
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.file:
+        path: "{{ system.home | default(current_home) }}/.local/spark/ajust/recipes"
+        state: directory
+        mode: "0755"
+
 - name: Sync AI coding agent resources from upstream repository
   when: sparkfabrik | default(true)
   tags: [sparkfabrik, sparkdock, ai-coding-agents]
