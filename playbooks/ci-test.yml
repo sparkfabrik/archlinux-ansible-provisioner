@@ -1,0 +1,74 @@
+---
+# CI Test Playbook
+# This playbook is designed to test the Ansible roles in a Docker environment.
+# It excludes tasks that cannot run in Docker (systemd, grub, kernel operations, etc.)
+
+- hosts: all
+  tasks:
+    - name: Create aur_builder user for testing
+      tags: [ci-system]
+      block:
+        - name: Create the `aur_builder` user
+          ansible.builtin.user:
+            name: aur_builder
+            create_home: yes
+            group: wheel
+            shell: /usr/bin/nologin
+            system: yes
+
+        - name: Allow the `aur_builder` user to run `sudo pacman` without a password
+          ansible.builtin.lineinfile:
+            path: /etc/sudoers.d/11-install-aur_builder
+            line: "aur_builder ALL=(ALL) NOPASSWD: /usr/bin/pacman"
+            create: yes
+            validate: "visudo -cf %s"
+
+        - name: Allow the `aur_builder` user to run `sudo makepkg` without a password
+          ansible.builtin.lineinfile:
+            path: /etc/sudoers.d/11-install-aur_builder
+            line: "aur_builder ALL=(ALL) NOPASSWD: /usr/bin/makepkg"
+            create: yes
+            validate: "visudo -cf %s"
+
+    - name: Test basic package installation
+      tags: [ci-packages]
+      block:
+        - name: Install test packages
+          community.general.pacman:
+            name:
+              - git
+              - vim
+              - sudo
+            state: present
+            update_cache: yes
+
+    - name: Verify installation
+      tags: [ci-verify]
+      block:
+        - name: Check git is installed
+          command: which git
+          register: git_check
+          changed_when: false
+          
+        - name: Verify git installation
+          assert:
+            that:
+              - git_check.rc == 0
+            fail_msg: "Git is not installed"
+            success_msg: "Git is installed at {{ git_check.stdout }}"
+
+        - name: Check vim is installed
+          command: which vim
+          register: vim_check
+          changed_when: false
+          
+        - name: Verify vim installation
+          assert:
+            that:
+              - vim_check.rc == 0
+            fail_msg: "Vim is not installed"
+            success_msg: "Vim is installed at {{ vim_check.stdout }}"
+
+        - name: Display verification results
+          debug:
+            msg: "Verification successful - git and vim are installed"

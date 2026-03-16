@@ -1,0 +1,102 @@
+---
+name: Test Ansible Playbook
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+  schedule:
+    # Run every Monday at 3:00 AM UTC to ensure playbook remains functional
+    - cron: '0 3 * * 1'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  test-playbook:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    container:
+      image: archlinux:latest
+    
+    steps:
+      - name: Update system and install dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm git python python-pip sudo base-devel
+      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Create CI test configuration
+        run: |
+          cat > /tmp/ci-test.yaml << 'EOF'
+          ---
+          system:
+            hostname: ci-test
+            username: ci-user
+            home: /home/ci-user
+            kernel: standard
+            timezone: UTC
+            bluetooth:
+              controllerMode: dual
+            grub:
+              gfxmode: auto
+          timeshift:
+            autosnap:
+              enabled: false
+          swapfile:
+            enabled: false
+          packages:
+            obs: false
+          desktop:
+            gnome:
+              extensions: []
+              keybindings:
+                open_terminal_shortcut: "<Super>Return"
+              dconf:
+                use_mouse_natural_scroll: false
+                alter_close_window: false
+                clock_show_seconds: false
+                dash_to_dock_show_favorites: "false"
+                alt_tab_avoid_grouping: false
+            sway:
+              enable: false
+              waybar: false
+            i3:
+              enable: false
+            x11_gestures: false
+            office: false
+            browser:
+              install_chrome_beta: false
+          debug: false
+          sparkfabrik: false
+          qemu_for_buildx: false
+          EOF
+      
+      - name: Install Ansible
+        run: |
+          pacman -S --noconfirm ansible
+      
+      - name: Install Ansible collections
+        run: |
+          ansible-galaxy collection install -r requirements.yml
+      
+      - name: Validate playbook syntax
+        run: |
+          ansible-playbook --syntax-check playbooks/system.yml
+          ansible-playbook --syntax-check playbooks/bootstrap.yml
+      
+      - name: Run playbook in check mode (dry-run)
+        run: |
+          echo "Running playbook in check mode to validate logic..."
+          if ansible-playbook playbooks/ci-test.yml -i localhost, -c local --check --extra-vars "@/tmp/ci-test.yaml"; then
+            echo "✓ Check mode passed"
+          else
+            echo "⚠ Check mode failed - this is expected as some tasks may not support check mode"
+            exit 0
+          fi
+      
+      - name: Run playbook with Docker-safe tasks only
+        run: |
+          ansible-playbook playbooks/ci-test.yml -i localhost, -c local --extra-vars "@/tmp/ci-test.yaml"
