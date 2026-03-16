@@ -2,60 +2,73 @@
 - name: Install base packages
   tags: [packages, base]
   block:
-  - name: Network packages
-    community.general.pacman:
-      name:
-        - dnsutils
-        - dhcpcd
-        - iproute2
-        - gnu-netcat
-        - net-tools
-        - tcpdump
-        - wpa_supplicant
+    - name: Ensure not installed packages are absent
+      community.general.pacman:
+        name:
+          - glances
+        state: absent
 
-  - name: System packages
-    community.general.pacman:
-      name:
-        - ansible
-        - bashtop
-        - bc
-        - lm_sensors
-        - coreutils
-        - usbutils
-        - dmidecode
-        - base-devel
-        - bash-completion
-        - dialog
-        - dmidecode
-        - glances
-        - flatpak
-        - fastfetch
-        - pacman-contrib
-        - gparted
-        - htop
-        - mesa
-        - p7zip
-        - git
-        - tree
-        - usbutils
-        - tmux
-        - zsh
-        - zsh-completions
-        - lshw
-        - deja-dup
-        - vim
+    - name: Network packages
+      community.general.pacman:
+        name:
+          - dnsutils
+          - dhcpcd
+          - iproute2
+          - gnu-netcat
+          - net-tools
+          - tcpdump
+          - wpa_supplicant
 
-  - name: System packges from aur
-    kewlfft.aur.aur:
-      use: paru
-      name:
-        - downgrade
-        - inxi
-        - git-credential-manager-bin
-        - glxinfo
-        - flatseal
-    become: yes
-    become_user: aur_builder
+    - name: System packages
+      community.general.pacman:
+        name:
+          - ansible
+          - bashtop
+          - lm_sensors
+          - coreutils
+          - usbutils
+          - dmidecode
+          - base-devel
+          - bash-completion
+          - dialog
+          - dmidecode
+          - glances
+          - flatpak
+          - fastfetch
+          - pacman-contrib
+          - gparted
+          - htop
+          - fd
+          - ripgrep
+          - exa
+          - bat
+          - bc
+          - btop
+          - thefuck
+          - mesa
+          - p7zip
+          - git
+          - tree
+          - thefuck
+          - usbutils
+          - tmux
+          - zsh
+          - zsh-completions
+          - lshw
+          - deja-dup
+          - vim
 
-  - name: Symlink vim to vi
-    command: ln -sf /usr/bin/vim /usr/bin/vi
+    - name: System packages from aur
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - downgrade
+          - inxi
+          - git-credential-manager-bin
+          - glxinfo
+          - flatseal
+      become: yes
+      become_user: aur_builder
+
+    - name: Symlink vim to vi
+      command: ln -sf /usr/bin/vim /usr/bin/vi

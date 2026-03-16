@@ -13,17 +13,22 @@
     - name: Install sway wm
       community.general.pacman:
         name:
-          - alacritty
+          - gdm
           - polkit-gnome
-          - network-manager-applet
-          - ranger
           - sway
           - swaybg
           - swayidle
           - swaylock
+
+    - name: System utilities
+      community.general.pacman:
+        name:
+          - alacritty
+          - ghostty
           - thunar
           - rofi
           - wl-clipboard
+          - ranger
 
     - name: Display server gui
       kewlfft.aur.aur:
@@ -91,6 +96,7 @@
         name:
           - waybar
           - otf-font-awesome
+          - woff2-font-awesome
 
     - name: Configure login launcher due to this issue - https://github.com/swaywm/sway/issues/3109
       ansible.builtin.copy:
