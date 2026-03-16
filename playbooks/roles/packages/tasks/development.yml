@@ -67,6 +67,7 @@
           - npm
           - php
           - python-pipx
+          - shellcheck
           - yarn
     - name: Install development packages using npm
       community.general.npm:
