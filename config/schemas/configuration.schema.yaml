@@ -289,6 +289,27 @@ properties:
         description: Use the swapfile for hibernation.
         examples:
           - true
+  sparkdock:
+    $id: "#/properties/sparkdock"
+    description: Sparkdock configuration.
+    additionalProperties: true
+    properties:
+      enabled:
+        $id: "#/properties/sparkdock/properties/enabled"
+        type: boolean
+        default: false
+        title: Enable Sparkdock
+        description: Activate the Sparkdock feature.
+        examples:
+          - true
+      path:
+        $id: "#/properties/sparkdock/properties/path"
+        type: string
+        default: "{{ system.home }}/.local/spark/sparkdock"
+        title: The path of sparkdock
+        description: The path where sparkdock will be installed.
+        examples:
+          - "{{ system.home }}/.local/spark/sparkdock"
   sparkfabrik:
     $id: "#/properties/sparkfabrik"
     default: false

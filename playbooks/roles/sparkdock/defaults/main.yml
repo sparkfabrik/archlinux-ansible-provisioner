@@ -1,3 +1,2 @@
 ---
 sparkdock_default_path: "{{ system.home | default(current_home) }}/.local/spark/sparkdock"
-office: false
