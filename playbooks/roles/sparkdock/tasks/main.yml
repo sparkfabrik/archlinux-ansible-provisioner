@@ -1,9 +1,9 @@
 ---
 - name: Import sparkdock features
-  when: sparkfabrik | default(true)
+  when: sparkdock.enabled | default(true)
   tags: [sparkfabrik, sparkdock]
   vars:
-    include_string: '[[ ! -f "{{ system.home | default(current_home) }}/.local/spark/sparkdock/config/shell/sparkdock.zshrc" ]] || source "{{ system.home | default(current_home) }}/.local/spark/sparkdock/config/shell/sparkdock.zshrc"'
+    include_string: '[[ ! -f "{{ sparkdock.path | default(sparkdock_default_path) }}/config/shell/sparkdock.zshrc" ]] || source "{{ sparkdock.path | default(sparkdock_default_path) }}/config/shell/sparkdock.zshrc"'
   become: yes
   become_user: "{{ system.username | default(current_user) }}"
   block:
@@ -16,7 +16,7 @@
     - name: Git checkout sparkdock
       ansible.builtin.git:
         repo: "https://github.com/sparkfabrik/sparkdock.git"
-        dest: "{{ system.home | default(current_home) }}/.local/spark/sparkdock"
+        dest: "{{ sparkdock.path | default(sparkdock_default_path) }}"
         version: master
         update: yes
         # version: <PUT THE DESIRED COMMIT SHA HERE FOR TESTING PURPOSES>
@@ -32,6 +32,27 @@
         regexp: 'sparkdock\.zshrc'
         line: "{{ include_string }}"
       when: zshrc_stat.stat.exists
+
+    - name: Check if opencode config directory exists in home directory
+      ansible.builtin.stat:
+        path: "{{ system.home | default(current_home) }}/.config/opencode"
+      register: home_opencode_config_stat
+
+    - name: Ensure opencode config file is present in sparkdock cloned repository
+      ansible.builtin.stat:
+        path: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
+      register: sparkdock_opencode_config_stat
+
+    - name: Copy opencode config file from sparkdock if the opencode config directory exists
+      ansible.builtin.copy:
+        src: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
+        dest: "{{ system.home | default(current_home) }}/.config/opencode/opencode.json"
+        mode: "0644"
+        owner: "{{ system.username | default(current_user) }}"
+        group: "{{ system.username | default(current_user) }}"
+      when:
+        - home_opencode_config_stat.stat.exists == true
+        - sparkdock_opencode_config_stat.stat.exists == true
 
 - name: Setup ajust (SparkJust for Linux)
   when: sparkfabrik | default(true)
@@ -103,13 +124,13 @@
 
     - name: Make sparkdock bin scripts executable
       become: yes
-      ansible.builtin.shell: chmod +x "{{ system.home | default(current_home) }}/.local/spark/sparkdock/bin/"*
+      ansible.builtin.shell: chmod +x "{{ sparkdock.path | default(sparkdock_default_path) }}/bin/"*
       changed_when: false
 
     - name: Run agent resources sync
       become: yes
       become_user: "{{ system.username | default(current_user) }}"
-      ansible.builtin.command: "{{ system.home | default(current_home) }}/.local/spark/sparkdock/bin/sparkdock-agents-sync"
+      ansible.builtin.command: "{{ sparkdock.path | default(sparkdock_default_path) }}/bin/sparkdock-agents-sync"
       register: agents_sync_output
       changed_when: "'added' in agents_sync_output.stdout or 'updated' in agents_sync_output.stdout"
 

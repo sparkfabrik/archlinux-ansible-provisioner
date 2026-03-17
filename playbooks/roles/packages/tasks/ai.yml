@@ -16,11 +16,11 @@
 
     - name: Ensure zsh site-functions directory exists
       ansible.builtin.file:
-        path: "{{ system.home }}/.local/share/zsh/site-functions"
+        path: "{{ system.home | default(current_home) }}/.local/share/zsh/site-functions"
         state: directory
         mode: "0755"
-        owner: "{{ system.username }}"
-        group: "{{ system.username }}"
+        owner: "{{ system.username | default(current_user) }}"
+        group: "{{ system.username | default(current_user) }}"
 
     - name: Generate opencode zsh completions
       ansible.builtin.command: opencode completion
@@ -31,10 +31,10 @@
     - name: Write opencode completions to file
       ansible.builtin.copy:
         content: "{{ opencode_completion_output.stdout }}\n"
-        dest: "{{ system.home }}/.local/share/zsh/site-functions/_opencode"
+        dest: "{{ system.home | default(current_home) }}/.local/share/zsh/site-functions/_opencode"
         mode: "0644"
-        owner: "{{ system.username }}"
-        group: "{{ system.username }}"
+        owner: "{{ system.username | default(current_user) }}"
+        group: "{{ system.username | default(current_user) }}"
       when:
         - opencode_completion_output is not skipped
         - opencode_completion_output.rc == 0
@@ -48,26 +48,41 @@
     - name: Write openspec completions to file
       ansible.builtin.copy:
         content: "{{ openspec_completion_output.stdout }}\n"
-        dest: "{{ system.home }}/.local/share/zsh/site-functions/_openspec"
+        dest: "{{ system.home | default(current_home) }}/.local/share/zsh/site-functions/_openspec"
         mode: "0644"
-        owner: "{{ system.username }}"
-        group: "{{ system.username }}"
+        owner: "{{ system.username | default(current_user) }}"
+        group: "{{ system.username | default(current_user) }}"
       when:
         - openspec_completion_output is not skipped
         - openspec_completion_output.rc == 0
 
     - name: Create ~/.config/opencode directory
-      file:
-        path: "{{ system.home }}/.config/opencode"
+      ansible.builtin.file:
+        path: "{{ system.home | default(current_home) }}/.config/opencode"
         state: directory
         mode: "0755"
-        owner: "{{ system.username }}"
-        group: "{{ system.username }}"
+        owner: "{{ system.username | default(current_user) }}"
+        group: "{{ system.username | default(current_user) }}"
 
-    - name: Create opencode config file
-      copy:
-        dest: "{{ system.home }}/.config/opencode/opencode.json"
+    - name: Check if opencode config file is already present from sparkdock
+      ansible.builtin.stat:
+        path: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
+      register: sparkdock_opencode_config_stat
+
+    - name: Copy opencode config file from sparkdock if it exists
+      ansible.builtin.copy:
+        src: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
+        dest: "{{ system.home | default(current_home) }}/.config/opencode/opencode.json"
+        mode: "0644"
+        owner: "{{ system.username | default(current_user) }}"
+        group: "{{ system.username | default(current_user) }}"
+      when: sparkdock_opencode_config_stat.stat.exists
+
+    - name: Create opencode config file as fallback if it doesn't exist from sparkdock
+      ansible.builtin.copy:
+        dest: "{{ system.home | default(current_home) }}/.config/opencode/opencode.json"
         src: "files/opencode/opencode.json"
         mode: "0644"
-        owner: "{{ system.username }}"
-        group: "{{ system.username }}"
+        owner: "{{ system.username | default(current_user) }}"
+        group: "{{ system.username | default(current_user) }}"
+      when: not sparkdock_opencode_config_stat.stat.exists
