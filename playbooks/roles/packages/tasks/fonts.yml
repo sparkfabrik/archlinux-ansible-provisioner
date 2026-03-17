@@ -1,51 +1,25 @@
 ---
+- name: Load packages variables
+  tags: [packages, fonts]
+  ansible.builtin.include_vars:
+    file: "{{ ansible_facts['distribution'] }}.yml"
+    name: distro_packages
+
 - name: Install and configure fonts
   tags: [packages, fonts]
+  when: ansible_facts['distribution'] == "Archlinux"
   block:
     - name: Install fonts
+      when: ansible_facts['distribution'] == "Archlinux"
       community.general.pacman:
         update_cache: true
-        name:
-          - freetype2
-          - fontconfig
-          - adobe-source-sans-fonts
-          - cantarell-fonts
-          - inter-font
-          - otf-libertinus
-          - libertinus-font
-          - noto-fonts
-          - noto-fonts-emoji
-          - terminus-font
-          - tex-gyre-fonts
-          - ttf-anonymous-pro
-          - ttf-droid
-          - ttf-liberation
-          - ttf-fira-code
-          - ttf-fira-mono
-          - ttf-fira-sans
-          - ttf-jetbrains-mono
-          - ttf-lato
-          - ttf-roboto
-          - ttf-roboto-mono
-          - ttf-ubuntu-font-family
-          - ttf-ibm-plex
-          - ttf-bitstream-vera
-          - ttf-dejavu
-          - ttf-hack
-          - ttf-inconsolata
-          - ttf-ubuntu-nerd
-          - ttf-ubuntu-mono-nerd
-          - ttf-firacode-nerd
-          - ttf-inconsolata-nerd
-          - ttf-jetbrains-mono-nerd
-          - otf-droid-nerd
+        name: "{{ distro_packages.fonts_pkgs }}"
 
     - name: Install fonts from aur
+      when: ansible_facts['distribution'] == "Archlinux"
       kewlfft.aur.aur:
         use: paru
-        name:
-          - ttf-monaco
-          - ttf-meslo-nerd-font-powerlevel10k
+        name: "{{ distro_packages.fonts_pkgs_aur }}"
       become: yes
       become_user: aur_builder
 
@@ -54,16 +28,19 @@
         src: "/usr/share/fontconfig/conf.avail/10-sub-pixel-rgb.conf"
         dest: "/etc/fonts/conf.d/10-sub-pixel-rgb.conf"
         state: link
+
     - name: Enable slight hinting
       file:
         src: "/usr/share/fontconfig/conf.avail/10-hinting-slight.conf"
         dest: "/etc/fonts/conf.d/10-hinting-slight.conf"
         state: link
+
     - name: Enable lcd filter
       file:
         src: "/usr/share/fontconfig/conf.avail/11-lcdfilter-default.conf"
         dest: "/etc/fonts/conf.d/11-lcdfilter-default.conf"
         state: link
+
     - name: Enable freetype2
       ansible.builtin.lineinfile:
         path: /etc/profile.d/freetype2.sh

@@ -1,11 +1,17 @@
 ---
+- name: Load packages variables
+  tags: [packages, dev, glab]
+  ansible.builtin.include_vars:
+    file: "{{ ansible_facts['distribution'] }}.yml"
+    name: distro_packages
+
 - name: Install glab (GitLab CLI)
   tags: [packages, dev, glab]
   block:
     - name: Install glab
+      when: ansible_facts['distribution'] == "Archlinux"
       community.general.pacman:
-        name:
-          - glab
+        name: "{{ distro_packages.glab_pkgs }}"
 
     - name: Ensure ~/.local/share/zsh/site-functions directory exists
       become: yes

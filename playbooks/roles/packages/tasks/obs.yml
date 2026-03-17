@@ -1,17 +1,23 @@
 ---
+- name: Load packages variables
+  tags: [packages, obs]
+  ansible.builtin.include_vars:
+    file: "{{ ansible_facts['distribution'] }}.yml"
+    name: distro_packages
+
 - name: Install and configure obs
   tags: [packages, obs]
   when: packages.obs == true
   block:
     - name: Install obs
+      when: ansible_facts['distribution'] == "Archlinux"
       community.general.pacman:
-        name:
-          - obs-studio
+        name: "{{ distro_packages.obs_pkgs }}"
 
     - name: Install obs plugins
+      when: ansible_facts['distribution'] == "Archlinux"
       kewlfft.aur.aur:
         use: paru
-        name:
-          - obs-backgroundremoval
+        name: "{{ distro_packages.obs_pkgs_aur }}"
       become: yes
       become_user: aur_builder

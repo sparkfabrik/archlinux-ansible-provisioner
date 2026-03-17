@@ -1,30 +1,28 @@
 ---
+- name: Load packages variables
+  tags: [packages, media, multimedia, audio]
+  ansible.builtin.include_vars:
+    file: "{{ ansible_facts['distribution'] }}.yml"
+    name: distro_packages
+
 - name: Install multimedia packages
   tags: [packages, media, multimedia]
   block:
-  - name: Install media packages
-    community.general.pacman:
-      name:
-        - guvcview
+    - name: Install media packages
+      when: ansible_facts['distribution'] == "Archlinux"
+      community.general.pacman:
+        name: "{{ distro_packages.multimedia_pkgs_media }}"
 
-  - name: Install audio plugins
-    tags: [audio]
-    community.general.pacman:
-      name:
-        - easyeffects
-        - lsp-plugins
-        - calf
-        - libdeep_filter_ladspa-bin
+    - name: Install media packages (aur)
+      when: ansible_facts['distribution'] == "Archlinux"
+      kewlfft.aur.aur:
+        use: paru
+        name: "{{ distro_packages.multimedia_pkgs_media_aur }}"
+      become: yes
+      become_user: aur_builder
 
-  - name: Install media packages (aur)
-    kewlfft.aur.aur:
-      use: paru
-      name:
-        - blanket
-        - kooha
-        - mplayer
-        - vlc
-        - libmicrodns
-        - protobuf
-    become: yes
-    become_user: aur_builder
+    - name: Install audio plugins
+      when: ansible_facts['distribution'] == "Archlinux"
+      tags: [audio]
+      community.general.pacman:
+        name: "{{ distro_packages.multimedia_pkgs_audio_plugins }}"

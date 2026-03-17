@@ -1,0 +1,191 @@
+# playbooks/roles/packages/tasks/browser.yml
+browser_pkgs_aur:
+  - firefox
+  - google-chrome
+
+# playbooks/roles/packages/tasks/browser.yml
+browser_pkgs_beta_aur:
+  - google-chrome-beta
+
+# playbooks/roles/packages/tasks/base.yml
+base_pkgs_network:
+  - dnsutils
+  - dhcpcd
+  - iproute2
+  - gnu-netcat
+  - net-tools
+  - tcpdump
+  - wpa_supplicant
+
+# playbooks/roles/packages/tasks/base.yml
+base_pkgs_system:
+  - ansible
+  - bashtop
+  - bc
+  - lm_sensors
+  - coreutils
+  - usbutils
+  - dmidecode
+  - base-devel
+  - bash-completion
+  - dialog
+  - dmidecode
+  - glances
+  - flatpak
+  - fastfetch
+  - pacman-contrib
+  - gparted
+  - htop
+  - mesa
+  - p7zip
+  - git
+  - tree
+  - usbutils
+  - tmux
+  - zsh
+  - zsh-completions
+  - lshw
+  - deja-dup
+  - vim
+
+# playbooks/roles/packages/tasks/base.yml
+base_pkgs_system_aur:
+  - downgrade
+  - inxi
+  - git-credential-manager-bin
+  - glxinfo
+  - flatseal
+
+# playbooks/roles/packages/tasks/development.yml
+development_pkgs_cloudnative:
+  - aws-cli-v2
+  - github-cli
+  - helm
+  - jless
+  - jq
+  - k9s
+  - kubectl
+  - kustomize
+  - terraform
+  - yamllint
+  - yq
+
+# playbooks/roles/packages/tasks/development.yml
+development_pkgs_cloudnative_aur:
+  - act
+  - cosign
+  - crane
+  - google-cloud-cli
+  - google-cloud-cli-gke-gcloud-auth-plugin
+  - grype-bin
+  - kind
+  - kubectx
+  - kubetail
+  - pack-cli-bin
+  - rancher-k3d-bin
+  - stern
+  - syft
+  - tmate
+  - trivy
+
+# playbooks/roles/packages/tasks/development.yml
+development_pkgs_dev:
+  - go
+  - nodejs-lts-iron
+  - npm
+  - php
+  - python-pipx
+  - yarn
+
+# playbooks/roles/packages/tasks/fonts.yml
+fonts_pkgs:
+  - freetype2
+  - fontconfig
+  - adobe-source-sans-fonts
+  - cantarell-fonts
+  - inter-font
+  - otf-libertinus
+  - libertinus-font
+  - noto-fonts
+  - noto-fonts-emoji
+  - terminus-font
+  - tex-gyre-fonts
+  - ttf-anonymous-pro
+  - ttf-droid
+  - ttf-liberation
+  - ttf-fira-code
+  - ttf-fira-mono
+  - ttf-fira-sans
+  - ttf-jetbrains-mono
+  - ttf-lato
+  - ttf-roboto
+  - ttf-roboto-mono
+  - ttf-ubuntu-font-family
+  - ttf-ibm-plex
+  - ttf-bitstream-vera
+  - ttf-dejavu
+  - ttf-hack
+  - ttf-inconsolata
+  - ttf-ubuntu-nerd
+  - ttf-ubuntu-mono-nerd
+  - ttf-firacode-nerd
+  - ttf-inconsolata-nerd
+  - ttf-jetbrains-mono-nerd
+  - otf-droid-nerd
+
+# playbooks/roles/packages/tasks/fonts.yml
+fonts_pkgs_aur:
+  - ttf-monaco
+  - ttf-meslo-nerd-font-powerlevel10k
+
+# playbooks/roles/packages/tasks/glab.yml
+glab_pkgs:
+  - glab
+
+# playbooks/roles/packages/tasks/multimedia.yml
+multimedia_pkgs_media:
+  - guvcview
+
+# playbooks/roles/packages/tasks/multimedia.yml
+multimedia_pkgs_audio_plugins:
+  - easyeffects
+  - lsp-plugins
+  - calf
+  - libdeep_filter_ladspa-bin
+
+# playbooks/roles/packages/tasks/multimedia.yml
+multimedia_pkgs_media_aur:
+  - blanket
+  - kooha
+  - mplayer
+  - vlc
+  - libmicrodns
+  - protobuf
+
+# playbooks/roles/packages/tasks/obs.yml
+obs_pkgs:
+  - obs-studio
+
+# playbooks/roles/packages/tasks/obs.yml
+obs_pkgs_aur:
+  - obs-backgroundremoval
+
+# playbooks/roles/packages/tasks/office.yml
+office_pkgs:
+  - libreoffice-fresh
+
+# playbooks/roles/packages/tasks/productivity.yml
+productivity_pkgs:
+  - thefuck
+  - yadm
+  - gnupg
+  - pinentry
+  - telegram-desktop
+
+# playbooks/roles/packages/tasks/productivity.yml
+productivity_pkgs_aur:
+  - timeshift
+  - visual-studio-code-bin
+  - icu69-bin
+  - zoom
+  - xournalpp

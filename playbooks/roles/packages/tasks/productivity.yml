@@ -1,4 +1,10 @@
 ---
+- name: Load packages variables
+  tags: [packages, productivity]
+  ansible.builtin.include_vars:
+    file: "{{ ansible_facts['distribution'] }}.yml"
+    name: distro_packages
+
 - name: Productivity
   tags: [packages, productivity]
   vars:
@@ -6,34 +12,29 @@
       - slack-desktop
   block:
     - name: Check presence of unwanted aur packages
+      when: ansible_facts['distribution'] == "Archlinux"
       shell: pacman -Qm "{{ item }}"
       loop: "{{ unwanted_aur_packages }}"
       register: aur_packages
       ignore_errors: yes
 
     - name: Exit if unwanted aur packages are installed
+      when:
+        - ansible_facts['distribution'] == "Archlinux"
+        - aur_packages.results | selectattr('rc', 'eq', 0) | list | count > 0
       fail:
         msg: "One or more of the unwanted AUR packages are installed: {{ unwanted_aur_packages | join(', ') }}"
-      when: aur_packages.results | selectattr('rc', 'eq', 0) | list | count > 0
 
     - name: Install productivity packages
+      when: ansible_facts['distribution'] == "Archlinux"
       community.general.pacman:
-        name:
-          - thefuck
-          - yadm
-          - gnupg
-          - pinentry
-          - telegram-desktop
+        name: "{{ distro_packages.productivity_pkgs }}"
 
     - name: Install productivity packages from aur
+      when: ansible_facts['distribution'] == "Archlinux"
       kewlfft.aur.aur:
         use: paru
-        name:
-          - timeshift
-          - visual-studio-code-bin
-          - icu69-bin
-          - zoom
-          - xournalpp
+        name: "{{ distro_packages.productivity_pkgs_aur }}"
       become: yes
       become_user: aur_builder
 

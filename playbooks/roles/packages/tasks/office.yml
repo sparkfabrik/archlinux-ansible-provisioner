@@ -1,9 +1,16 @@
 ---
+- name: Load packages variables
+  tags: [packages, office]
+  ansible.builtin.include_vars:
+    file: "{{ ansible_facts['distribution'] }}.yml"
+    name: distro_packages
+
 - name: Productivity
   tags: [packages, office]
   block:
-  - name: Install office docs packages
-    community.general.pacman:
-      name:
-        - libreoffice-fresh
-    when: desktop.office
+    - name: Install office packages
+      when:
+        - ansible_facts['distribution'] == "Archlinux"
+        - desktop.office
+      community.general.pacman:
+        name: "{{ distro_packages.office_pkgs }}"

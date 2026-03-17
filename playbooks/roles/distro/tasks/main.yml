@@ -1,0 +1,7 @@
+---
+- name: Print detected distribution
+  tags: [always, distro]
+  block:
+    - name: Print distribution
+      ansible.builtin.debug:
+        msg: "Detected distribution: {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}"

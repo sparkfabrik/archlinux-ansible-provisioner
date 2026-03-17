@@ -1,58 +1,30 @@
 ---
+- name: Load packages variables
+  tags: [packages, dev, cloudnative]
+  ansible.builtin.include_vars:
+    file: "{{ ansible_facts['distribution'] }}.yml"
+    name: distro_packages
+
 - name: Install cloud native packages
   tags: [packages, dev, cloudnative]
   block:
     - name: Ensure not installed packages
+      when: ansible_facts['distribution'] == "Archlinux"
       community.general.pacman:
         name:
           - neofetch
         state: absent
 
     - name: Install cloud native packages
+      when: ansible_facts['distribution'] == "Archlinux"
       community.general.pacman:
-        name:
-          - aws-cli-v2
-          - github-cli
-          - helm
-          - jless
-          - jq
-          - k9s
-          - kubectl
-          - kustomize
-          - terraform
-          - yamllint
-          - yq
+        name: "{{ distro_packages.development_pkgs_cloudnative }}"
 
     - name: Install cloud native packages from aur
+      when: ansible_facts['distribution'] == "Archlinux"
       kewlfft.aur.aur:
         use: paru
-        name:
-          - act
-          - cosign
-          - crane
-          - google-cloud-cli
-          - google-cloud-cli-gke-gcloud-auth-plugin
-          - grype-bin
-          - kind
-          - kubectx
-          - kubetail
-          - pack-cli-bin
-          - rancher-k3d-bin
-          - stern
-          - syft
-          - tmate
-      become: yes
-      become_user: aur_builder
-
-    - name: Install cloud native security packages
-      tags: [packages, security]
-      kewlfft.aur.aur:
-        use: paru
-        name:
-          - cosign
-          - grype-bin
-          - syft
-          - trivy
+        name: "{{ distro_packages.development_pkgs_cloudnative_aur }}"
       become: yes
       become_user: aur_builder
 
@@ -60,14 +32,10 @@
   tags: [packages, dev]
   block:
     - name: Install development packages
+      when: ansible_facts['distribution'] == "Archlinux"
       community.general.pacman:
-        name:
-          - go
-          - nodejs-lts-iron
-          - npm
-          - php
-          - python-pipx
-          - yarn
+        name: "{{ distro_packages.development_pkgs_dev }}"
+
     - name: Install development packages using npm
       community.general.npm:
         name: "@github/copilot"

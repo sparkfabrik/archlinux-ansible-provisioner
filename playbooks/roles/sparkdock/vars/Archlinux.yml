@@ -1,0 +1,3 @@
+# playbooks/roles/sparkdock/tasks/main.yml
+just_pkgs:
+  - just

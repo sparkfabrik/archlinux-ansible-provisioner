@@ -1,19 +1,27 @@
 ---
+- name: Load packages variables
+  tags: [base, browser]
+  ansible.builtin.include_vars:
+    file: "{{ ansible_facts['distribution'] }}.yml"
+    name: distro_packages
+
 - name: Browsers
   tags: [base, browser]
   block:
     - name: Install web browsers
+      when: ansible_facts['distribution'] == "Archlinux"
       kewlfft.aur.aur:
         use: paru
-        name:
-          - google-chrome
-          - firefox
+        name: "{{ distro_packages.browser_pkgs_aur }}"
       become: yes
       become_user: aur_builder
+
     - name: Install Google Chrome beta if requested
-      when: desktop.browser.install_chrome_beta
+      when:
+        - ansible_facts['distribution'] == "Archlinux"
+        - desktop.browser.install_chrome_beta
       kewlfft.aur.aur:
         use: paru
-        name: google-chrome-beta
+        name: "{{ distro_packages.browser_pkgs_beta_aur }}"
       become: yes
       become_user: aur_builder

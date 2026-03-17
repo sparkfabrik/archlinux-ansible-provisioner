@@ -25,6 +25,7 @@ TAGS=packages,dev CONFIG=./config/default.yaml make local-install-tags  # Multip
 sudo ansible-playbook ./playbooks/system.yml -i localhost, -c local \
   --tags docker --extra-vars "@./config/default.yaml"
 
+make ansible-system-check                        # Syntax-check playbooks against config
 make local-install-apps                          # Packages only
 make regenerate-mkinitcpio-grub                  # Regenerate mkinitcpio + grub
 make generate-json-schema-docs                   # Schema docs (Docker required)
@@ -33,6 +34,9 @@ make install-githooks                            # Install git hooks
 
 ## Repository Structure
 
+> **Agent rule:** When adding, removing, or renaming files or directories that
+> affect this structure, update this section to keep it accurate.
+
 ```
 playbooks/
   bootstrap.yml          # Pacstrap + base system config
@@ -40,6 +44,7 @@ playbooks/
   roles/
     amd/                 # AMD GPU drivers
     bootstrap/           # Base system (pacstrap, locales, user)
+    distro/              # Distribution detection and info
     docker/              # Docker + optional HTTP proxy
     gnome/               # Gnome DE, extensions, dconf, keybindings
     i3/ | logitech/ | nvidia/ | sway/   # WMs + hardware drivers
@@ -62,11 +67,11 @@ config/
   - name: Install and configure docker
     tags: [docker]
     block:
-        - name: Install docker
-          community.general.pacman:
-            name:
-              - docker
-              - docker-compose
+      - name: Install docker
+        community.general.pacman:
+          name:
+            - docker
+            - docker-compose
   ```
 
 ### Boolean Values
@@ -85,7 +90,7 @@ config/
 
 - Use **sentence case** (capitalize first word only): `"Install docker"`.
 - Be descriptive but concise. No trailing period.
-- Use backticks for technical terms: `` "Create the `aur_builder` user" ``.
+- Use backticks for technical terms: ``"Create the `aur_builder` user"``.
 
 ### Tags
 
@@ -151,6 +156,91 @@ config/
 ### Configuration Schema
 
 When adding new configurable features:
+
 1. Add the variable to `config/default.yaml.tpl` with a sensible default.
 2. Add the schema definition to `config/schemas/configuration.schema.yaml`.
 3. Use `| default()` in tasks for backward compatibility.
+
+### Adding or Modifying Packages in `packages` and `sparkdock` Roles
+
+Packages are **never hardcoded** in task files. Each role that installs packages
+uses a distro-specific vars file and references package lists by variable name.
+
+**Vars files location:**
+
+- `playbooks/roles/packages/vars/Archlinux.yml` — all package lists for the `packages` role.
+- `playbooks/roles/sparkdock/vars/Archlinux.yml` — package lists for the `sparkdock` role.
+
+**Vars file format:** Each variable is a YAML list named with a descriptive
+`snake_case` key, prefixed by concern, suffixed `_aur` for AUR-only packages.
+A comment above each list references the task file path (relative to repo root)
+that consumes it:
+
+```yaml
+# playbooks/roles/<role>/tasks/<file>.yml
+browser_pkgs_aur:
+  - google-chrome
+  - firefox
+```
+
+**How task files are structured:** Each task file has a standalone `include_vars`
+task **before** any blocks, loading the distro-specific vars file into the
+`distro_packages` namespace. Blocks then reference `distro_packages.<variable_name>`.
+
+```yaml
+---
+- name: Load packages variables
+  tags: [packages, dev, cloudnative]
+  ansible.builtin.include_vars:
+    file: "{{ ansible_facts['distribution'] }}.yml"
+    name: distro_packages
+
+- name: Install cloud native packages
+  tags: [packages, dev, cloudnative]
+  block:
+    - name: Install cloud native packages
+      when: ansible_facts['distribution'] == "Archlinux"
+      community.general.pacman:
+        name: "{{ distro_packages.development_pkgs_cloudnative }}"
+
+- name: Install development packages
+  tags: [packages, dev]
+  block:
+    - name: Install development packages
+      when: ansible_facts['distribution'] == "Archlinux"
+      community.general.pacman:
+        name: "{{ distro_packages.development_pkgs_dev }}"
+```
+
+**`include_vars` rules:**
+
+- Placed **once per file**, at the top, **outside** any block.
+- Its `tags:` list must be the **union of all tags** from every block in the
+  file, including inner task tags (e.g., if a task inside a block has
+  `tags: [audio]`, add `audio` to the `include_vars` tags).
+- The variable name is always `distro_packages`.
+- **Never** duplicate the `include_vars` call inside or across blocks.
+
+**Steps to add a new package:**
+
+1. Open the role's `vars/Archlinux.yml`.
+2. Find the matching variable list for the concern (e.g., `base_pkgs_system`,
+   `productivity_pkgs_aur`). Add the package to the list alphabetically.
+3. If no matching list exists, create a new variable with the naming convention
+   `<concern>_pkgs` (pacman) or `<concern>_pkgs_aur` (AUR). Add a comment
+   above it with the consuming task file path relative to the repo root.
+4. In the task file, reference the variable as
+   `distro_packages.<variable_name>`.
+5. If the task file does not already have a top-level `include_vars` task,
+   add one **before** any blocks, with tags set to the union of all block
+   tags in the file.
+6. Every `community.general.pacman` and `kewlfft.aur.aur` task **must** have
+   `when: ansible_facts['distribution'] == "Archlinux"`.
+
+**Migrating hardcoded packages:** If a task file lists packages inline instead
+of referencing a variable (e.g., `name: [google-chrome, firefox]`), move the
+list to `vars/Archlinux.yml` under a new variable, add the `include_vars`
+task at the top of the file if missing, and replace the inline list with the
+variable reference.
+
+**Validation:** Run `make ansible-system-check` after changes.

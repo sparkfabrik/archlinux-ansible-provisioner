@@ -54,14 +54,22 @@
         - home_opencode_config_stat.stat.exists == true
         - sparkdock_opencode_config_stat.stat.exists == true
 
+- name: Load packages variables
+  when: sparkfabrik | default(true)
+  tags: [sparkfabrik, sparkdock, ajust]
+  ansible.builtin.include_vars:
+    file: "{{ ansible_facts['distribution'] }}.yml"
+    name: distro_packages
+
 - name: Setup ajust (SparkJust for Linux)
   when: sparkfabrik | default(true)
   tags: [sparkfabrik, sparkdock, ajust]
   block:
     - name: Install just task runner
+      when: ansible_facts['distribution'] == "Archlinux"
       become: yes
       community.general.pacman:
-        name: just
+        name: "{{ distro_packages.just_pkgs }}"
         state: present
 
     - name: Install ajust wrapper script

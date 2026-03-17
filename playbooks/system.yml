@@ -6,6 +6,7 @@
         current_user: "{{ ansible_env.SUDO_USER | default(ansible_facts['user_id']) }}"
         current_home: "/home/{{ ansible_env.SUDO_USER | default(ansible_facts['user_id']) }}"
   roles:
+    - role: distro
     - role: system
     - role: packages
     - role: docker
