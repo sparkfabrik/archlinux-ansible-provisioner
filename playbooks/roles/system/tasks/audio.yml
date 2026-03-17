@@ -1,18 +1,7 @@
 ---
-- name: Install pipewire audio
+- name: Configure audio
   tags: [system, audio]
   block:
-    - name: Install pipewire packages (to replace Pulseaudio)
-      shell: yes | pacman -Syu pipewire-pulse wireplumber # there isn't a way to install conflicting packages.
-    - name: Install audio system dependencies
-      community.general.pacman:
-        name:
-          - alsa-utils
-          - alsa-ucm-conf
-          - helvum
-          - pavucontrol
-          - sof-firmware
-          - wiremix
     - name: Add user to audio group
       user:
         name: '{{ system.username }}'

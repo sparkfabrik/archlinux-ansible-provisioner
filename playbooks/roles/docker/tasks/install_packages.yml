@@ -1,0 +1,39 @@
+---
+- name: Install docker packages
+  tags: [packages, dev, cloudnative, docker]
+  block:
+    - name: Install docker
+      community.general.pacman:
+        name:
+          - docker
+          - docker-buildx
+          - docker-compose
+
+    - name: Install docker-credential-gcr to authenticate in Google Container Registry
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - docker-credential-gcr-bin
+      become: yes
+      become_user: aur_builder
+
+    - name: Install qemu packages in order to cross-compile docker images
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - qemu-user-static
+          - qemu-user-static-binfmt
+      become: yes
+      become_user: aur_builder
+      when: qemu_for_buildx | default(true)
+
+- name: Install SparkFabrik HTTP Proxy packages
+  tags: [packages, dev, cloudnative, docker, spark-http-proxy]
+  block:
+    - name: Install required packages
+      community.general.pacman:
+        name:
+          - mkcert
+          - nss
+        state: present
+        update_cache: yes

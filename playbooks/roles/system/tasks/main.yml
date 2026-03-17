@@ -44,35 +44,18 @@
       become_user: aur_builder
       when: paru.stat.exists == false
 
-- name: Install and setup reflector
+# All package installations (centralized)
+- name: Install system packages
+  import_tasks: install_packages.yml
+
+# Configuration sections
+- name: Configure reflector
   tags: [system, pacman]
   block:
-    - name: Install reflector
-      community.general.pacman:
-        name:
-          - reflector
     - name: Enable reflector weekly
       shell: systemctl enable reflector.timer
 
-- name: Install system packages
-  community.general.pacman:
-    name:
-      - btrfs-progs
-      - coreutils
-      - efibootmgr
-      - git
-      - grub-btrfs
-      - nvme-cli
-      - os-prober
-      - procps-ng
-      - ntfs-3g
-      - sudo
-      - udisks2
-      - util-linux
-    state: present
-    update_cache: yes
-
-- name: Install and setup reflector
+- name: Configure btrfs
   tags: [system, btrfs]
   block:
     - name: Enable btrfs monthly scrub
@@ -84,47 +67,10 @@
     - name: Enable fstrim.timer
       shell: systemctl enable fstrim.timer
 
-- name: Install fwupd
-  community.general.pacman:
-    name:
-      - fwupd
-      - udisks2
-    state: present
-    update_cache: yes
-
-- name: Install network packages
-  community.general.pacman:
-    name:
-      - inetutils
-      - whois
-    state: present
-    update_cache: yes
-
-- name: Set up DNS with systemd-resolved
-  import_tasks: dns.yml
-
-- name: Install and configure timeshift
-  tags: [timeshift]
-  block:
-    - name: Install timeshift and autosnap
-      kewlfft.aur.aur:
-        use: paru
-        name:
-          - timeshift
-      become: yes
-      become_user: aur_builder
-
-- name: Install and configure timeshift-autosnap
+- name: Configure timeshift-autosnap
   tags: [timeshift]
   when: timeshift.autosnap.enabled == true
   block:
-    - name: Install
-      kewlfft.aur.aur:
-        use: paru
-        name:
-          - timeshift-autosnap
-      become: yes
-      become_user: aur_builder
     - name: Configure timeshift
       community.general.ini_file:
         path: /etc/timeshift-autosnap.conf
@@ -133,6 +79,9 @@
         option: maxSnapshots
         value: "{{ timeshift.autosnap.maxSnapshots | default('10') }}"
         exclusive: yes
+
+- name: Set up DNS with systemd-resolved
+  import_tasks: dns.yml
 
 - name: Set up grub
   import_tasks: grub.yml
@@ -154,9 +103,6 @@
 
 - name: Set up laptop
   import_tasks: laptop.yml
-
-- name: Set up display
-  import_tasks: display.yml
 
 - name: Configure kernel
   import_tasks: kernel.yml

@@ -1,16 +1,4 @@
 ---
-- name: "Detect fingerprint reader"
-  tags: [system, thinkpad]
-  shell: 'lsusb | grep -i "fingerprint"'
-  ignore_errors: yes
-  register: is_fingerprint_reader
-
-- name: Detect ThinkPad Z16 Gen2 fingerprint reader
-  tags: [system, thinkpad]
-  shell: 'lsusb  | grep "06cb:0123"'
-  ignore_errors: yes
-  register: is_fingerprint_reader_z16
-
 - name: "Detect if device has a lid"
   tags: [system, thinkpad]
   shell: "cat /proc/acpi/button/lid/LID/state"
@@ -43,14 +31,10 @@
         mode: 0644
         backup: yes
 
-- name: Install fingerprint reader (if hw is available)
+- name: Configure fingerprint reader
   tags: [system, fingerprint]
   when: is_fingerprint_reader.rc == 0 or is_fingerprint_reader_z16.rc == 0
   block:
-    - name: Install fprintd
-      community.general.pacman:
-        name:
-          - fprintd
     - name: Add user to input group
       user:
         name: "{{ system.username }}"

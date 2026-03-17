@@ -1,4 +1,7 @@
 ---
+- name: Install sparkdock packages
+  import_tasks: install_packages.yml
+
 - name: Import sparkdock features
   when: sparkdock.enabled | default(true)
   tags: [sparkfabrik, sparkdock]
@@ -58,12 +61,6 @@
   when: sparkfabrik | default(true)
   tags: [sparkfabrik, sparkdock, ajust]
   block:
-    - name: Install just task runner
-      become: yes
-      community.general.pacman:
-        name: just
-        state: present
-
     - name: Install ajust wrapper script
       become: yes
       ansible.builtin.copy:

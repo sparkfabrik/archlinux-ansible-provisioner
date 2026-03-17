@@ -1,36 +1,10 @@
 ---
-- name: Install gnome
-  tags: gnome
+- name: Install gnome packages
+  import_tasks: install_packages.yml
+
+- name: Configure gnome
+  tags: [gnome]
   block:
-    - name: Install gnome packages
-      community.general.pacman:
-        name:
-          - dconf-editor
-          - gdm
-          - gnome
-          - gnome-extra
-          - networkmanager
-          - networkmanager-openvpn
-          - python-psutil
-          - seahorse
-        state: present
-        update_cache: yes
-    - name: Install gnome extensions
-      community.general.pacman:
-        name:
-          - gnome-shell-extension-appindicator
-        state: present
-        update_cache: yes
-    - name: Install gnome extensions from aur
-      kewlfft.aur.aur:
-        use: paru
-        name:
-          - gnome-shell-extension-dash-to-dock
-          - gnome-shell-extension-desktop-icons-ng
-          - gnome-shell-extension-just-perfection-desktop
-          - gnome-shell-extension-vitals
-      become: yes
-      become_user: aur_builder
     - name: "Enable gdm"
       shell: systemctl enable gdm
     - name: "Enable NetworkManager"
@@ -55,6 +29,3 @@
 
 - name: Configure multitouch gestures (x11)
   import_tasks: gestures.yml
-
-- name: Install flameshot
-  import_tasks: flameshot.yml
