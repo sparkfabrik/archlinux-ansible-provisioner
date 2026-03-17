@@ -6,16 +6,6 @@
     gesture_ext:
       - x11gestures@joseexposito.github.io
   block:
-  - name: Install touchee and gnome-shell-extension-x11gestures
-    kewlfft.aur.aur:
-      use: paru
-      name:
-        - touchegg
-        - touche
-        - gnome-shell-extension-x11gestures
-    become: yes
-    become_user: aur_builder
-
   - name: Enable gnome-shell-extension-x11gestures extensions (available after restarting)
     dconf:
       key: "/org/gnome/shell/enabled-extensions"

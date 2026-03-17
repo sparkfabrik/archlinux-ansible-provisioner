@@ -1,0 +1,69 @@
+---
+# The flameshot keybinding is created in keybindings.yml
+- name: Install gnome packages
+  tags: [gnome]
+  block:
+    - name: Install gnome packages
+      community.general.pacman:
+        name:
+          - dconf-editor
+          - gdm
+          - gnome
+          - gnome-extra
+          - networkmanager
+          - networkmanager-openvpn
+          - python-psutil
+          - seahorse
+        state: present
+        update_cache: yes
+    - name: Install gnome extensions
+      community.general.pacman:
+        name:
+          - gnome-shell-extension-appindicator
+        state: present
+        update_cache: yes
+    - name: Install gnome extensions from aur
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - gnome-shell-extension-dash-to-dock
+          - gnome-shell-extension-desktop-icons-ng
+          - gnome-shell-extension-just-perfection-desktop
+          - gnome-shell-extension-vitals
+      become: yes
+      become_user: aur_builder
+
+- name: Install gnome Adwaita-dark theme
+  tags: [gnome, gnome-config, dconf]
+  block:
+    - name: Install gnome Adwaita-dark theme from aur
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - adwaita-dark
+      become: yes
+      become_user: aur_builder
+
+- name: Install gesture packages
+  tags: [gnome, gestures]
+  when: desktop.x11_gestures
+  block:
+    - name: Install touchegg and gnome-shell-extension-x11gestures
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - touchegg
+          - touche
+          - gnome-shell-extension-x11gestures
+      become: yes
+      become_user: aur_builder
+
+- name: Install flameshot
+  tags: [packages, gnome, flameshot]
+  block:
+    - name: Install flameshot
+      community.general.pacman:
+        name:
+          - flameshot
+        state: present
+        update_cache: yes

@@ -1,14 +1,7 @@
 ---
-- name: Configure system components
+- name: Configure bluetooth
   tags: [system, bluetooth]
   block:
-  - name: Install bluetooth dependencies
-    community.general.pacman:
-      name:
-        - blueman
-        - bluez
-        - bluez-utils
-
   - name: Configure bluetooth ControllerMode
     community.general.ini_file:
       path: /etc/bluetooth/main.conf

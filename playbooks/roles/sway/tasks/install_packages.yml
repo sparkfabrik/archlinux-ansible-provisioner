@@ -1,0 +1,95 @@
+---
+- name: Install sway packages
+  tags: [wm, sway]
+  when: desktop.sway.enable == true
+  block:
+    - name: Ensure deprecated packages are not present.
+      community.general.pacman:
+        name:
+          - dunst
+          - wofi
+        state: absent
+
+    - name: Install sway wm
+      community.general.pacman:
+        name:
+          - alacritty
+          - polkit-gnome
+          - network-manager-applet
+          - ranger
+          - sway
+          - swaybg
+          - swayidle
+          - swaylock
+          - thunar
+          - rofi
+          - wl-clipboard
+
+    - name: Display server gui
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - wdisplays
+      become: true
+      become_user: aur_builder
+
+    - name: Clipboard manager
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - clipman
+      become: true
+      become_user: aur_builder
+
+    - name: Network utilities
+      community.general.pacman:
+        name:
+          - network-manager-applet
+          - blueman
+
+    - name: Notification system
+      community.general.pacman:
+        name:
+          - mako
+
+    - name: Install sway contrib (grim and other utilities)
+      kewlfft.aur.aur:
+        name:
+          - sway-contrib
+      become: true
+      become_user: aur_builder
+
+    - name: Install fonts from aur
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - ttf-meslo-nerd-font-powerlevel10k
+      become: true
+      become_user: aur_builder
+
+    - name: Multimedia controls
+      kewlfft.aur.aur:
+        name:
+          - gammastep
+          - light
+          - swayosd
+      become: true
+      become_user: aur_builder
+
+    - name: Screensharing
+      community.general.pacman:
+        name:
+          - xdg-desktop-portal-wlr
+          - xdg-desktop-portal
+
+    - name: Waybar
+      when: desktop.sway.waybar == true
+      community.general.pacman:
+        name:
+          - waybar
+          - otf-font-awesome
+
+    - name: Install the openrgb flatpak
+      flatpak:
+        name: org.openrgb.OpenRGB
+        state: present

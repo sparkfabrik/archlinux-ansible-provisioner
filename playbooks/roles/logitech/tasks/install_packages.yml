@@ -1,0 +1,23 @@
+---
+- name: Install logitech packages
+  tags: [logitech]
+  block:
+  - name: "Detect Logitech Unifying stuff"
+    shell: "lsusb | grep -i logitech | grep Unifying"
+    ignore_errors: yes
+    register: is_logitech_unifying
+
+  - name: Install logitech packages
+    community.general.pacman:
+      name:
+        - solaar
+    when: is_logitech_unifying.stdout != ""
+
+  - name: Install logitech packages from aur
+    kewlfft.aur.aur:
+      use: paru
+      name:
+        - logiops
+    become: yes
+    become_user: aur_builder
+    when: is_logitech_unifying.stdout != ""

@@ -1,14 +1,10 @@
 ---
-- name: Install and configure docker
+- name: Install docker packages
+  import_tasks: install_packages.yml
+
+- name: Configure docker
   tags: [packages, dev, cloudnative, docker]
   block:
-    - name: Install docker
-      community.general.pacman:
-        name:
-          - docker
-          - docker-buildx
-          - docker-compose
-
     - name: Add user to docker group
       user:
         name: "{{ system.username }}"
@@ -52,24 +48,6 @@
         state: restarted
         daemon_reload: yes
         name: systemd-resolved
-
-    - name: Install docker-credential-gcr to authenticate in Google Container Registry
-      kewlfft.aur.aur:
-        use: paru
-        name:
-          - docker-credential-gcr-bin
-      become: yes
-      become_user: aur_builder
-
-    - name: Install qemu packages in order to cross-compile docker images
-      kewlfft.aur.aur:
-        use: paru
-        name:
-          - qemu-user-static
-          - qemu-user-static-binfmt
-      become: yes
-      become_user: aur_builder
-      when: qemu_for_buildx | default(true)
 
     - name: Restart systemd-binfmt
       ansible.builtin.systemd:

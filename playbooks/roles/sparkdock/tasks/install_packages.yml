@@ -1,0 +1,10 @@
+---
+- name: Install sparkdock packages
+  when: sparkfabrik | default(true)
+  tags: [sparkfabrik, sparkdock, ajust]
+  block:
+    - name: Install just task runner
+      become: yes
+      community.general.pacman:
+        name: just
+        state: present

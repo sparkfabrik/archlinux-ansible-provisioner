@@ -1,27 +1,10 @@
 ---
-- name: Install logitech stuff
+- name: Install logitech packages
+  import_tasks: install_packages.yml
+
+- name: Configure logitech
   tags: [logitech]
   block:
-  - name: "Detect Logitech Unifying stuff"
-    shell: "lsusb | grep -i logitech | grep Unifying"
-    ignore_errors: yes
-    register: is_logitech_unifying
-
-  - name: Install logitech packages
-    community.general.pacman:
-      name:
-        - solaar
-    when: is_logitech_unifying.stdout != ""
-
-  - name: Install logitech packages from aur
-    kewlfft.aur.aur:
-      use: paru
-      name:
-        - logiops
-    become: yes
-    become_user: aur_builder
-    when: is_logitech_unifying.stdout != ""
-
   - name: Configure logiops (for MX Master 2S and MX Master 3)
     ansible.builtin.copy:
       src: logitech/logid-mx-master.cfg
