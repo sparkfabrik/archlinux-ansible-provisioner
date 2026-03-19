@@ -78,6 +78,7 @@
       ansible.builtin.slurp:
         src: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
       register: sparkdock_opencode_config_content
+      no_log: true
       when:
         - sparkdock_opencode_config_stat.stat.exists == true
         - opencode_local_config_stat.stat.exists == true
@@ -86,6 +87,7 @@
       ansible.builtin.slurp:
         src: "{{ system.home | default(current_home) }}/.config/opencode/opencode.local.json"
       register: opencode_local_config_content
+      no_log: true
       when:
         - sparkdock_opencode_config_stat.stat.exists == true
         - opencode_local_config_stat.stat.exists == true
@@ -97,6 +99,7 @@
         mode: "0644"
         owner: "{{ system.username | default(current_user) }}"
         group: "{{ system.username | default(current_user) }}"
+      no_log: true
       when:
         - sparkdock_opencode_config_stat.stat.exists == true
         - opencode_local_config_stat.stat.exists == true
