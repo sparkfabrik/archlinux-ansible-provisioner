@@ -43,7 +43,43 @@
         path: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
       register: sparkdock_opencode_config_stat
 
-    - name: Copy opencode config file from sparkdock if the opencode config directory exists
+    - name: Check if opencode local override file exists
+      ansible.builtin.stat:
+        path: "{{ system.home | default(current_home) }}/.config/opencode/opencode.local.json"
+      register: opencode_local_config_stat
+      when: home_opencode_config_stat.stat.exists == true
+
+    - name: Read sparkdock opencode config
+      ansible.builtin.slurp:
+        src: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
+      register: sparkdock_opencode_config_content
+      when:
+        - home_opencode_config_stat.stat.exists == true
+        - sparkdock_opencode_config_stat.stat.exists == true
+        - opencode_local_config_stat.stat.exists == true
+
+    - name: Read opencode local override file
+      ansible.builtin.slurp:
+        src: "{{ system.home | default(current_home) }}/.config/opencode/opencode.local.json"
+      register: opencode_local_config_content
+      when:
+        - home_opencode_config_stat.stat.exists == true
+        - sparkdock_opencode_config_stat.stat.exists == true
+        - opencode_local_config_stat.stat.exists == true
+
+    - name: Write merged opencode config with local overrides
+      ansible.builtin.copy:
+        content: "{{ (sparkdock_opencode_config_content.content | b64decode | from_json) | combine(opencode_local_config_content.content | b64decode | from_json, recursive=True) | to_nice_json }}\n"
+        dest: "{{ system.home | default(current_home) }}/.config/opencode/opencode.json"
+        mode: "0644"
+        owner: "{{ system.username | default(current_user) }}"
+        group: "{{ system.username | default(current_user) }}"
+      when:
+        - home_opencode_config_stat.stat.exists == true
+        - sparkdock_opencode_config_stat.stat.exists == true
+        - opencode_local_config_stat.stat.exists == true
+
+    - name: Copy opencode config file from sparkdock (no local overrides)
       ansible.builtin.copy:
         src: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
         dest: "{{ system.home | default(current_home) }}/.config/opencode/opencode.json"
@@ -53,6 +89,7 @@
       when:
         - home_opencode_config_stat.stat.exists == true
         - sparkdock_opencode_config_stat.stat.exists == true
+        - opencode_local_config_stat is skipped or opencode_local_config_stat.stat.exists == false
 
 - name: Setup ajust (SparkJust for Linux)
   when: sparkfabrik | default(true)
