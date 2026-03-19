@@ -69,57 +69,50 @@
         path: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
       register: sparkdock_opencode_config_stat
 
+    - name: Set opencode base config path from sparkdock
+      ansible.builtin.set_fact:
+        opencode_base_config_path: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
+      when: sparkdock_opencode_config_stat.stat.exists == true
+
+    - name: Set opencode base config path from bundled fallback
+      ansible.builtin.set_fact:
+        opencode_base_config_path: "{{ role_path }}/files/opencode/opencode.json"
+      when: sparkdock_opencode_config_stat.stat.exists == false
+
     - name: Check if opencode local override file exists
       ansible.builtin.stat:
         path: "{{ system.home | default(current_home) }}/.config/opencode/opencode.local.json"
       register: opencode_local_config_stat
 
-    - name: Read sparkdock opencode config
+    - name: Read opencode base config
       ansible.builtin.slurp:
-        src: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
-      register: sparkdock_opencode_config_content
+        src: "{{ opencode_base_config_path }}"
+      register: opencode_base_config_content
       no_log: true
-      when:
-        - sparkdock_opencode_config_stat.stat.exists == true
-        - opencode_local_config_stat.stat.exists == true
+      when: opencode_local_config_stat.stat.exists == true
 
     - name: Read opencode local override file
       ansible.builtin.slurp:
         src: "{{ system.home | default(current_home) }}/.config/opencode/opencode.local.json"
       register: opencode_local_config_content
       no_log: true
-      when:
-        - sparkdock_opencode_config_stat.stat.exists == true
-        - opencode_local_config_stat.stat.exists == true
+      when: opencode_local_config_stat.stat.exists == true
 
     - name: Write merged opencode config with local overrides
       ansible.builtin.copy:
-        content: "{{ (sparkdock_opencode_config_content.content | b64decode | from_json) | combine(opencode_local_config_content.content | b64decode | from_json, recursive=True) | to_nice_json }}\n"
+        content: "{{ (opencode_base_config_content.content | b64decode | from_json) | combine(opencode_local_config_content.content | b64decode | from_json, recursive=True) | to_nice_json }}\n"
         dest: "{{ system.home | default(current_home) }}/.config/opencode/opencode.json"
         mode: "0644"
         owner: "{{ system.username | default(current_user) }}"
         group: "{{ system.username | default(current_user) }}"
       no_log: true
-      when:
-        - sparkdock_opencode_config_stat.stat.exists == true
-        - opencode_local_config_stat.stat.exists == true
+      when: opencode_local_config_stat.stat.exists == true
 
-    - name: Copy opencode config file from sparkdock (no local overrides)
+    - name: Copy opencode base config file (no local overrides)
       ansible.builtin.copy:
-        src: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
+        src: "{{ opencode_base_config_path }}"
         dest: "{{ system.home | default(current_home) }}/.config/opencode/opencode.json"
         mode: "0644"
         owner: "{{ system.username | default(current_user) }}"
         group: "{{ system.username | default(current_user) }}"
-      when:
-        - sparkdock_opencode_config_stat.stat.exists == true
-        - opencode_local_config_stat.stat.exists == false
-
-    - name: Create opencode config file as fallback if it doesn't exist from sparkdock
-      ansible.builtin.copy:
-        dest: "{{ system.home | default(current_home) }}/.config/opencode/opencode.json"
-        src: "files/opencode/opencode.json"
-        mode: "0644"
-        owner: "{{ system.username | default(current_user) }}"
-        group: "{{ system.username | default(current_user) }}"
-      when: not sparkdock_opencode_config_stat.stat.exists
+      when: opencode_local_config_stat.stat.exists == false
