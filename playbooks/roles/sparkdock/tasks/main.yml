@@ -49,14 +49,14 @@
         opencode_base_config_path: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
       when:
         - home_opencode_config_stat.stat.exists == true
-        - sparkdock_opencode_config_stat.stat.exists == true
+        - (sparkdock_opencode_config_stat.stat.exists | default(false)) == true
 
     - name: Set opencode base config path from bundled fallback
       ansible.builtin.set_fact:
         opencode_base_config_path: "{{ role_path }}/files/opencode/opencode.json"
       when:
         - home_opencode_config_stat.stat.exists == true
-        - sparkdock_opencode_config_stat is skipped or sparkdock_opencode_config_stat.stat.exists == false
+        - sparkdock_opencode_config_stat is skipped or (sparkdock_opencode_config_stat.stat.exists | default(false)) == false
 
     - name: Check if opencode local override file exists
       ansible.builtin.stat:
@@ -71,7 +71,7 @@
       no_log: true
       when:
         - home_opencode_config_stat.stat.exists == true
-        - opencode_local_config_stat.stat.exists == true
+        - opencode_local_config_stat is not skipped and (opencode_local_config_stat.stat.exists | default(false)) == true
 
     - name: Read opencode local override file
       ansible.builtin.slurp:
@@ -80,7 +80,7 @@
       no_log: true
       when:
         - home_opencode_config_stat.stat.exists == true
-        - opencode_local_config_stat.stat.exists == true
+        - opencode_local_config_stat is not skipped and (opencode_local_config_stat.stat.exists | default(false)) == true
 
     - name: Write merged opencode config with local overrides
       ansible.builtin.copy:
@@ -92,7 +92,7 @@
       no_log: true
       when:
         - home_opencode_config_stat.stat.exists == true
-        - opencode_local_config_stat.stat.exists == true
+        - opencode_local_config_stat is not skipped and (opencode_local_config_stat.stat.exists | default(false)) == true
 
     - name: Copy opencode base config file (no local overrides)
       ansible.builtin.copy:
@@ -103,7 +103,7 @@
         group: "{{ system.username | default(current_user) }}"
       when:
         - home_opencode_config_stat.stat.exists == true
-        - opencode_local_config_stat is skipped or opencode_local_config_stat.stat.exists == false
+        - opencode_local_config_stat is skipped or (opencode_local_config_stat.stat.exists | default(false)) == false
 
 - name: Setup ajust (SparkJust for Linux)
   when: sparkfabrik | default(true)
