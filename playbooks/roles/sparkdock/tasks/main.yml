@@ -1,7 +1,7 @@
 ---
 - name: Import sparkdock features
   when: sparkdock.enabled | default(true)
-  tags: [sparkfabrik, sparkdock]
+  tags: [sparkfabrik, sparkdock, ajust]
   vars:
     include_string: '[[ ! -f "{{ sparkdock.path | default(sparkdock_default_path) }}/config/shell/sparkdock.zshrc" ]] || source "{{ sparkdock.path | default(sparkdock_default_path) }}/config/shell/sparkdock.zshrc"'
   become: yes
@@ -58,10 +58,12 @@
   when: sparkfabrik | default(true)
   tags: [sparkfabrik, sparkdock, ajust]
   block:
-    - name: Install just task runner
+    - name: Install `ajust` packages
       become: yes
       community.general.pacman:
-        name: just
+        name:
+          - just
+          - gum
         state: present
 
     - name: Install ajust wrapper script
