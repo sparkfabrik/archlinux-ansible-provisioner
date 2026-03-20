@@ -19,6 +19,7 @@
         dest: "{{ sparkdock.path | default(sparkdock_default_path) }}"
         version: master
         update: yes
+        force: yes
         # version: <PUT THE DESIRED COMMIT SHA HERE FOR TESTING PURPOSES>
 
     - name: Check if .zshrc exists

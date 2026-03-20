@@ -63,6 +63,9 @@ sparkdock-fetch-updates:
 # AI coding agent recipes (only available once sparkdock is cloned)
 import? "~/.local/spark/sparkdock/sjust/recipes/05-ai-coding-agents.just"
 
+# GitHuman recipes (only available once sparkdock is cloned)
+import? "~/.local/spark/sparkdock/sjust/recipes/06-githuman.just"
+
 # GitLab CLI (glab) recipes
 import? "~/.local/spark/ajust/recipes/01-gitlab.just"
 
