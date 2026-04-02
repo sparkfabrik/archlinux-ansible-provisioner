@@ -59,13 +59,23 @@
   when: sparkfabrik | default(true)
   tags: [sparkfabrik, sparkdock, ajust]
   block:
-    - name: Install `ajust` packages
+    - name: Install `ajust` packages (Archlinux)
       become: yes
       community.general.pacman:
         name:
           - just
           - gum
         state: present
+      when: ansible_os_family == "Archlinux"
+
+    - name: Install `ajust` packages (Debian/Ubuntu)
+      become: yes
+      ansible.builtin.apt:
+        name:
+          - just
+          - gum
+        state: present
+      when: ansible_os_family == "Debian"
 
     - name: Install ajust wrapper script
       become: yes
@@ -101,9 +111,19 @@
     - name: Generate ajust zsh completion
       become: yes
       become_user: "{{ system.username | default(current_user) }}"
-      ansible.builtin.shell: |
-        just --completions zsh | sed -E 's/([\(_" ])just/\1ajust/g' > "{{ system.home | default(current_home) }}/.local/share/zsh/site-functions/_ajust"
-      changed_when: true
+      ansible.builtin.shell:
+        cmd: just --completions zsh | sed -E 's/([\(_" ])just/\1ajust/g'
+        executable: /bin/bash
+      register: ajust_zsh_completion
+      changed_when: false
+
+    - name: Write ajust zsh completion file
+      become: yes
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.copy:
+        content: "{{ ajust_zsh_completion.stdout }}"
+        dest: "{{ system.home | default(current_home) }}/.local/share/zsh/site-functions/_ajust"
+        mode: "0644"
 
     - name: Ensure ~/.local/spark/ajust/recipes directory exists
       become: yes
@@ -133,7 +153,25 @@
     - name: Run agent resources sync
       become: yes
       become_user: "{{ system.username | default(current_user) }}"
-      ansible.builtin.command: "{{ sparkdock.path | default(sparkdock_default_path) }}/bin/sparkdock-agents-sync"
+      ansible.builtin.shell: |
+        # Wrap gum to skip TTY-dependent subcommands (spin) in non-interactive Ansible context.
+        export _REAL_GUM=$(command -v gum)
+        gum() {
+          if [[ "$1" == "spin" ]]; then
+            shift
+            # Skip all arguments until the '--' separator.
+            while [[ $# -gt 0 && "$1" != "--" ]]; do shift; done
+            # Skip the '--' separator itself.
+            [[ "${1:-}" == "--" ]] && shift
+            "$@"
+          else
+            "$_REAL_GUM" "$@"
+          fi
+        }
+        export -f gum
+        {{ sparkdock.path | default(sparkdock_default_path) }}/bin/sparkdock-agents-sync
+      args:
+        executable: /bin/bash
       register: agents_sync_output
       changed_when: "'added' in agents_sync_output.stdout or 'updated' in agents_sync_output.stdout"
 
