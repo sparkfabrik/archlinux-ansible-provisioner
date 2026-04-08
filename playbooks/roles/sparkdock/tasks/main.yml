@@ -98,12 +98,13 @@
         state: directory
         mode: "0755"
 
-    - name: Generate ajust zsh completion
+    - name: Install ajust zsh completion
       become: yes
       become_user: "{{ system.username | default(current_user) }}"
-      ansible.builtin.shell: |
-        just --completions zsh | sed -E 's/([\(_" ])just/\1ajust/g' > "{{ system.home | default(current_home) }}/.local/share/zsh/site-functions/_ajust"
-      changed_when: true
+      ansible.builtin.copy:
+        src: ajust/_ajust
+        dest: "{{ system.home | default(current_home) }}/.local/share/zsh/site-functions/_ajust"
+        mode: "0644"
 
     - name: Ensure ~/.local/spark/ajust/recipes directory exists
       become: yes
