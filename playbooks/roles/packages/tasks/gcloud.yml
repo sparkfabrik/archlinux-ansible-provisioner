@@ -57,16 +57,6 @@
           dest: /etc/bash_completion.d/google-cloud-sdk
           state: link
 
-      - name: Install zsh completion for gcloud commands
-        ansible.builtin.file:
-          src: /opt/google-cloud-sdk/completion.zsh.inc
-          dest: "/usr/share/zsh/site-functions/_{{ item }}"
-          state: link
-        loop:
-          - gcloud
-          - gsutil
-          - bq
-
       - name: Clean up downloaded tarball
         ansible.builtin.file:
           path: /tmp/google-cloud-cli-linux-x86_64.tar.gz
