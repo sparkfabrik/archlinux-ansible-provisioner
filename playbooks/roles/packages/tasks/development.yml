@@ -30,8 +30,6 @@
           - act
           - cosign
           - crane
-          - google-cloud-cli
-          - google-cloud-cli-gke-gcloud-auth-plugin
           - grype-bin
           - kind
           - kubectx

@@ -1,0 +1,57 @@
+---
+- name: Install Google Cloud SDK from official tarball
+  tags: [packages, dev, cloudnative, gcloud]
+  block:
+      - name: Remove google-cloud-cli AUR packages if installed
+        community.general.pacman:
+          name:
+            - google-cloud-cli
+            - google-cloud-cli-gke-gcloud-auth-plugin
+          state: absent
+        ignore_errors: true
+
+      - name: Check if Google Cloud SDK is already installed
+        ansible.builtin.stat:
+          path: /opt/google-cloud-sdk/bin/gcloud
+        register: gcloud_installed
+
+      - name: Download Google Cloud SDK tarball
+        ansible.builtin.get_url:
+          url: https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz
+          dest: /tmp/google-cloud-cli-linux-x86_64.tar.gz
+          mode: "0644"
+        when: not gcloud_installed.stat.exists
+
+      - name: Extract Google Cloud SDK to /opt
+        ansible.builtin.unarchive:
+          src: /tmp/google-cloud-cli-linux-x86_64.tar.gz
+          dest: /opt
+          remote_src: true
+        when: not gcloud_installed.stat.exists
+
+      - name: Run Google Cloud SDK install script
+        ansible.builtin.command:
+          cmd: /opt/google-cloud-sdk/install.sh --quiet --path-update false --command-completion false
+        when: not gcloud_installed.stat.exists
+        changed_when: true
+
+      - name: Install gke-gcloud-auth-plugin component
+        ansible.builtin.command:
+          cmd: /opt/google-cloud-sdk/bin/gcloud components install gke-gcloud-auth-plugin --quiet
+        register: gke_plugin_install
+        changed_when: "'All components are up to date' not in gke_plugin_install.stderr"
+
+      - name: Create /etc/profile.d/google-cloud-sdk.sh for PATH integration
+        ansible.builtin.copy:
+          dest: /etc/profile.d/google-cloud-sdk.sh
+          mode: "0644"
+          content: |
+            # Google Cloud SDK PATH integration
+            if [ -d /opt/google-cloud-sdk/bin ]; then
+              export PATH="/opt/google-cloud-sdk/bin:$PATH"
+            fi
+
+      - name: Clean up downloaded tarball
+        ansible.builtin.file:
+          path: /tmp/google-cloud-cli-linux-x86_64.tar.gz
+          state: absent
