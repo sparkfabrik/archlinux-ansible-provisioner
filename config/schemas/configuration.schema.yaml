@@ -338,6 +338,21 @@ properties:
         description: Install obs studio and plugins.
         title: OBS Studio and plugins
         type: boolean
+      gcloud:
+        $id: "#/properties/packages/properties/gcloud"
+        additionalProperties: true
+        default: {}
+        description: Google Cloud CLI configuration.
+        title: Google Cloud CLI
+        type: object
+        properties:
+          configure_shell_rc:
+            $id: "#/properties/packages/properties/gcloud/properties/configure_shell_rc"
+            default: true
+            description: Add gcloud PATH and completion to ~/.bashrc and ~/.zshrc.
+            examples:
+              - true
+            type: boolean
 required:
   - system
 title: The root schema

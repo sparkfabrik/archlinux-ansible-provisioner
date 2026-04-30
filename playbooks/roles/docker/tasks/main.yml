@@ -2,6 +2,12 @@
 - name: Install and configure docker
   tags: [packages, dev, cloudnative, docker]
   block:
+    - name: Ensure not installed packages
+      community.general.pacman:
+        name:
+          - docker-credential-gcr-bin
+        state: absent
+
     - name: Install docker
       community.general.pacman:
         name:
@@ -52,14 +58,6 @@
         state: restarted
         daemon_reload: yes
         name: systemd-resolved
-
-    - name: Install docker-credential-gcr to authenticate in Google Container Registry
-      kewlfft.aur.aur:
-        use: paru
-        name:
-          - docker-credential-gcr-bin
-      become: yes
-      become_user: aur_builder
 
     - name: Install qemu packages in order to cross-compile docker images
       kewlfft.aur.aur:

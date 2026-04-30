@@ -6,6 +6,8 @@
       community.general.pacman:
         name:
           - neofetch
+          - google-cloud-cli
+          - google-cloud-cli-gke-gcloud-auth-plugin
         state: absent
 
     - name: Install cloud native packages
@@ -41,6 +43,9 @@
           - tmate
       become: yes
       become_user: aur_builder
+
+    - name: Install and configure Google Cloud CLI
+      import_tasks: gcloud.yml
 
     - name: Install cloud native security packages
       tags: [packages, security]

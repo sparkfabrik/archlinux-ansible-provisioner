@@ -26,6 +26,8 @@ swapfile:
   configure_hibernate: false
 packages:
   obs: false
+  gcloud:
+    configure_shell_rc: true # Add gcloud PATH and completion to ~/.bashrc and ~/.zshrc
 desktop:
   gnome:
     extensions:

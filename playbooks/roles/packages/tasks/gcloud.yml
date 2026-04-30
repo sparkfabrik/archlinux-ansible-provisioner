@@ -1,63 +1,106 @@
 ---
-- name: Install Google Cloud SDK from official tarball
+- name: Install and configure Google Cloud CLI
   tags: [packages, dev, cloudnative, gcloud]
   block:
-      - name: Remove google-cloud-cli AUR packages if installed
-        community.general.pacman:
-          name:
-            - google-cloud-cli
-            - google-cloud-cli-gke-gcloud-auth-plugin
-          state: absent
-        ignore_errors: true
+    - name: Check if Google Cloud CLI is already installed
+      ansible.builtin.stat:
+        path: /opt/google-cloud-sdk/bin/gcloud
+      register: gcloud_installed
 
-      - name: Check if Google Cloud SDK is already installed
-        ansible.builtin.stat:
-          path: /opt/google-cloud-sdk/bin/gcloud
-        register: gcloud_installed
+    - name: Download Google Cloud CLI archive
+      ansible.builtin.get_url:
+        url: https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz
+        dest: /tmp/google-cloud-cli-linux-x86_64.tar.gz
+        mode: "0644"
+      when: not gcloud_installed.stat.exists
 
-      - name: Download Google Cloud SDK tarball
-        ansible.builtin.get_url:
-          url: https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz
-          dest: /tmp/google-cloud-cli-linux-x86_64.tar.gz
-          mode: "0644"
-        when: not gcloud_installed.stat.exists
+    - name: Extract Google Cloud CLI to `/opt`
+      ansible.builtin.unarchive:
+        src: /tmp/google-cloud-cli-linux-x86_64.tar.gz
+        dest: /opt
+        remote_src: true
+      when: not gcloud_installed.stat.exists
 
-      - name: Extract Google Cloud SDK to /opt
-        ansible.builtin.unarchive:
-          src: /tmp/google-cloud-cli-linux-x86_64.tar.gz
-          dest: /opt
-          remote_src: true
-        when: not gcloud_installed.stat.exists
+    - name: Run Google Cloud CLI install script
+      ansible.builtin.command: >
+        /opt/google-cloud-sdk/install.sh
+        --quiet
+        --usage-reporting false
+        --path-update false
+        --command-completion false
+      when: not gcloud_installed.stat.exists
 
-      - name: Run Google Cloud SDK install script
-        ansible.builtin.command:
-          cmd: /opt/google-cloud-sdk/install.sh --quiet --path-update false --command-completion false
-        when: not gcloud_installed.stat.exists
-        changed_when: true
+    - name: Clean up downloaded archive
+      ansible.builtin.file:
+        path: /tmp/google-cloud-cli-linux-x86_64.tar.gz
+        state: absent
+      when: not gcloud_installed.stat.exists
 
-      - name: Install gke-gcloud-auth-plugin component
-        ansible.builtin.command:
-          cmd: /opt/google-cloud-sdk/bin/gcloud components install gke-gcloud-auth-plugin --quiet
-        register: gke_plugin_install
-        changed_when: "'All components are up to date' not in gke_plugin_install.stderr"
+    - name: Check which shell rc files exist
+      ansible.builtin.stat:
+        path: "{{ system.home | default(current_home) }}/{{ item }}"
+      loop:
+        - .bashrc
+        - .zshrc
+      register: shell_rc_files
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      when: packages.gcloud.configure_shell_rc | default(true)
 
-      - name: Create /etc/profile.d/google-cloud-sdk.sh for PATH integration
-        ansible.builtin.copy:
-          dest: /etc/profile.d/google-cloud-sdk.sh
-          mode: "0644"
-          content: |
-            # Google Cloud SDK PATH integration
-            if [ -d /opt/google-cloud-sdk/bin ]; then
-              export PATH="/opt/google-cloud-sdk/bin:$PATH"
-            fi
+    - name: Add Google Cloud CLI PATH to `.bashrc`
+      ansible.builtin.lineinfile:
+        path: "{{ system.home | default(current_home) }}/.bashrc"
+        regexp: 'path\.bash\.inc'
+        line: '[[ ! -f /opt/google-cloud-sdk/path.bash.inc ]] || source /opt/google-cloud-sdk/path.bash.inc'
+        state: present
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      when:
+        - packages.gcloud.configure_shell_rc | default(true)
+        - shell_rc_files.results[0].stat.exists
 
-      - name: Install bash completion for gcloud
-        ansible.builtin.file:
-          src: /opt/google-cloud-sdk/completion.bash.inc
-          dest: /etc/bash_completion.d/google-cloud-sdk
-          state: link
+    - name: Enable Google Cloud CLI completion in `.bashrc`
+      ansible.builtin.lineinfile:
+        path: "{{ system.home | default(current_home) }}/.bashrc"
+        regexp: 'completion\.bash\.inc'
+        line: '[[ ! -f /opt/google-cloud-sdk/completion.bash.inc ]] || source /opt/google-cloud-sdk/completion.bash.inc'
+        state: present
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      when:
+        - packages.gcloud.configure_shell_rc | default(true)
+        - shell_rc_files.results[0].stat.exists
 
-      - name: Clean up downloaded tarball
-        ansible.builtin.file:
-          path: /tmp/google-cloud-cli-linux-x86_64.tar.gz
-          state: absent
+    - name: Add Google Cloud CLI PATH to `.zshrc`
+      ansible.builtin.lineinfile:
+        path: "{{ system.home | default(current_home) }}/.zshrc"
+        regexp: 'path\.zsh\.inc'
+        line: '[[ ! -f /opt/google-cloud-sdk/path.zsh.inc ]] || source /opt/google-cloud-sdk/path.zsh.inc'
+        state: present
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      when:
+        - packages.gcloud.configure_shell_rc | default(true)
+        - shell_rc_files.results[1].stat.exists
+
+    - name: Enable Google Cloud CLI completion in `.zshrc`
+      ansible.builtin.lineinfile:
+        path: "{{ system.home | default(current_home) }}/.zshrc"
+        regexp: 'completion\.zsh\.inc'
+        line: '[[ ! -f /opt/google-cloud-sdk/completion.zsh.inc ]] || source /opt/google-cloud-sdk/completion.zsh.inc'
+        state: present
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      when:
+        - packages.gcloud.configure_shell_rc | default(true)
+        - shell_rc_files.results[1].stat.exists
+
+    - name: Update Google Cloud CLI and all installed components
+      ansible.builtin.command: /opt/google-cloud-sdk/bin/gcloud components update --quiet
+      register: gcloud_update_result
+      changed_when: "'All components are up to date' not in gcloud_update_result.stderr"
+
+    - name: Install `gke-gcloud-auth-plugin` component
+      ansible.builtin.command: /opt/google-cloud-sdk/bin/gcloud components install gke-gcloud-auth-plugin --quiet
+      register: gke_plugin_result
+      changed_when: "'All components are up to date' not in gke_plugin_result.stderr"
