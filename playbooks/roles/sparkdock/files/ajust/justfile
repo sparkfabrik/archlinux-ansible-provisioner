@@ -63,6 +63,9 @@ sparkdock-fetch-updates:
 # Shared recipes from Sparkdock (only available once sparkdock is cloned)
 import? "~/.local/spark/sparkdock/sjust/recipes/04-shared.just"
 
+# Shell configuration recipes from Sparkdock
+import? "~/.local/spark/sparkdock/sjust/recipes/03-shell.just"
+
 # GitLab CLI (glab) recipes
 import? "~/.local/spark/ajust/recipes/01-gitlab.just"
 

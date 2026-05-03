@@ -2,8 +2,6 @@
 - name: Import sparkdock features
   when: sparkdock.enabled | default(true)
   tags: [sparkfabrik, sparkdock, ajust]
-  vars:
-    include_string: '[[ ! -f "{{ sparkdock.path | default(sparkdock_default_path) }}/config/shell/sparkdock.zshrc" ]] || source "{{ sparkdock.path | default(sparkdock_default_path) }}/config/shell/sparkdock.zshrc"'
   become: yes
   become_user: "{{ system.username | default(current_user) }}"
   block:
@@ -27,11 +25,24 @@
         path: "{{ system.home | default(current_home) }}/.zshrc"
       register: zshrc_stat
 
-    - name: Ensure sparkdock zsh customization is included in the zshrc file
+    - name: Remove legacy single-line sparkdock source from zshrc
       ansible.builtin.lineinfile:
         path: "{{ system.home | default(current_home) }}/.zshrc"
-        regexp: 'sparkdock\.zshrc'
-        line: "{{ include_string }}"
+        regexp: '^\[\[.*sparkdock\.zshrc.*\]\].*source'
+        state: absent
+      when: zshrc_stat.stat.exists
+
+    - name: Ensure sparkdock zsh customization is included in the zshrc file
+      ansible.builtin.blockinfile:
+        path: "{{ system.home | default(current_home) }}/.zshrc"
+        marker: "# {mark} SPARKDOCK SHELL ENHANCEMENTS"
+        block: |
+          if [ -f "{{ sparkdock.path | default(sparkdock_default_path) }}/config/shell/sparkdock.zshrc" ]; then
+              export SPARKDOCK_ENABLE_STARSHIP=0
+              export SPARKDOCK_ENABLE_FZF=0
+              export SPARKDOCK_ENABLE_ATUIN=0
+              source "{{ sparkdock.path | default(sparkdock_default_path) }}/config/shell/sparkdock.zshrc"
+          fi
       when: zshrc_stat.stat.exists
 
     - name: Check if opencode config directory exists in home directory
