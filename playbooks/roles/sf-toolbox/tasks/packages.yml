@@ -4,20 +4,10 @@
   tags: [sf-toolbox, packages, homebrew]
   when: ansible_facts['os_family'] == "Debian"
   block:
-    - name: Check if Homebrew is installed system-wide
+    - name: Check if Homebrew is already installed
       ansible.builtin.stat:
         path: /home/linuxbrew/.linuxbrew/bin/brew
-      register: homebrew_system
-
-    - name: Check if Homebrew is installed in user home
-      ansible.builtin.stat:
-        path: "{{ system.home | default(current_home) }}/.linuxbrew/bin/brew"
-      register: homebrew_user
-
-    - name: Set Homebrew prefix
-      ansible.builtin.set_fact:
-        homebrew_prefix: "{{ (homebrew_system.stat.exists) | ternary('/home/linuxbrew/.linuxbrew', (system.home | default(current_home)) + '/.linuxbrew') }}"
-        homebrew_installed: "{{ homebrew_system.stat.exists or homebrew_user.stat.exists }}"
+      register: homebrew_binary
 
     - name: Install Homebrew dependencies
       ansible.builtin.apt:
@@ -29,21 +19,16 @@
           - git
         state: present
         update_cache: true
-      when: not homebrew_installed
+      when: not homebrew_binary.stat.exists
 
     - name: Install Homebrew
       become: true
       become_user: "{{ system.username | default(current_user) }}"
       ansible.builtin.shell:
         cmd: NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        creates: "{{ homebrew_prefix }}/bin/brew"
+        creates: /home/linuxbrew/.linuxbrew/bin/brew
       environment:
         HOME: "{{ system.home | default(current_home) }}"
-
-    - name: Recalculate Homebrew prefix after install
-      ansible.builtin.set_fact:
-        homebrew_prefix: "{{ (homebrew_system.stat.exists) | ternary('/home/linuxbrew/.linuxbrew', (system.home | default(current_home)) + '/.linuxbrew') }}"
-      when: not homebrew_installed
 
     - name: Add Homebrew to PATH via /etc/profile.d
       ansible.builtin.copy:
@@ -53,8 +38,6 @@
           # Homebrew (linuxbrew) PATH integration
           if [ -d /home/linuxbrew/.linuxbrew ]; then
             eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-          elif [ -d "$HOME/.linuxbrew" ]; then
-            eval "$("$HOME/.linuxbrew/bin/brew" shellenv)"
           fi
 
     - name: Add Homebrew taps
@@ -62,7 +45,7 @@
       become_user: "{{ system.username | default(current_user) }}"
       community.general.homebrew_tap:
         name: "{{ item }}"
-        path: "{{ homebrew_prefix }}/bin"
+        path: /home/linuxbrew/.linuxbrew/bin
         state: present
       loop: "{{ toolbox.debian.homebrew_taps | default([]) }}"
 
@@ -116,5 +99,5 @@
       community.general.homebrew:
         name: "{{ toolbox.debian.homebrew }}"
         state: present
-        path: "{{ homebrew_prefix }}/bin"
+        path: /home/linuxbrew/.linuxbrew/bin
       when: ansible_facts['os_family'] == "Debian"
