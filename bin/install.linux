@@ -80,7 +80,7 @@ show_status() {
   log_info "sf-toolbox — $OS_DISPLAY"
 
   if [[ ${#missing[@]} -eq 0 ]]; then
-    log_info "All tools installed. Updating..."
+    log_info "All tools present. Ensuring latest versions..."
     return 0
   fi
 
@@ -127,6 +127,12 @@ ensure_ansible() {
 }
 
 clone_or_update() {
+  # When running from a local dev checkout (not the installed copy), skip clone
+  if [[ "$REPO_DIR" != "$INSTALL_DIR" ]]; then
+    log_info "Running from local checkout: $REPO_DIR"
+    return 0
+  fi
+
   if [[ -d "$INSTALL_DIR/.git" ]]; then
     log_info "Updating $INSTALL_DIR from $REPO_URL..."
     git -C "$INSTALL_DIR" pull --ff-only
@@ -135,8 +141,8 @@ clone_or_update() {
     sudo mkdir -p "$INSTALL_DIR"
     sudo chown "$USER:$USER" "$INSTALL_DIR"
     git clone "$REPO_URL" "$INSTALL_DIR"
+    REPO_DIR="$INSTALL_DIR"
   fi
-  REPO_DIR="$INSTALL_DIR"
 }
 
 run_ansible() {
@@ -147,6 +153,9 @@ run_ansible() {
 }
 
 create_symlink() {
+  # Only create symlink when running from the installed copy
+  [[ "$REPO_DIR" != "$INSTALL_DIR" ]] && return 0
+
   if [[ ! -L "$SYMLINK_PATH" ]] || [[ "$(readlink -f "$SYMLINK_PATH")" != "$INSTALL_DIR/bin/install.linux" ]]; then
     sudo ln -sf "$INSTALL_DIR/bin/install.linux" "$SYMLINK_PATH"
   fi
