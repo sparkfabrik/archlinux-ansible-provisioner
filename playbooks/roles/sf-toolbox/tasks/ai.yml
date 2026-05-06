@@ -1,19 +1,7 @@
 ---
-- name: Install development AI packages
-  tags: [packages, dev, ai]
+- name: Configure AI tools
+  tags: [sf-toolbox, packages, ai]
   block:
-    - name: Install opencode from npm
-      community.general.npm:
-        name: opencode-ai
-        global: true
-        state: present
-
-    - name: Install openspec from npm
-      community.general.npm:
-        name: "@fission-ai/openspec"
-        global: true
-        state: present
-
     - name: Ensure zsh site-functions directory exists
       ansible.builtin.file:
         path: "{{ system.home | default(current_home) }}/.local/share/zsh/site-functions"
@@ -23,6 +11,8 @@
         group: "{{ system.username | default(current_user) }}"
 
     - name: Generate opencode zsh completions
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
       ansible.builtin.command: opencode completion
       register: opencode_completion_output
       changed_when: false
@@ -40,6 +30,8 @@
         - opencode_completion_output.rc == 0
 
     - name: Generate openspec zsh completions
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
       ansible.builtin.command: openspec completion generate zsh
       register: openspec_completion_output
       changed_when: false
@@ -64,25 +56,10 @@
         owner: "{{ system.username | default(current_user) }}"
         group: "{{ system.username | default(current_user) }}"
 
-    - name: Check if opencode config file is already present from sparkdock
-      ansible.builtin.stat:
-        path: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
-      register: sparkdock_opencode_config_stat
-
-    - name: Copy opencode config file from sparkdock if it exists
+    - name: Copy opencode config file from sparkdock
       ansible.builtin.copy:
         src: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
         dest: "{{ system.home | default(current_home) }}/.config/opencode/opencode.json"
         mode: "0644"
         owner: "{{ system.username | default(current_user) }}"
         group: "{{ system.username | default(current_user) }}"
-      when: sparkdock_opencode_config_stat.stat.exists
-
-    - name: Create opencode config file as fallback if it doesn't exist from sparkdock
-      ansible.builtin.copy:
-        dest: "{{ system.home | default(current_home) }}/.config/opencode/opencode.json"
-        src: "files/opencode/opencode.json"
-        mode: "0644"
-        owner: "{{ system.username | default(current_user) }}"
-        group: "{{ system.username | default(current_user) }}"
-      when: not sparkdock_opencode_config_stat.stat.exists

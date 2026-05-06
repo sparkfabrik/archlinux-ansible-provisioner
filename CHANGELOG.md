@@ -1,0 +1,46 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+
+- Added `playbooks/roles/sf-toolbox/` role with per-tool task files (packages, gcloud, ai, glab, ajust, http-proxy)
+- Added `detect` section in toolbox package definitions for binary detection in the installer
+- Added clean arch/debian separation in toolbox package definitions with dotted-path support in the parser
+
+### Changed
+
+- Moved `config/toolbox-packages.yml` into `playbooks/roles/sf-toolbox/vars/main.yml` (auto-loaded by Ansible, no more `include_vars`)
+- Renamed `playbooks/toolbox.yml` to `playbooks/sf-toolbox.yml` for consistent naming with the `sf-toolbox` role and installer
+- Restructured toolbox package config from flat keys to nested `arch`/`debian`/`common` sections
+- Moved `src/scripts/parse-packages.py` to `bin/common/parse-toolbox-packages.py` with support for dotted key paths
+- Moved `just`/`gum` package installation from sparkdock role to sf-toolbox role
+- Moved ajust setup (wrapper, justfile, completion, recipes) from sparkdock role to sf-toolbox role
+- Stripped sparkdock role down to git clone + agent resources sync only
+- Simplified `bin/install.linux` — removed conflict detection/removal, removed plan presentation, added detect/inform status display
+- Removed invasive apt package and PPA source removal on Debian (Homebrew PATH precedence handles conflicts)
+- Updated `system.yml` to import sf-toolbox role (alongside existing roles)
+
+### Removed
+
+- Removed `playbooks/roles/packages/tasks/ai.yml`, `glab.yml`, `gcloud.yml`, `homebrew.yml` (merged into sf-toolbox)
+- Removed `playbooks/roles/docker/tasks/sparkfabrik-http-proxy.yml` (merged into sf-toolbox)
+- Removed `playbooks/roles/sparkdock/tasks/packages-arch.yml` and `packages-debian.yml` (merged into sf-toolbox)
+- Removed sparkdock zshrc sourcing (replaced by ajust shell integration)
+
+- Added GitHub Actions CI workflow testing the toolbox playbook on Ubuntu 24.04, Ubuntu 26.04, and Arch Linux
+- Added `bin/install.linux` single-command installer/updater (`sf-toolbox`) with detect→plan→confirm→execute flow, gum integration, and conflict removal on Debian
+- Added `playbooks/toolbox.yml` lightweight playbook for company tooling only (sparkdock, AI, glab, gcloud, http-proxy) without full system provisioning
+- Added `config/toolbox-packages.yml` as single source of truth for package definitions consumed by both shell and Ansible
+- Added `src/scripts/parse-packages.py` stdlib-only YAML parser for shell consumption
+- Added `bin/common/logging.sh` shared logging helpers (sourced from sparkdock) with gum integration and ANSI fallback
+- Added Debian/Ubuntu compatibility for sparkdock, AI tooling, and shell setup using Homebrew as the package manager for dev tools on Debian systems
+- Added Homebrew bootstrap task that auto-installs linuxbrew on Debian/Ubuntu systems
+- Added OS-specific task file split pattern (e.g., `packages-arch.yml` / `packages-debian.yml`) to keep platform logic separated
+- Added `gum spin` wrapper for headless `sparkdock-agents-sync` execution in non-interactive Ansible context
+- Added CHANGELOG.md following Keep a Changelog conventions

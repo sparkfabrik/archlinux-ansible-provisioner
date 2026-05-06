@@ -1,0 +1,53 @@
+---
+# ─── Package cleanup ───────────────────────────────────────────────────────
+- name: Remove conflicting packages
+  tags: [sf-toolbox, packages]
+  block:
+    - name: Remove conflicting pacman packages (Archlinux)
+      community.general.pacman:
+        name: "{{ toolbox.arch.remove.pacman }}"
+        state: absent
+      ignore_errors: true
+      when: ansible_facts['os_family'] == "Archlinux"
+
+    - name: Remove obsolete npm packages
+      community.general.npm:
+        name: "{{ item }}"
+        global: true
+        state: absent
+      loop: "{{ toolbox.common.remove.npm }}"
+      ignore_errors: true
+
+# ─── Package installation ──────────────────────────────────────────────────
+- name: Install toolbox packages
+  tags: [sf-toolbox, packages]
+  block:
+    - name: Install pacman packages (Archlinux)
+      community.general.pacman:
+        name: "{{ toolbox.arch.pacman }}"
+        state: present
+      when: ansible_facts['os_family'] == "Archlinux"
+
+    - name: Install npm packages (Archlinux)
+      community.general.npm:
+        name: "{{ item }}"
+        global: true
+        state: present
+      loop: "{{ toolbox.arch.npm }}"
+      when: ansible_facts['os_family'] == "Archlinux"
+
+    - name: Install apt system packages (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: "{{ toolbox.debian.apt }}"
+        state: present
+        update_cache: true
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Install homebrew packages (Debian/Ubuntu)
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      community.general.homebrew:
+        name: "{{ toolbox.debian.homebrew }}"
+        state: present
+        path: /home/linuxbrew/.linuxbrew/bin
+      when: ansible_facts['os_family'] == "Debian"

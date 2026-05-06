@@ -13,6 +13,37 @@ Please be advised that this provisioner is provided **as-is**, with no warranty 
 It is also important to clarify that this provisioner is **not** intended to replace the official [Archlinux Installation Guide](https://wiki.archlinux.org/title/installation_guide).
 The official guide is an invaluable resource for understanding the installation process and best practices for setting up Archlinux. Users are strongly encouraged to read and consult the official guide as a primary source of information.
 
+## sf-toolbox — SparkFabrik Linux Toolbox
+
+Standalone installer for SparkFabrik shared dev tools on Arch Linux and Debian/Ubuntu. Works independently from the full system provisioner.
+
+### Quick Install
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/sparkfabrik/archlinux-ansible-provisioner/main/bin/install.linux)
+```
+
+### Usage
+
+```bash
+sf-toolbox                              # Update all tools
+TAGS=ai,glab sf-toolbox                 # Run specific tags only
+SKIP_TAGS=gcloud sf-toolbox             # Skip specific tags
+```
+
+### What Gets Installed
+
+- **AI Coding**: opencode, openspec
+- **Cloud/DevOps**: gcloud, glab, mkcert, docker (must be pre-installed)
+- **Task Runner**: just, ajust (SparkFabrik wrapper)
+- **Utilities**: gum
+- **HTTP Proxy**: spark-http-proxy (local .loc domains)
+
+### Requirements
+
+- Arch Linux, Debian, or Ubuntu
+- `git`, `zsh`, `docker`, `curl`, `python3` (and `node`/`npm` on Arch)
+
 ## About This Provisioner
 
 This provisioner is based on Ansible and is structured into several roles for different aspects of the Archlinux setup:

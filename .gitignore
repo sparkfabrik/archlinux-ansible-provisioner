@@ -2,4 +2,4 @@
 /.idea
 /config/*.yaml
 pkglist.txt
-/openspec/
+.opencode/package-lock.json

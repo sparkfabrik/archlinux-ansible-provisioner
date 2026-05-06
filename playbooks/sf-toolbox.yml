@@ -1,0 +1,28 @@
+---
+# SparkFabrik Linux Toolbox — Company tooling playbook
+#
+# Installs only the shared SparkFabrik dev tools (sparkdock, AI, glab, gcloud,
+# http-proxy). Does NOT provision the full system (no desktop, drivers, kernel).
+#
+# Usage:
+#   sudo ansible-playbook playbooks/sf-toolbox.yml -i localhost, -c local
+#   sudo ansible-playbook playbooks/sf-toolbox.yml -i localhost, -c local --tags ai,glab
+
+- hosts: all
+  vars:
+    sparkdock_default_path: "{{ current_home }}/.local/spark/sparkdock"
+    sparkfabrik: true
+
+  environment:
+    PATH: "/home/linuxbrew/.linuxbrew/bin:{{ lookup('env', 'PATH') }}"
+
+  pre_tasks:
+    - name: Auto-detect current user
+      tags: [always]
+      ansible.builtin.set_fact:
+        current_user: "{{ ansible_facts['env']['SUDO_USER'] | default(ansible_facts['user_id']) }}"
+        current_home: "/home/{{ ansible_facts['env']['SUDO_USER'] | default(ansible_facts['user_id']) }}"
+
+  roles:
+    - sparkdock
+    - sf-toolbox

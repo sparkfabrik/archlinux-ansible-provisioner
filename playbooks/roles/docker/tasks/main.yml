@@ -77,6 +77,3 @@
         daemon_reload: yes
         name: systemd-binfmt
       when: qemu_for_buildx | default(true)
-
-- name: Install and configure SparkFabrik HTTP Proxy
-  import_tasks: sparkfabrik-http-proxy.yml

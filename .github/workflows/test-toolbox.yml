@@ -1,0 +1,252 @@
+---
+name: Test Toolbox
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  NONINTERACTIVE: "1"
+
+jobs:
+  toolbox-ubuntu-2404:
+    name: Ubuntu 24.04
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible zsh
+
+      - name: Run sf-toolbox installer
+        env:
+          SKIP_TAGS: spark-http-proxy,ai-coding-agents
+        run: bin/install.linux
+
+      - name: Verify installed tools
+        run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          just --version
+          gum --version
+          glab --version
+          opencode version || opencode --version
+          /opt/google-cloud-sdk/bin/gcloud --version
+
+  toolbox-ubuntu-2604:
+    name: Ubuntu 26.04
+    runs-on: ubuntu-latest
+    container: ubuntu:26.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install prerequisites
+        run: |
+          apt-get update
+          apt-get install -y ansible git zsh curl sudo python3 build-essential
+
+      - name: Create test user
+        run: |
+          useradd -m -s /bin/zsh testuser
+          echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+      - name: Run sf-toolbox installer
+        env:
+          SUDO_USER: testuser
+          SKIP_TAGS: spark-http-proxy,ai-coding-agents
+        run: bin/install.linux
+
+      - name: Verify installed tools
+        run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          just --version
+          gum --version
+          glab --version
+          opencode version || opencode --version
+          /opt/google-cloud-sdk/bin/gcloud --version
+
+  toolbox-arch:
+    name: Arch Linux
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install prerequisites
+        run: |
+          pacman -Syu --noconfirm \
+            ansible git python nodejs npm zsh sudo
+
+      - name: Create test user
+        run: |
+          useradd -m -s /bin/zsh testuser
+          echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+      - name: Run sf-toolbox installer
+        env:
+          SUDO_USER: testuser
+          SKIP_TAGS: spark-http-proxy,ai-coding-agents
+        run: bin/install.linux
+
+      - name: Verify installed tools
+        run: |
+          opencode version || opencode --version
+          just --version
+          gum --version
+          glab --version
+          /opt/google-cloud-sdk/bin/gcloud --version
+
+  conflict-detection-arch:
+    name: Arch conflict detection
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install prerequisites
+        run: |
+          pacman -Syu --noconfirm git zsh python python-yaml nodejs npm sudo ansible
+
+      - name: Create test user
+        run: |
+          useradd -m -s /bin/zsh testuser
+          echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+      - name: Install conflicting npm tool (user-level)
+        run: |
+          # Simulate npm user-level install of openspec (symlink → node_modules)
+          mkdir -p /home/testuser/.local/bin
+          mkdir -p /home/testuser/.local/lib/node_modules/@fission-ai/openspec/bin
+          echo '#!/usr/bin/env node' > /home/testuser/.local/lib/node_modules/@fission-ai/openspec/bin/openspec.js
+          chmod +x /home/testuser/.local/lib/node_modules/@fission-ai/openspec/bin/openspec.js
+          ln -s /home/testuser/.local/lib/node_modules/@fission-ai/openspec/bin/openspec.js \
+            /home/testuser/.local/bin/openspec
+          chown -R testuser:testuser /home/testuser/.local
+
+      - name: Install conflicting standalone binary
+        run: |
+          # Simulate a manually dropped binary in /usr/local/bin
+          printf '#!/bin/sh\necho "just 1.0.0-fake"\n' > /usr/local/bin/just
+          chmod +x /usr/local/bin/just
+
+      - name: Verify conflict detection stops installation
+        env:
+          NONINTERACTIVE: "0"
+          SUDO_USER: testuser
+          HOME: /home/testuser
+          PATH: /home/testuser/.local/bin:/usr/local/bin:/usr/bin:/bin
+        run: |
+          set +e
+          output=$(bin/install.linux 2>&1)
+          rc=$?
+          set -e
+          echo "$output"
+
+          if [[ $rc -eq 0 ]]; then
+            echo "FAIL: installer should have stopped due to conflicts"
+            exit 1
+          fi
+
+          # Verify detection output
+          echo "$output" | grep -q "openspec" || { echo "FAIL: openspec not detected"; exit 1; }
+          echo "$output" | grep -q "just" || { echo "FAIL: just not detected"; exit 1; }
+          echo "$output" | grep -q "npm uninstall" || { echo "FAIL: npm removal command not shown"; exit 1; }
+          echo "$output" | grep -q "sudo rm" || { echo "FAIL: standalone removal command not shown"; exit 1; }
+          echo "PASS: Arch conflict detection works correctly"
+
+      - name: Remove conflicts and verify installer proceeds
+        env:
+          SUDO_USER: testuser
+          SKIP_TAGS: spark-http-proxy,ai-coding-agents
+        run: |
+          rm -f /home/testuser/.local/bin/openspec
+          rm -f /usr/local/bin/just
+
+          bin/install.linux
+
+      - name: Verify installed tools
+        run: |
+          opencode version || opencode --version
+          just --version
+          gum --version
+          glab --version
+          /opt/google-cloud-sdk/bin/gcloud --version
+
+  toolbox-conflict-detection:
+    name: Ubuntu conflict detection
+    runs-on: ubuntu-latest
+    container: ubuntu:24.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install prerequisites
+        run: |
+          apt-get update
+          apt-get install -y git zsh curl sudo python3 python3-yaml
+
+      - name: Create test user
+        run: |
+          useradd -m -s /bin/zsh testuser
+          echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+      - name: Install conflicting tools via apt
+        run: |
+          apt-get install -y mkcert
+
+      - name: Install conflicting tool as standalone binary
+        run: |
+          # Simulate a manually dropped binary
+          echo '#!/bin/sh' > /usr/local/bin/just
+          echo 'echo "just 1.0.0-fake"' >> /usr/local/bin/just
+          chmod +x /usr/local/bin/just
+
+      - name: Verify conflict detection stops installation
+        env:
+          NONINTERACTIVE: "0"
+          SUDO_USER: testuser
+        run: |
+          set +e
+          output=$(bin/install.linux 2>&1)
+          rc=$?
+          set -e
+          echo "$output"
+
+          if [[ $rc -eq 0 ]]; then
+            echo "FAIL: installer should have stopped due to conflicts"
+            exit 1
+          fi
+
+          # Verify detection output
+          echo "$output" | grep -q "mkcert" || { echo "FAIL: mkcert not detected"; exit 1; }
+          echo "$output" | grep -q "just" || { echo "FAIL: just not detected"; exit 1; }
+          echo "$output" | grep -q "apt remove" || { echo "FAIL: apt removal command not shown"; exit 1; }
+          echo "$output" | grep -q "sudo rm" || { echo "FAIL: standalone removal command not shown"; exit 1; }
+          echo "PASS: conflict detection works correctly"
+
+      - name: Remove conflicts and verify installer proceeds
+        env:
+          SUDO_USER: testuser
+          SKIP_TAGS: spark-http-proxy,ai-coding-agents
+        run: |
+          # Remove the conflicts
+          apt-get remove --purge -y mkcert || true
+          rm -f /usr/local/bin/just
+
+          # Now installer should proceed
+          bin/install.linux
+
+      - name: Verify installed tools
+        run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          just --version
+          gum --version
+          glab --version
+          /opt/google-cloud-sdk/bin/gcloud --version
