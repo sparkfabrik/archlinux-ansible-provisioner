@@ -17,25 +17,37 @@ REPO_URL="https://github.com/sparkfabrik/archlinux-ansible-provisioner.git"
 BRANCH="${SF_TOOLBOX_BRANCH:-main}"
 
 # ─── Minimal logging (no external deps) ────────────────────────────────────
-info()  { printf '\033[1;34m[INFO]\033[0m %s\n' "$*"; }
-error() { printf '\033[1;31m[FAIL]\033[0m %s\n' "$*"; exit 1; }
-bold()  { printf '\033[1m%s\033[0m' "$*"; }
+info()  { printf '\033[1m\033[93m[ \033[92m•\033[93m ] \033[4m%s\033[0m\n' "$*"; }
+error() { printf '\033[1m\033[31m[FAIL] %s\033[0m\n' "$*"; exit 1; }
 
-# ─── Explain what this script does and ask for confirmation ─────────────────
-printf '\n'
-printf '  %s\n' "$(bold "sf-toolbox bootstrap")"
-printf '\n'
+# ─── Banner ─────────────────────────────────────────────────────────────────
+clear 2>/dev/null || true
+
+cat <<'EOF'
+
+       __       _              _ _
+   ___ / _|     | |_ ___   ___ | | |__   _____  __
+  / __| |_ ____| __/ _ \ / _ \| | '_ \ / _ \ \/ /
+  \__ \  _|____| || (_) | (_) | | |_) | (_) >  <
+  |___/_|       \__\___/ \___/|_|_.__/ \___/_/\_\
+
+  SparkFabrik Linux Toolbox — First-time setup
+
+EOF
+
+# ─── Explain what this script does ──────────────────────────────────────────
 printf '  This script will:\n'
 printf '\n'
 printf '    1. Install git (if not already present)\n'
-printf '    2. Clone the SparkFabrik provisioner repository:\n'
-printf '       %s\n' "$REPO_URL"
-printf '       into: %s\n' "$INSTALL_DIR"
-printf '    3. Run the sf-toolbox installer (Ansible-based)\n'
+printf '    2. Clone the provisioner repository into:\n'
+printf '       \033[1m%s\033[0m\n' "$INSTALL_DIR"
+printf '    3. Run the sf-toolbox Ansible installer\n'
 printf '\n'
-printf '  Branch: %s\n' "$BRANCH"
+printf '  Repository: %s\n' "$REPO_URL"
+printf '  Branch:     \033[1m%s\033[0m\n' "$BRANCH"
 printf '\n'
 
+# ─── Confirmation ──────────────────────────────────────────────────────────
 if [[ "${NONINTERACTIVE:-0}" != "1" ]]; then
   printf '  Continue? [Y/n] '
   read -r answer
@@ -65,11 +77,12 @@ if [[ -d "$INSTALL_DIR/.git" ]]; then
   git -C "$INSTALL_DIR" checkout "$BRANCH"
   git -C "$INSTALL_DIR" pull --ff-only
 else
-  info "Cloning $REPO_URL → $INSTALL_DIR..."
+  info "Cloning repository → $INSTALL_DIR..."
   sudo mkdir -p "$INSTALL_DIR"
   sudo chown "$USER:$USER" "$INSTALL_DIR"
   git clone -b "$BRANCH" "$REPO_URL" "$INSTALL_DIR"
 fi
 
 # ─── Hand off to the real installer ────────────────────────────────────────
+info "Launching sf-toolbox installer..."
 exec "$INSTALL_DIR/bin/install.linux"
