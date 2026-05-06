@@ -1,6 +1,18 @@
 ---
+- name: Ensure sparkdock repository is cloned and up-to-date
+  tags: [always]
+  become: yes
+  become_user: "{{ system.username | default(current_user) }}"
+  block:
+    - name: Git checkout sparkdock
+      ansible.builtin.git:
+        repo: "https://github.com/sparkfabrik/sparkdock.git"
+        dest: "{{ sparkdock.path | default(sparkdock_default_path) }}"
+        version: master
+        update: yes
+        force: yes
+
 - name: Import sparkdock features
-  when: sparkdock.enabled | default(true)
   tags: [sparkfabrik, sparkdock, ajust]
   vars:
     include_string: '[[ ! -f "{{ sparkdock.path | default(sparkdock_default_path) }}/config/shell/sparkdock.zshrc" ]] || source "{{ sparkdock.path | default(sparkdock_default_path) }}/config/shell/sparkdock.zshrc"'
@@ -13,15 +25,6 @@
         state: directory
         mode: "0755"
 
-    - name: Git checkout sparkdock
-      ansible.builtin.git:
-        repo: "https://github.com/sparkfabrik/sparkdock.git"
-        dest: "{{ sparkdock.path | default(sparkdock_default_path) }}"
-        version: master
-        update: yes
-        force: yes
-        # version: <PUT THE DESIRED COMMIT SHA HERE FOR TESTING PURPOSES>
-
     - name: Check if .zshrc exists
       ansible.builtin.stat:
         path: "{{ system.home | default(current_home) }}/.zshrc"
@@ -33,27 +36,6 @@
         regexp: 'sparkdock\.zshrc'
         line: "{{ include_string }}"
       when: zshrc_stat.stat.exists
-
-    - name: Check if opencode config directory exists in home directory
-      ansible.builtin.stat:
-        path: "{{ system.home | default(current_home) }}/.config/opencode"
-      register: home_opencode_config_stat
-
-    - name: Ensure opencode config file is present in sparkdock cloned repository
-      ansible.builtin.stat:
-        path: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
-      register: sparkdock_opencode_config_stat
-
-    - name: Copy opencode config file from sparkdock if the opencode config directory exists
-      ansible.builtin.copy:
-        src: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
-        dest: "{{ system.home | default(current_home) }}/.config/opencode/opencode.json"
-        mode: "0644"
-        owner: "{{ system.username | default(current_user) }}"
-        group: "{{ system.username | default(current_user) }}"
-      when:
-        - home_opencode_config_stat.stat.exists == true
-        - sparkdock_opencode_config_stat.stat.exists == true
 
 - name: Setup ajust (SparkJust for Linux)
   when: sparkfabrik | default(true)

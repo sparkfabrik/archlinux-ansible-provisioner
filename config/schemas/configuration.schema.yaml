@@ -294,14 +294,6 @@ properties:
     description: Sparkdock configuration.
     additionalProperties: true
     properties:
-      enabled:
-        $id: "#/properties/sparkdock/properties/enabled"
-        type: boolean
-        default: false
-        title: Enable Sparkdock
-        description: Activate the Sparkdock feature.
-        examples:
-          - true
       path:
         $id: "#/properties/sparkdock/properties/path"
         type: string

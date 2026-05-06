@@ -3,10 +3,11 @@
     - name: Auto-detect current user (like sparkdock uses ansible_facts['user_id'])
       tags: [always]
       ansible.builtin.set_fact:
-        current_user: "{{ ansible_env.SUDO_USER | default(ansible_facts['user_id']) }}"
-        current_home: "/home/{{ ansible_env.SUDO_USER | default(ansible_facts['user_id']) }}"
+        current_user: "{{ ansible_facts['env']['SUDO_USER'] | default(ansible_facts['user_id']) }}"
+        current_home: "/home/{{ ansible_facts['env']['SUDO_USER'] | default(ansible_facts['user_id']) }}"
   roles:
     - role: system
+    - role: sparkdock
     - role: packages
     - role: docker
     - role: nvidia
@@ -16,4 +17,3 @@
     - role: sparkfabrik
     - role: sway
     - role: i3
-    - role: sparkdock
