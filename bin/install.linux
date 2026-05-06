@@ -109,6 +109,134 @@ show_status() {
   printf "\n"
 }
 
+# ─── Conflict detection (Debian only) ───────────────────────────────────────
+is_sf_managed() {
+  local tool="$1" path="$2"
+  # Brew-managed
+  [[ "$path" == /home/linuxbrew/.linuxbrew/bin/* ]] && return 0
+  # sf-toolbox direct installs (non-brew)
+  case "$tool" in
+    gcloud) [[ "$path" == "/opt/google-cloud-sdk/bin/gcloud" ]] && return 0 ;;
+    ajust) [[ "$path" == "/usr/local/bin/ajust" ]] && return 0 ;;
+    spark-http-proxy) [[ "$path" == "/usr/local/bin/spark-http-proxy" ]] && return 0 ;;
+  esac
+  return 1
+}
+
+get_provenance() {
+  local path="$1"
+  local pkg
+
+  # Check apt
+  if pkg=$(dpkg -S "$path" 2>/dev/null | head -1 | cut -d: -f1); then
+    echo "apt: $pkg"
+    return
+  fi
+
+  # Check snap
+  if [[ "$path" == /snap/bin/* ]]; then
+    echo "snap"
+    return
+  fi
+
+  # Standalone binary or unknown
+  echo "standalone binary"
+}
+
+get_removal_cmd() {
+  local tool="$1" path="$2" provenance="$3"
+  case "$provenance" in
+    apt:*)
+      local pkg="${provenance#apt: }"
+      echo "sudo apt remove --purge $pkg"
+      ;;
+    snap)
+      echo "sudo snap remove $tool"
+      ;;
+    *)
+      echo "sudo rm $path"
+      ;;
+  esac
+}
+
+check_conflicts() {
+  # Only on Debian — Arch handles removal in Ansible
+  [[ "$OS_FAMILY" != "Debian" ]] && return 0
+
+  # Skip in non-interactive mode (CI environments are controlled)
+  [[ "${NONINTERACTIVE:-0}" == "1" ]] && return 0
+
+  local parser="$REPO_DIR/bin/common/parse-toolbox-packages.py"
+  local packages_file="$REPO_DIR/playbooks/roles/sf-toolbox/vars/main.yml"
+
+  [[ -f "$parser" && -f "$packages_file" ]] || return 0
+
+  local -a conflict_tools=() conflict_paths=() conflict_provs=() conflict_cmds=()
+  mapfile -t tools < <(python3 "$parser" "$packages_file" toolbox.detect)
+
+  for tool in "${tools[@]}"; do
+    local tool_path
+    tool_path=$(command -v "$tool" 2>/dev/null) || continue
+
+    # If it's already managed by sf-toolbox, no conflict
+    if is_sf_managed "$tool" "$tool_path"; then
+      continue
+    fi
+
+    local prov
+    prov=$(get_provenance "$tool_path")
+    local cmd
+    cmd=$(get_removal_cmd "$tool" "$tool_path" "$prov")
+
+    conflict_tools+=("$tool")
+    conflict_paths+=("$tool_path")
+    conflict_provs+=("$prov")
+    conflict_cmds+=("$cmd")
+  done
+
+  [[ ${#conflict_tools[@]} -eq 0 ]] && return 0
+
+  # Show conflicts and stop
+  printf "\n"
+  log_warn "Conflicting tools detected"
+  printf "\n"
+  printf "  sf-toolbox manages these tools via Homebrew (linuxbrew).\n"
+  printf "  Existing versions installed via other methods must be removed\n"
+  printf "  first to avoid version conflicts and confusion.\n"
+  printf "\n"
+  printf "  Found:\n\n"
+
+  for i in "${!conflict_tools[@]}"; do
+    printf "    %-18s %-30s (%s)\n" "${conflict_tools[$i]}" "${conflict_paths[$i]}" "${conflict_provs[$i]}"
+  done
+
+  printf "\n"
+  printf "  Remove them with:\n\n"
+
+  # Deduplicate and group apt packages into a single command
+  local -a apt_pkgs=() other_cmds=()
+  for i in "${!conflict_cmds[@]}"; do
+    if [[ "${conflict_provs[$i]}" == apt:* ]]; then
+      local pkg="${conflict_provs[$i]#apt: }"
+      apt_pkgs+=("$pkg")
+    else
+      other_cmds+=("${conflict_cmds[$i]}")
+    fi
+  done
+
+  if [[ ${#apt_pkgs[@]} -gt 0 ]]; then
+    printf "    sudo apt remove --purge %s\n" "${apt_pkgs[*]}"
+  fi
+  for cmd in "${other_cmds[@]}"; do
+    printf "    %s\n" "$cmd"
+  done
+
+  printf "\n"
+  printf "  Then re-run sf-toolbox.\n"
+  printf "\n"
+  exit 1
+}
+
 # ─── Bootstrap ──────────────────────────────────────────────────────────────
 confirm_homebrew() {
   # Only on Debian, only on first install (brew not yet present)
@@ -214,6 +342,7 @@ main() {
   detect_os
   resolve_repo_dir
   show_status
+  check_conflicts
   confirm_homebrew
   ensure_ansible
   clone_or_update

@@ -97,3 +97,79 @@ jobs:
           gum --version
           glab --version
           /opt/google-cloud-sdk/bin/gcloud --version
+
+  toolbox-conflict-detection:
+    name: Ubuntu conflict detection
+    runs-on: ubuntu-latest
+    container: ubuntu:24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install prerequisites
+        run: |
+          apt-get update
+          apt-get install -y git zsh curl sudo python3
+
+      - name: Create test user
+        run: |
+          useradd -m -s /bin/zsh testuser
+          echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+      - name: Install conflicting tools via apt
+        run: |
+          # glab from GitLab PPA
+          curl -fsSL "https://gitlab.com/gitlab-org/cli/-/raw/main/scripts/install-deb.sh" | bash
+          apt-get install -y glab
+          # mkcert from apt
+          apt-get install -y mkcert || true
+
+      - name: Install conflicting tool as standalone binary
+        run: |
+          # Simulate a manually dropped binary
+          echo '#!/bin/sh' > /usr/local/bin/just
+          echo 'echo "just 1.0.0-fake"' >> /usr/local/bin/just
+          chmod +x /usr/local/bin/just
+
+      - name: Verify conflict detection stops installation
+        env:
+          NONINTERACTIVE: "0"
+          SUDO_USER: testuser
+        run: |
+          set +e
+          output=$(bin/install.linux 2>&1)
+          rc=$?
+          set -e
+          echo "$output"
+
+          if [[ $rc -eq 0 ]]; then
+            echo "FAIL: installer should have stopped due to conflicts"
+            exit 1
+          fi
+
+          # Verify detection output
+          echo "$output" | grep -q "glab" || { echo "FAIL: glab not detected"; exit 1; }
+          echo "$output" | grep -q "just" || { echo "FAIL: just not detected"; exit 1; }
+          echo "$output" | grep -q "apt remove" || { echo "FAIL: apt removal command not shown"; exit 1; }
+          echo "$output" | grep -q "sudo rm" || { echo "FAIL: standalone removal command not shown"; exit 1; }
+          echo "PASS: conflict detection works correctly"
+
+      - name: Remove conflicts and verify installer proceeds
+        env:
+          SUDO_USER: testuser
+          SKIP_TAGS: spark-http-proxy,ai-coding-agents
+        run: |
+          # Remove the conflicts
+          apt-get remove --purge -y glab || true
+          rm -f /usr/local/bin/just
+          apt-get remove --purge -y mkcert || true
+
+          # Now installer should proceed
+          bin/install.linux
+
+      - name: Verify installed tools
+        run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          just --version
+          gum --version
+          glab --version
+          /opt/google-cloud-sdk/bin/gcloud --version
