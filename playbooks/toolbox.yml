@@ -1,0 +1,47 @@
+---
+# SparkFabrik Linux Toolbox — Company tooling playbook
+#
+# Installs only the shared SparkFabrik dev tools (sparkdock, AI, glab, gcloud,
+# http-proxy). Does NOT provision the full system (no desktop, drivers, kernel).
+#
+# Usage:
+#   sudo ansible-playbook playbooks/toolbox.yml -i localhost, -c local
+#   sudo ansible-playbook playbooks/toolbox.yml -i localhost, -c local --tags sparkdock,ai
+
+- hosts: all
+  vars:
+    sparkdock_default_path: "{{ current_home }}/.local/spark/sparkdock"
+    sparkfabrik: true
+
+  pre_tasks:
+    - name: Auto-detect current user
+      tags: [always]
+      ansible.builtin.set_fact:
+        current_user: "{{ ansible_facts['env']['SUDO_USER'] | default(ansible_facts['user_id']) }}"
+        current_home: "/home/{{ ansible_facts['env']['SUDO_USER'] | default(ansible_facts['user_id']) }}"
+
+    - name: Load toolbox package definitions
+      tags: [always]
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../config/toolbox-packages.yml"
+        name: toolbox
+
+  tasks:
+    - name: Bootstrap Homebrew (Debian/Ubuntu)
+      tags: [packages, homebrew]
+      import_tasks: roles/packages/tasks/homebrew.yml
+
+    - name: Setup sparkdock
+      import_tasks: roles/sparkdock/tasks/main.yml
+
+    - name: Install AI coding tools
+      import_tasks: roles/packages/tasks/ai.yml
+
+    - name: Install GitLab CLI
+      import_tasks: roles/packages/tasks/glab.yml
+
+    - name: Install Google Cloud SDK
+      import_tasks: roles/packages/tasks/gcloud.yml
+
+    - name: Install SparkFabrik HTTP Proxy
+      import_tasks: roles/docker/tasks/sparkfabrik-http-proxy.yml

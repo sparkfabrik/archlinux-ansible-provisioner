@@ -1,0 +1,325 @@
+#!/usr/bin/env bash
+# sf-toolbox — SparkFabrik Linux Toolbox installer and updater
+#
+# Installs/updates SparkFabrik shared dev tooling (sparkdock, AI tools,
+# cloud-native CLIs, http-proxy) on Arch Linux and Debian/Ubuntu.
+#
+# Usage:
+#   bin/install.linux          # First install or update
+#   sf-toolbox                 # After symlink is created
+#   TAGS=sparkdock,ai sf-toolbox  # Partial run
+#
+set -euo pipefail
+
+# ─── Configuration ──────────────────────────────────────────────────────────
+INSTALL_DIR="/opt/archlinux-provisioner"
+REPO_URL="https://github.com/sparkfabrik/archlinux-ansible-provisioner.git"
+SYMLINK_PATH="/usr/local/bin/sf-toolbox"
+
+# ─── Logging ────────────────────────────────────────────────────────────────
+# Source shared logging helpers (provides log_info, log_success, log_warn,
+# log_error, log_section; uses gum when available, falls back to ANSI).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../src/scripts/logging.sh
+source "${SCRIPT_DIR}/../src/scripts/logging.sh"
+
+DIM='\033[2m'; NC='\033[0m'
+
+# ─── Helpers ────────────────────────────────────────────────────────────────
+info()    { log_info "$*"; }
+success() { log_success "$*"; }
+warn()    { log_warn "$*"; }
+error()   { log_error "$*"; exit 1; }
+header()  { log_section "$*"; }
+
+# Resolve repo location
+resolve_repo_dir() {
+  if [[ -d "$INSTALL_DIR/.git" ]]; then
+    REPO_DIR="$INSTALL_DIR"
+  else
+    # Running from local clone (before install)
+    REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+  fi
+}
+
+# ─── Detection ──────────────────────────────────────────────────────────────
+detect_os() {
+  if [[ ! -f /etc/os-release ]]; then
+    error "Cannot detect OS (no /etc/os-release)"
+  fi
+
+  # shellcheck source=/dev/null
+  . /etc/os-release
+
+  case "${ID:-}" in
+    arch|archlinux|endeavouros|manjaro)
+      OS_FAMILY="Archlinux"
+      OS_DISPLAY="${PRETTY_NAME:-Arch Linux}"
+      ;;
+    ubuntu|debian|pop|linuxmint)
+      OS_FAMILY="Debian"
+      OS_DISPLAY="${PRETTY_NAME:-Ubuntu/Debian}"
+      ;;
+    *)
+      error "Unsupported OS: ${ID:-unknown}. Only Arch Linux and Debian/Ubuntu are supported."
+      ;;
+  esac
+}
+
+check_prereqs() {
+  local packages_file="$REPO_DIR/config/toolbox-packages.yml"
+  local parser="$REPO_DIR/src/scripts/parse-packages.py"
+
+  if [[ ! -f "$packages_file" ]] || [[ ! -f "$parser" ]]; then
+    error "Package config or parser not found. Are you running from the repo directory?"
+  fi
+
+  local missing=()
+
+  # Common prerequisites
+  mapfile -t prereqs < <(python3 "$parser" "$packages_file" prerequisites)
+  for cmd in "${prereqs[@]}"; do
+    if ! command -v "$cmd" &>/dev/null; then
+      missing+=("$cmd")
+    fi
+  done
+
+  # Arch-specific prerequisites
+  if [[ "$OS_FAMILY" == "Archlinux" ]]; then
+    mapfile -t prereqs_arch < <(python3 "$parser" "$packages_file" prerequisites_arch)
+    for cmd in "${prereqs_arch[@]}"; do
+      if ! command -v "$cmd" &>/dev/null; then
+        missing+=("$cmd")
+      fi
+    done
+  fi
+
+  if [[ ${#missing[@]} -gt 0 ]]; then
+    error "Missing prerequisites: ${missing[*]}. Please install them first."
+  fi
+}
+
+detect_mode() {
+  if [[ -d "$INSTALL_DIR/.git" ]]; then
+    MODE="update"
+  else
+    MODE="install"
+  fi
+}
+
+detect_conflicts() {
+  CONFLICTS=()
+  CONFLICT_SOURCES=()
+
+  # Only relevant on Debian
+  [[ "$OS_FAMILY" != "Debian" ]] && return 0
+
+  local packages_file="$REPO_DIR/config/toolbox-packages.yml"
+  local parser="$REPO_DIR/src/scripts/parse-packages.py"
+
+  # Check installed apt packages
+  mapfile -t removed_pkgs < <(python3 "$parser" "$packages_file" removed_apt_packages)
+  for pkg in "${removed_pkgs[@]}"; do
+    if dpkg -l "$pkg" &>/dev/null 2>&1; then
+      CONFLICTS+=("$pkg")
+    fi
+  done
+
+  # Check PPA sources
+  mapfile -t source_patterns < <(python3 "$parser" "$packages_file" removed_apt_sources)
+  for pattern in "${source_patterns[@]}"; do
+    # shellcheck disable=SC2086
+    for file in /etc/apt/sources.list.d/$pattern 2>/dev/null; do
+      if [[ -f "$file" ]]; then
+        CONFLICT_SOURCES+=("$file")
+      fi
+    done
+  done
+}
+
+detect_installed() {
+  INSTALLED=()
+  TO_INSTALL=()
+
+  local tools=(sparkdock opencode openspec glab gcloud mkcert just gum ajust)
+  for tool in "${tools[@]}"; do
+    case "$tool" in
+      sparkdock)
+        if [[ -d "${HOME}/.local/spark/sparkdock/.git" ]]; then
+          INSTALLED+=("sparkdock")
+        else
+          TO_INSTALL+=("sparkdock")
+        fi
+        ;;
+      *)
+        if command -v "$tool" &>/dev/null; then
+          INSTALLED+=("$tool")
+        else
+          TO_INSTALL+=("$tool")
+        fi
+        ;;
+    esac
+  done
+}
+
+# ─── Presentation ───────────────────────────────────────────────────────────
+present_plan() {
+  local summary=""
+
+  summary+="$(printf "${BOLD}  sf-toolbox — SparkFabrik Linux Toolbox${NC}\n")"
+  summary+="$(printf "\n")"
+  summary+="$(printf "  System:  %s (%s)\n" "$OS_DISPLAY" "$OS_FAMILY")"
+  summary+="$(printf "  User:    %s\n" "$USER")"
+  summary+="$(printf "  Mode:    %s\n" "$MODE")"
+  summary+="$(printf "\n")"
+
+  if [[ ${#TO_INSTALL[@]} -gt 0 ]]; then
+    summary+="$(printf "  ${GREEN}Will install:${NC}\n")"
+    for item in "${TO_INSTALL[@]}"; do
+      summary+="$(printf "    + %s\n" "$item")"
+    done
+    summary+="$(printf "\n")"
+  fi
+
+  if [[ ${#CONFLICTS[@]} -gt 0 ]]; then
+    summary+="$(printf "  ${YELLOW}Will remove (conflicts):${NC}\n")"
+    for item in "${CONFLICTS[@]}"; do
+      summary+="$(printf "    - %s (apt)\n" "$item")"
+    done
+    for item in "${CONFLICT_SOURCES[@]}"; do
+      summary+="$(printf "    - %s (PPA source)\n" "$(basename "$item")")"
+    done
+    summary+="$(printf "\n")"
+  fi
+
+  if [[ ${#INSTALLED[@]} -gt 0 ]]; then
+    summary+="$(printf "  ${DIM}Already present:${NC}\n")"
+    for item in "${INSTALLED[@]}"; do
+      summary+="$(printf "    ✓ %s\n" "$item")"
+    done
+    summary+="$(printf "\n")"
+  fi
+
+  # Render with gum if available, otherwise plain
+  if command -v gum &>/dev/null; then
+    echo "$summary" | gum style --border rounded --padding "1 2"
+  else
+    printf "\n"
+    echo "$summary"
+  fi
+
+  # Confirmation
+  printf "  Proceed? [Y/n] "
+  read -r response
+  case "${response:-Y}" in
+    [yY]|"") return 0 ;;
+    *) info "Aborted."; exit 0 ;;
+  esac
+}
+
+# ─── Execution ──────────────────────────────────────────────────────────────
+remove_conflicts() {
+  [[ ${#CONFLICTS[@]} -eq 0 && ${#CONFLICT_SOURCES[@]} -eq 0 ]] && return 0
+
+  info "Removing conflicting packages..."
+
+  if [[ ${#CONFLICTS[@]} -gt 0 ]]; then
+    sudo apt-get remove --purge -y "${CONFLICTS[@]}" 2>/dev/null || true
+  fi
+
+  for file in "${CONFLICT_SOURCES[@]}"; do
+    info "Removing PPA source: $(basename "$file")"
+    sudo rm -f "$file"
+  done
+
+  # Update apt cache after removing sources
+  if [[ ${#CONFLICT_SOURCES[@]} -gt 0 ]]; then
+    sudo apt-get update -qq 2>/dev/null || true
+  fi
+}
+
+clone_or_update_repo() {
+  if [[ "$MODE" == "install" ]]; then
+    info "Cloning repository to $INSTALL_DIR..."
+    sudo mkdir -p "$INSTALL_DIR"
+    sudo chown "$USER:$USER" "$INSTALL_DIR"
+    git clone "$REPO_URL" "$INSTALL_DIR"
+    REPO_DIR="$INSTALL_DIR"
+  else
+    info "Updating repository..."
+    git -C "$INSTALL_DIR" pull --ff-only
+  fi
+}
+
+install_homebrew() {
+  [[ "$OS_FAMILY" != "Debian" ]] && return 0
+
+  if [[ -f /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+    success "Homebrew already installed"
+    return 0
+  fi
+
+  info "Installing Homebrew (linuxbrew)..."
+  NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+}
+
+install_ansible() {
+  if command -v ansible-playbook &>/dev/null; then
+    success "Ansible already installed"
+    return 0
+  fi
+
+  info "Installing Ansible..."
+  case "$OS_FAMILY" in
+    Archlinux) sudo pacman -S --noconfirm ansible ;;
+    Debian)
+      eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+      brew install ansible
+      ;;
+  esac
+}
+
+run_ansible() {
+  info "Installing Ansible collections..."
+  ansible-galaxy collection install -r "$REPO_DIR/requirements.yml" --force-with-deps 2>/dev/null
+
+  info "Running toolbox playbook..."
+  local cmd=(sudo ansible-playbook "$REPO_DIR/playbooks/toolbox.yml" -i localhost, -c local)
+
+  if [[ -n "${TAGS:-}" ]]; then
+    cmd+=(--tags "$TAGS")
+  fi
+
+  "${cmd[@]}"
+}
+
+create_symlink() {
+  if [[ ! -L "$SYMLINK_PATH" ]] || [[ "$(readlink -f "$SYMLINK_PATH")" != "$INSTALL_DIR/bin/install.linux" ]]; then
+    info "Creating symlink: $SYMLINK_PATH → $INSTALL_DIR/bin/install.linux"
+    sudo ln -sf "$INSTALL_DIR/bin/install.linux" "$SYMLINK_PATH"
+  fi
+}
+
+# ─── Main ───────────────────────────────────────────────────────────────────
+main() {
+  resolve_repo_dir
+  detect_os
+  detect_mode
+  check_prereqs
+  detect_conflicts
+  detect_installed
+  present_plan
+  remove_conflicts
+  clone_or_update_repo
+  install_homebrew
+  install_ansible
+  run_ansible
+  create_symlink
+
+  printf "\n"
+  success "SparkFabrik Linux Toolbox installed successfully!"
+  success "Run 'sf-toolbox' anytime to update."
+}
+
+main "$@"

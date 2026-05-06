@@ -1,0 +1,55 @@
+---
+# SparkFabrik Linux Toolbox — Package Definitions
+#
+# Single source of truth for the sf-toolbox installer and Ansible playbook.
+# Read by bin/install.linux (via src/scripts/parse-packages.py) and
+# playbooks/toolbox.yml (via include_vars).
+
+# Prerequisites: must be available as commands before sf-toolbox runs.
+# The install script checks these and fails with guidance if missing.
+prerequisites:
+  - git
+  - zsh
+  - docker
+  - curl
+  - python3
+
+# Additional prerequisites for Arch only (npm needed for openspec).
+prerequisites_arch:
+  - node
+  - npm
+
+# Homebrew taps required before installing packages (Debian/Ubuntu only).
+homebrew_taps:
+  - anomalyco/tap
+
+# Packages managed via Homebrew on Debian/Ubuntu.
+# On Arch, equivalent packages come from pacman (mapped in ansible tasks).
+homebrew_packages:
+  - just
+  - gum
+  - glab
+  - mkcert
+  - anomalyco/tap/opencode
+  - openspec
+
+# Packages to remove if found via apt/dpkg on Debian/Ubuntu.
+# Prevents conflicts with brew-managed versions.
+removed_apt_packages:
+  - glab
+  - google-cloud-cli
+  - google-cloud-cli-gke-gcloud-auth-plugin
+  - mkcert
+  - just
+  - gum
+
+# APT source file patterns to remove from /etc/apt/sources.list.d/.
+removed_apt_sources:
+  - "*gitlab*"
+  - "*charm*"
+  - "*cloud.google*"
+
+# npm global packages to remove (migration cleanup).
+# opencode-ai is replaced by pacman (Arch) or brew (Debian).
+removed_npm_packages:
+  - opencode-ai

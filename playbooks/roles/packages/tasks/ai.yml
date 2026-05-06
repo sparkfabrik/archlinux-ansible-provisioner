@@ -2,17 +2,36 @@
 - name: Install development AI packages
   tags: [packages, dev, ai]
   block:
-    - name: Install opencode from npm
+    - name: Remove opencode-ai npm package (replaced by native package)
       community.general.npm:
         name: opencode-ai
         global: true
-        state: present
+        state: absent
+      ignore_errors: true
 
-    - name: Install openspec from npm
+    - name: Install opencode from pacman (Archlinux)
+      community.general.pacman:
+        name: opencode
+        state: present
+      when: ansible_os_family == "Archlinux"
+
+    - name: Install openspec from npm (Archlinux)
       community.general.npm:
         name: "@fission-ai/openspec"
         global: true
         state: present
+      when: ansible_os_family == "Archlinux"
+
+    - name: Install AI tools via Homebrew (Debian/Ubuntu)
+      become: yes
+      become_user: "{{ system.username | default(current_user) }}"
+      community.general.homebrew:
+        name:
+          - anomalyco/tap/opencode
+          - openspec
+        state: present
+        path: /home/linuxbrew/.linuxbrew/bin
+      when: ansible_os_family == "Debian"
 
     - name: Ensure zsh site-functions directory exists
       ansible.builtin.file:

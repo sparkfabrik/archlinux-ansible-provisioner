@@ -38,3 +38,13 @@
           if [ -d /home/linuxbrew/.linuxbrew ]; then
             eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           fi
+
+    - name: Add Homebrew taps
+      become: yes
+      become_user: "{{ system.username | default(current_user) }}"
+      community.general.homebrew_tap:
+        name: "{{ item }}"
+        path: /home/linuxbrew/.linuxbrew/bin
+        state: present
+      loop: "{{ toolbox.homebrew_taps | default([]) }}"
+      when: toolbox is defined and toolbox.homebrew_taps is defined
