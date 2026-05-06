@@ -54,7 +54,6 @@ desktop:
   browser:
     install_chrome_beta: false
 debug: false
-sparkdock:
-  enabled: true
+sparkdock: {}
 sparkfabrik: true
 qemu_for_buildx: true
