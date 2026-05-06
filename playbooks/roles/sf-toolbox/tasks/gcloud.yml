@@ -43,11 +43,17 @@
             export PATH="/opt/google-cloud-sdk/bin:$PATH"
           fi
 
+    - name: Check if gcloud bash completion exists
+      ansible.builtin.stat:
+        path: /opt/google-cloud-sdk/completion.bash.inc
+      register: gcloud_completion
+
     - name: Install bash completion for gcloud
       ansible.builtin.file:
         src: /opt/google-cloud-sdk/completion.bash.inc
         dest: /etc/bash_completion.d/google-cloud-sdk
         state: link
+      when: gcloud_completion.stat.exists
 
     - name: Clean up downloaded tarball
       ansible.builtin.file:
