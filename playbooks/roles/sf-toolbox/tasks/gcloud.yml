@@ -48,6 +48,13 @@
         path: /opt/google-cloud-sdk/completion.bash.inc
       register: gcloud_completion
 
+    - name: Ensure bash_completion.d directory exists
+      ansible.builtin.file:
+        path: /etc/bash_completion.d
+        state: directory
+        mode: "0755"
+      when: gcloud_completion.stat.exists
+
     - name: Install bash completion for gcloud
       ansible.builtin.file:
         src: /opt/google-cloud-sdk/completion.bash.inc

@@ -9,6 +9,7 @@
 #   sf-toolbox                 # After symlink is created
 #   TAGS=sparkdock,ai sf-toolbox            # Partial run
 #   SKIP_TAGS=gcloud,http-proxy sf-toolbox  # Skip specific tags
+#   NONINTERACTIVE=1 sf-toolbox             # Skip prompts (CI/scripts)
 #
 set -euo pipefail
 
@@ -110,6 +111,35 @@ show_status() {
 }
 
 # ─── Bootstrap ──────────────────────────────────────────────────────────────
+confirm_homebrew() {
+  # Only on Debian, only on first install (brew not yet present)
+  [[ "$OS_FAMILY" != "Debian" ]] && return 0
+  [[ -f /home/linuxbrew/.linuxbrew/bin/brew ]] && return 0
+
+  printf "\n"
+  printf "  sf-toolbox uses Homebrew (linuxbrew) to manage dev tools on Linux.\n"
+  printf "\n"
+  printf "  Why Homebrew?\n"
+  printf "  - Provides up-to-date versions of CLI tools (just, gum, glab, opencode)\n"
+  printf "  - Does not interfere with system packages (apt is not touched)\n"
+  printf "  - Installs to /home/linuxbrew/.linuxbrew (isolated from the system)\n"
+  printf "\n"
+  printf "  More info: https://docs.brew.sh/Homebrew-on-Linux\n"
+  printf "\n"
+
+  # Skip prompt in non-interactive mode (CI, piped scripts)
+  [[ "${NONINTERACTIVE:-0}" == "1" ]] && return 0
+
+  if [[ "${HAS_GUM}" = true ]]; then
+    gum confirm "Install Homebrew and proceed?" || { log_info "Aborted."; exit 0; }
+  else
+    printf "  Install Homebrew and proceed? [Y/n] "
+    read -r reply
+    [[ "${reply:-Y}" =~ ^[Nn] ]] && { log_info "Aborted."; exit 0; }
+  fi
+  printf "\n"
+}
+
 ensure_ansible() {
   command -v ansible-playbook &>/dev/null && return 0
 
@@ -168,6 +198,7 @@ main() {
   detect_os
   resolve_repo_dir
   show_status
+  confirm_homebrew
   ensure_ansible
   clone_or_update
   run_ansible
