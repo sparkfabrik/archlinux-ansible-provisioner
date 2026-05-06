@@ -9,6 +9,7 @@
             - google-cloud-cli-gke-gcloud-auth-plugin
           state: absent
         ignore_errors: true
+        when: ansible_os_family == "Archlinux"
 
       - name: Check if Google Cloud SDK is already installed
         ansible.builtin.stat:

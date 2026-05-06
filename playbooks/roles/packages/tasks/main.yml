@@ -1,4 +1,7 @@
 ---
+- name: Bootstrap Homebrew (Debian/Ubuntu)
+  import_tasks: homebrew.yml
+
 - name: Set up base packages
   import_tasks: base.yml
 

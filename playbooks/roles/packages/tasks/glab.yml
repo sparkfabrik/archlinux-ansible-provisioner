@@ -2,10 +2,20 @@
 - name: Install glab (GitLab CLI)
   tags: [packages, dev, glab]
   block:
-    - name: Install glab
+    - name: Install glab (Archlinux)
       community.general.pacman:
         name:
           - glab
+      when: ansible_os_family == "Archlinux"
+
+    - name: Install glab via Homebrew (Debian/Ubuntu)
+      become: yes
+      become_user: "{{ system.username | default(current_user) }}"
+      community.general.homebrew:
+        name: glab
+        state: present
+        path: /home/linuxbrew/.linuxbrew/bin
+      when: ansible_os_family == "Debian"
 
     - name: Ensure ~/.local/share/zsh/site-functions directory exists
       become: yes

@@ -1,0 +1,8 @@
+---
+- name: Install `ajust` packages
+  become: yes
+  community.general.pacman:
+    name:
+      - just
+      - gum
+    state: present

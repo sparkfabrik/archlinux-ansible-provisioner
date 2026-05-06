@@ -148,9 +148,45 @@ config/
 - Use `register:` to capture command output for conditional logic.
 - Use `changed_when: false` on read-only commands; `failed_when: false` on optional probes.
 
+### Multi-OS Support
+
+- Gate OS-specific package installs with `when: ansible_os_family == "Archlinux"` or
+  `when: ansible_os_family == "Debian"`.
+- Prefer **splitting into separate task files** (`packages-arch.yml`, `packages-debian.yml`)
+  over inline `when:` checks when there are more than 2-3 OS-specific tasks.
+- Use `community.general.homebrew` for dev tools on Debian (not raw apt for tools
+  like just, gum, glab, mkcert).
+- Use `ansible.builtin.apt` only for system libraries (e.g., `libnss3-tools`).
+- Always provide `| default(current_user)` and `| default(current_home)` fallbacks
+  for `system.username` and `system.home`.
+
 ### Configuration Schema
 
 When adding new configurable features:
 1. Add the variable to `config/default.yaml.tpl` with a sensible default.
 2. Add the schema definition to `config/schemas/configuration.schema.yaml`.
 3. Use `| default()` in tasks for backward compatibility.
+
+## CHANGELOG.md Conventions
+
+**MANDATORY**: Every commit that changes user-visible behavior, adds features,
+fixes bugs, removes functionality, or refactors existing behavior **MUST**
+include a corresponding `CHANGELOG.md` entry under `## [Unreleased]`. This is
+not optional -- treat a missing changelog entry as a build failure. The only
+exceptions are pure documentation or test-only changes with zero user-facing
+impact.
+
+- Follow [Keep a Changelog](https://keepachangelog.com/) format
+- **One header per section**: Each `### Added`, `### Changed`, `### Fixed`,
+  `### Removed`, `### Deprecated`, `### Security` must appear **exactly once**
+  under `## [Unreleased]`. Never create a duplicate section header -- always
+  prepend entries to the existing section
+- **Standard section order**: Added, Changed, Deprecated, Removed, Fixed, Security
+- **Correct categorization**: New features/tools/commands go under `### Added`,
+  not `### Changed`. Use `### Changed` only for modifications to existing behavior.
+  Use `### Fixed` for bug fixes
+- **New entries go at the top** of their section -- newest first
+- **Never reorder existing entries** -- only prepend above them
+- **One line per entry**: Keep entries concise. No sub-headings or multi-level
+  nesting inside `## [Unreleased]`
+- **No trailing whitespace** on any line

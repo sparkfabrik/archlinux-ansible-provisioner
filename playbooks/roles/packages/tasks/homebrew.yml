@@ -1,0 +1,40 @@
+---
+- name: Bootstrap Homebrew on Debian/Ubuntu
+  tags: [packages, homebrew]
+  when: ansible_os_family == "Debian"
+  block:
+    - name: Check if Homebrew is already installed
+      ansible.builtin.stat:
+        path: /home/linuxbrew/.linuxbrew/bin/brew
+      register: homebrew_binary
+
+    - name: Install Homebrew dependencies
+      ansible.builtin.apt:
+        name:
+          - build-essential
+          - procps
+          - curl
+          - file
+          - git
+        state: present
+        update_cache: true
+      when: not homebrew_binary.stat.exists
+
+    - name: Install Homebrew
+      become: yes
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.shell:
+        cmd: NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        creates: /home/linuxbrew/.linuxbrew/bin/brew
+      environment:
+        HOME: "{{ system.home | default(current_home) }}"
+
+    - name: Add Homebrew to PATH via /etc/profile.d
+      ansible.builtin.copy:
+        dest: /etc/profile.d/homebrew.sh
+        mode: "0644"
+        content: |
+          # Homebrew (linuxbrew) PATH integration
+          if [ -d /home/linuxbrew/.linuxbrew ]; then
+            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          fi

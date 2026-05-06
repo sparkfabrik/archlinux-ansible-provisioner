@@ -37,18 +37,24 @@
         line: "{{ include_string }}"
       when: zshrc_stat.stat.exists
 
+- name: Install ajust packages (Archlinux)
+  when:
+    - sparkfabrik | default(true)
+    - ansible_os_family == "Archlinux"
+  tags: [sparkfabrik, sparkdock, ajust]
+  import_tasks: packages-arch.yml
+
+- name: Install ajust packages (Debian/Ubuntu)
+  when:
+    - sparkfabrik | default(true)
+    - ansible_os_family == "Debian"
+  tags: [sparkfabrik, sparkdock, ajust]
+  import_tasks: packages-debian.yml
+
 - name: Setup ajust (SparkJust for Linux)
   when: sparkfabrik | default(true)
   tags: [sparkfabrik, sparkdock, ajust]
   block:
-    - name: Install `ajust` packages
-      become: yes
-      community.general.pacman:
-        name:
-          - just
-          - gum
-        state: present
-
     - name: Install ajust wrapper script
       become: yes
       ansible.builtin.copy:
@@ -116,7 +122,25 @@
     - name: Run agent resources sync
       become: yes
       become_user: "{{ system.username | default(current_user) }}"
-      ansible.builtin.command: "{{ sparkdock.path | default(sparkdock_default_path) }}/bin/sparkdock-agents-sync"
+      ansible.builtin.shell: |
+        # Wrap gum to skip TTY-dependent subcommands (spin) in non-interactive Ansible context.
+        export _REAL_GUM=$(command -v gum)
+        gum() {
+          if [[ "$1" == "spin" ]]; then
+            shift
+            # Skip all arguments until the '--' separator.
+            while [[ $# -gt 0 && "$1" != "--" ]]; do shift; done
+            # Skip the '--' separator itself.
+            [[ "${1:-}" == "--" ]] && shift
+            "$@"
+          else
+            "$_REAL_GUM" "$@"
+          fi
+        }
+        export -f gum
+        {{ sparkdock.path | default(sparkdock_default_path) }}/bin/sparkdock-agents-sync
+      args:
+        executable: /bin/bash
       register: agents_sync_output
       changed_when: "'added' in agents_sync_output.stdout or 'updated' in agents_sync_output.stdout"
 
