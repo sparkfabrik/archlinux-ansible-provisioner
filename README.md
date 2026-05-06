@@ -17,10 +17,10 @@ The official guide is an invaluable resource for understanding the installation 
 
 Standalone installer for SparkFabrik shared dev tools on Arch Linux and Debian/Ubuntu. Works independently from the full system provisioner.
 
-### Quick Install
+### Quick Bootstrap
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/sparkfabrik/archlinux-ansible-provisioner/main/bin/install.linux)
+bash <(curl -fsSL https://raw.githubusercontent.com/sparkfabrik/archlinux-ansible-provisioner/main/bin/bootstrap.sh)
 ```
 
 ### Usage
