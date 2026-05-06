@@ -185,7 +185,12 @@ clone_or_update() {
 }
 
 run_ansible() {
-  ansible-galaxy collection install -r "$REPO_DIR/requirements.yml" --force-with-deps
+  log_info "Installing Ansible dependencies..."
+  if ! ansible-galaxy collection install -r "$REPO_DIR/requirements.yml" --force-with-deps >/dev/null 2>&1; then
+    log_error "Failed to install Ansible collections. Run manually:"
+    log_error "  ansible-galaxy collection install -r $REPO_DIR/requirements.yml --force-with-deps"
+    exit 1
+  fi
   local cmd=(sudo ansible-playbook "$REPO_DIR/playbooks/sf-toolbox.yml" -i "localhost," -c local)
   [[ -n "${TAGS:-}" ]] && cmd+=(--tags "$TAGS")
   [[ -n "${SKIP_TAGS:-}" ]] && cmd+=(--skip-tags "$SKIP_TAGS")
