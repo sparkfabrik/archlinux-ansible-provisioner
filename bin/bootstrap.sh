@@ -19,6 +19,32 @@ BRANCH="${SF_TOOLBOX_BRANCH:-main}"
 # ─── Minimal logging (no external deps) ────────────────────────────────────
 info()  { printf '\033[1;34m[INFO]\033[0m %s\n' "$*"; }
 error() { printf '\033[1;31m[FAIL]\033[0m %s\n' "$*"; exit 1; }
+bold()  { printf '\033[1m%s\033[0m' "$*"; }
+
+# ─── Explain what this script does and ask for confirmation ─────────────────
+printf '\n'
+printf '  %s\n' "$(bold "sf-toolbox bootstrap")"
+printf '\n'
+printf '  This script will:\n'
+printf '\n'
+printf '    1. Install git (if not already present)\n'
+printf '    2. Clone the SparkFabrik provisioner repository:\n'
+printf '       %s\n' "$REPO_URL"
+printf '       into: %s\n' "$INSTALL_DIR"
+printf '    3. Run the sf-toolbox installer (Ansible-based)\n'
+printf '\n'
+printf '  Branch: %s\n' "$BRANCH"
+printf '\n'
+
+if [[ "${NONINTERACTIVE:-0}" != "1" ]]; then
+  printf '  Continue? [Y/n] '
+  read -r answer
+  case "${answer:-Y}" in
+    [Yy]*|"") ;;
+    *) printf '\n  Aborted.\n'; exit 0 ;;
+  esac
+  printf '\n'
+fi
 
 # ─── Ensure git is available ────────────────────────────────────────────────
 if ! command -v git &>/dev/null; then
