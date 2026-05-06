@@ -120,11 +120,7 @@ jobs:
 
       - name: Install conflicting tools via apt
         run: |
-          # glab from GitLab PPA
-          curl -fsSL "https://gitlab.com/gitlab-org/cli/-/raw/main/scripts/install-deb.sh" | bash
-          apt-get install -y glab
-          # mkcert from apt
-          apt-get install -y mkcert || true
+          apt-get install -y mkcert
 
       - name: Install conflicting tool as standalone binary
         run: |
@@ -150,7 +146,7 @@ jobs:
           fi
 
           # Verify detection output
-          echo "$output" | grep -q "glab" || { echo "FAIL: glab not detected"; exit 1; }
+          echo "$output" | grep -q "mkcert" || { echo "FAIL: mkcert not detected"; exit 1; }
           echo "$output" | grep -q "just" || { echo "FAIL: just not detected"; exit 1; }
           echo "$output" | grep -q "apt remove" || { echo "FAIL: apt removal command not shown"; exit 1; }
           echo "$output" | grep -q "sudo rm" || { echo "FAIL: standalone removal command not shown"; exit 1; }
@@ -162,9 +158,8 @@ jobs:
           SKIP_TAGS: spark-http-proxy,ai-coding-agents
         run: |
           # Remove the conflicts
-          apt-get remove --purge -y glab || true
-          rm -f /usr/local/bin/just
           apt-get remove --purge -y mkcert || true
+          rm -f /usr/local/bin/just
 
           # Now installer should proceed
           bin/install.linux
