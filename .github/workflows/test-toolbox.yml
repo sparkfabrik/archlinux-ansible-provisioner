@@ -98,6 +98,85 @@ jobs:
           glab --version
           /opt/google-cloud-sdk/bin/gcloud --version
 
+  conflict-detection-arch:
+    name: Arch conflict detection
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install prerequisites
+        run: |
+          pacman -Syu --noconfirm git zsh python python-yaml nodejs npm
+
+      - name: Create test user
+        run: |
+          useradd -m -s /bin/zsh testuser
+          echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+      - name: Install conflicting npm tool (user-level)
+        run: |
+          # Simulate npm user-level install of openspec (symlink → node_modules)
+          mkdir -p /home/testuser/.local/bin
+          mkdir -p /home/testuser/.local/lib/node_modules/@fission-ai/openspec/bin
+          echo '#!/usr/bin/env node' > /home/testuser/.local/lib/node_modules/@fission-ai/openspec/bin/openspec.js
+          chmod +x /home/testuser/.local/lib/node_modules/@fission-ai/openspec/bin/openspec.js
+          ln -s /home/testuser/.local/lib/node_modules/@fission-ai/openspec/bin/openspec.js \
+            /home/testuser/.local/bin/openspec
+          chown -R testuser:testuser /home/testuser/.local
+
+      - name: Install conflicting standalone binary
+        run: |
+          # Simulate a manually dropped binary in /usr/local/bin
+          printf '#!/bin/sh\necho "just 1.0.0-fake"\n' > /usr/local/bin/just
+          chmod +x /usr/local/bin/just
+
+      - name: Verify conflict detection stops installation
+        env:
+          NONINTERACTIVE: "0"
+          SUDO_USER: testuser
+          HOME: /home/testuser
+          PATH: /home/testuser/.local/bin:/usr/local/bin:/usr/bin:/bin
+        run: |
+          set +e
+          output=$(bin/install.linux 2>&1)
+          rc=$?
+          set -e
+          echo "$output"
+
+          if [[ $rc -eq 0 ]]; then
+            echo "FAIL: installer should have stopped due to conflicts"
+            exit 1
+          fi
+
+          # Verify detection output
+          echo "$output" | grep -q "openspec" || { echo "FAIL: openspec not detected"; exit 1; }
+          echo "$output" | grep -q "just" || { echo "FAIL: just not detected"; exit 1; }
+          echo "$output" | grep -q "npm uninstall" || { echo "FAIL: npm removal command not shown"; exit 1; }
+          echo "$output" | grep -q "sudo rm" || { echo "FAIL: standalone removal command not shown"; exit 1; }
+          echo "PASS: Arch conflict detection works correctly"
+
+      - name: Remove conflicts and verify installer proceeds
+        env:
+          SUDO_USER: testuser
+          SKIP_TAGS: spark-http-proxy,ai-coding-agents
+        run: |
+          rm -f /home/testuser/.local/bin/openspec
+          rm -f /usr/local/bin/just
+
+          bin/install.linux
+
+      - name: Verify installed tools
+        run: |
+          opencode version || opencode --version
+          just --version
+          gum --version
+          glab --version
+          /opt/google-cloud-sdk/bin/gcloud --version
+
   toolbox-conflict-detection:
     name: Ubuntu conflict detection
     runs-on: ubuntu-latest
