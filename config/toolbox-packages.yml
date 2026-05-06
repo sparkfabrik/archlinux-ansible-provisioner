@@ -2,7 +2,7 @@
 # SparkFabrik Linux Toolbox — Package Definitions
 #
 # Single source of truth for the sf-toolbox installer and Ansible playbook.
-# Read by bin/install.linux (via src/scripts/parse-packages.py) and
+# Read by bin/install.linux (via bin/common/parse-toolbox-packages.py) and
 # playbooks/sf-toolbox.yml (via include_vars).
 
 # ─── Arch Linux ────────────────────────────────────────────────────────────
@@ -34,24 +34,26 @@ debian:
     - mkcert
     - anomalyco/tap/opencode
     - openspec
-  remove:
-    apt:
-      - glab
-      - google-cloud-cli
-      - google-cloud-cli-gke-gcloud-auth-plugin
-      - mkcert
-      - just
-      - gum
-    apt_sources:
-      - "*gitlab*"
-      - "*charm*"
-      - "*cloud.google*"
 
 # ─── Common (both OSes) ───────────────────────────────────────────────────
 common:
   remove:
     npm:
       - opencode-ai
+
+# ─── Detection ────────────────────────────────────────────────────────────
+# Binary names managed by sf-toolbox. Used by bin/install.linux to show
+# current install status before running Ansible.
+detect:
+  - opencode
+  - openspec
+  - glab
+  - gcloud
+  - mkcert
+  - just
+  - gum
+  - ajust
+  - spark-http-proxy
 
 # ─── Prerequisites ────────────────────────────────────────────────────────
 # Must be available as commands before sf-toolbox runs.

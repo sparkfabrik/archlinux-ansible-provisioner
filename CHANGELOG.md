@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added `playbooks/roles/sf-toolbox/` role consolidating all SparkFabrik dev tools (AI, glab, gcloud, http-proxy, homebrew bootstrap) into a single self-contained role
+- Added `playbooks/roles/sf-toolbox/` role with per-tool task files (packages, gcloud, ai, glab, ajust, http-proxy)
+- Added `detect` section in `config/toolbox-packages.yml` for binary detection in the installer
 - Added clean arch/debian separation in `config/toolbox-packages.yml` with dotted-path support in the parser
 
 ### Changed
@@ -18,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restructured `config/toolbox-packages.yml` from flat keys to nested `arch`/`debian`/`common` sections
 - Moved `src/scripts/parse-packages.py` to `bin/common/parse-toolbox-packages.py` with support for dotted key paths
 - Moved `just`/`gum` package installation from sparkdock role to sf-toolbox role
+- Moved ajust setup (wrapper, justfile, completion, recipes) from sparkdock role to sf-toolbox role
+- Stripped sparkdock role down to git clone + agent resources sync only
+- Simplified `bin/install.linux` — removed conflict detection/removal, removed plan presentation, added detect/inform status display
+- Removed invasive apt package and PPA source removal on Debian (Homebrew PATH precedence handles conflicts)
 - Updated `system.yml` to import sf-toolbox role (alongside existing roles)
 
 ### Removed
@@ -25,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed `playbooks/roles/packages/tasks/ai.yml`, `glab.yml`, `gcloud.yml`, `homebrew.yml` (merged into sf-toolbox)
 - Removed `playbooks/roles/docker/tasks/sparkfabrik-http-proxy.yml` (merged into sf-toolbox)
 - Removed `playbooks/roles/sparkdock/tasks/packages-arch.yml` and `packages-debian.yml` (merged into sf-toolbox)
+- Removed sparkdock zshrc sourcing (replaced by ajust shell integration)
 
 - Added GitHub Actions CI workflow testing the toolbox playbook on Ubuntu 24.04, Ubuntu 26.04, and Arch Linux
 - Added `bin/install.linux` single-command installer/updater (`sf-toolbox`) with detect→plan→confirm→execute flow, gum integration, and conflict removal on Debian
