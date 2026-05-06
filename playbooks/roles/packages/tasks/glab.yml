@@ -6,7 +6,7 @@
       community.general.pacman:
         name:
           - glab
-      when: ansible_os_family == "Archlinux"
+      when: ansible_facts['os_family'] == "Archlinux"
 
     - name: Install glab via Homebrew (Debian/Ubuntu)
       become: yes
@@ -15,7 +15,7 @@
         name: glab
         state: present
         path: /home/linuxbrew/.linuxbrew/bin
-      when: ansible_os_family == "Debian"
+      when: ansible_facts['os_family'] == "Debian"
 
     - name: Ensure ~/.local/share/zsh/site-functions directory exists
       become: yes

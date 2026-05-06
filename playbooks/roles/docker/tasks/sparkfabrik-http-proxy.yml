@@ -9,7 +9,7 @@
           - nss
         state: present
         update_cache: yes
-      when: ansible_os_family == "Archlinux"
+      when: ansible_facts['os_family'] == "Archlinux"
 
     - name: Install required system packages (Debian/Ubuntu)
       ansible.builtin.apt:
@@ -17,7 +17,7 @@
           - libnss3-tools
         state: present
         update_cache: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts['os_family'] == "Debian"
 
     - name: Install mkcert via Homebrew (Debian/Ubuntu)
       become: yes
@@ -26,7 +26,7 @@
         name: mkcert
         state: present
         path: /home/linuxbrew/.linuxbrew/bin
-      when: ansible_os_family == "Debian"
+      when: ansible_facts['os_family'] == "Debian"
 
     - name: Configure mkcert
       command: mkcert -install

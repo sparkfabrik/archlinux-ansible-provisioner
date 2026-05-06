@@ -28,20 +28,30 @@
 
   tasks:
     - name: Bootstrap Homebrew (Debian/Ubuntu)
-      tags: [packages, homebrew]
-      import_tasks: roles/packages/tasks/homebrew.yml
+      import_role:
+        name: packages
+        tasks_from: homebrew.yml
 
     - name: Setup sparkdock
-      import_tasks: roles/sparkdock/tasks/main.yml
+      import_role:
+        name: sparkdock
 
     - name: Install AI coding tools
-      import_tasks: roles/packages/tasks/ai.yml
+      import_role:
+        name: packages
+        tasks_from: ai.yml
 
     - name: Install GitLab CLI
-      import_tasks: roles/packages/tasks/glab.yml
+      import_role:
+        name: packages
+        tasks_from: glab.yml
 
     - name: Install Google Cloud SDK
-      import_tasks: roles/packages/tasks/gcloud.yml
+      import_role:
+        name: packages
+        tasks_from: gcloud.yml
 
     - name: Install SparkFabrik HTTP Proxy
-      import_tasks: roles/docker/tasks/sparkfabrik-http-proxy.yml
+      import_role:
+        name: docker
+        tasks_from: sparkfabrik-http-proxy.yml
