@@ -14,7 +14,7 @@
     sparkfabrik: true
 
   environment:
-    PATH: "/home/linuxbrew/.linuxbrew/bin:{{ ansible_env.PATH }}"
+    PATH: "/home/linuxbrew/.linuxbrew/bin:{{ ansible_facts['env']['PATH'] }}"
 
   pre_tasks:
     - name: Auto-detect current user
