@@ -110,7 +110,7 @@ jobs:
 
       - name: Install prerequisites
         run: |
-          pacman -Syu --noconfirm git zsh python python-yaml nodejs npm
+          pacman -Syu --noconfirm git zsh python python-yaml nodejs npm sudo ansible
 
       - name: Create test user
         run: |
