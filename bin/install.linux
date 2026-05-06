@@ -20,7 +20,7 @@ SYMLINK_PATH="/usr/local/bin/sf-toolbox"
 # Source shared logging helpers (provides log_info, log_success, log_warn,
 # log_error, log_section; uses gum when available, falls back to ANSI).
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=../src/scripts/logging.sh
+# shellcheck source=../src/scripts/logging.sh disable=SC1091
 source "${SCRIPT_DIR}/../src/scripts/logging.sh"
 
 DIM='\033[2m'; NC='\033[0m'
@@ -128,8 +128,9 @@ detect_conflicts() {
   # Check PPA sources
   mapfile -t source_patterns < <(python3 "$parser" "$packages_file" removed_apt_sources)
   for pattern in "${source_patterns[@]}"; do
-    # shellcheck disable=SC2086
-    for file in /etc/apt/sources.list.d/$pattern 2>/dev/null; do
+    # shellcheck disable=SC2206
+    local matches=(/etc/apt/sources.list.d/$pattern)
+    for file in "${matches[@]}"; do
       if [[ -f "$file" ]]; then
         CONFLICT_SOURCES+=("$file")
       fi
@@ -163,6 +164,7 @@ detect_installed() {
 }
 
 # ─── Presentation ───────────────────────────────────────────────────────────
+# shellcheck disable=SC2059
 present_plan() {
   local summary=""
 
@@ -285,7 +287,7 @@ run_ansible() {
   ansible-galaxy collection install -r "$REPO_DIR/requirements.yml" --force-with-deps 2>/dev/null
 
   info "Running toolbox playbook..."
-  local cmd=(sudo ansible-playbook "$REPO_DIR/playbooks/toolbox.yml" -i localhost, -c local)
+  local cmd=(sudo ansible-playbook "$REPO_DIR/playbooks/toolbox.yml" -i "localhost," -c local)
 
   if [[ -n "${TAGS:-}" ]]; then
     cmd+=(--tags "$TAGS")

@@ -167,6 +167,31 @@ When adding new configurable features:
 2. Add the schema definition to `config/schemas/configuration.schema.yaml`.
 3. Use `| default()` in tasks for backward compatibility.
 
+## Shell Script Guidelines
+
+### Shellcheck Validation
+
+Before committing changes to shell scripts, run shellcheck:
+
+```bash
+shellcheck bin/install.linux
+shellcheck src/scripts/logging.sh
+```
+
+All shell scripts must pass shellcheck with no errors or warnings. Use inline
+directives (`# shellcheck disable=SCXXXX`) only when the warning is a false
+positive and add a comment explaining why.
+
+### Style
+
+- Use `set -euo pipefail` at the top of all scripts.
+- Prefer early-return / guard-clause style over `else` branches.
+- Use `[[ ... ]]` over `[ ... ]` for conditionals.
+- Quote all variable expansions unless word splitting is intentionally needed.
+- Use `local` for function-scoped variables.
+- Source shared helpers from `src/scripts/` (e.g., `logging.sh`) instead of
+  duplicating color codes or utility functions.
+
 ## CHANGELOG.md Conventions
 
 **MANDATORY**: Every commit that changes user-visible behavior, adds features,
