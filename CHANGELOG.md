@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added GitHub Actions CI workflow testing the toolbox playbook on Ubuntu 24.04, Ubuntu 26.04, and Arch Linux
 - Added `bin/install.linux` single-command installer/updater (`sf-toolbox`) with detect→plan→confirm→execute flow, gum integration, and conflict removal on Debian
 - Added `playbooks/toolbox.yml` lightweight playbook for company tooling only (sparkdock, AI, glab, gcloud, http-proxy) without full system provisioning
 - Added `config/toolbox-packages.yml` as single source of truth for package definitions consumed by both shell and Ansible

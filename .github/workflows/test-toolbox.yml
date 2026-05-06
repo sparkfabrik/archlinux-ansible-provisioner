@@ -1,0 +1,110 @@
+---
+name: Test Toolbox
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  toolbox-ubuntu-2404:
+    name: Ubuntu 24.04
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible zsh
+
+      - name: Install Ansible collections
+        run: ansible-galaxy collection install -r requirements.yml
+
+      - name: Run toolbox playbook
+        run: |
+          sudo ansible-playbook playbooks/toolbox.yml \
+            -i localhost, -c local \
+            --skip-tags spark-http-proxy,ai-coding-agents
+
+      - name: Verify installed tools
+        run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          just --version
+          gum --version
+          glab --version
+          opencode version || opencode --version
+          /opt/google-cloud-sdk/bin/gcloud --version
+
+  toolbox-ubuntu-2604:
+    name: Ubuntu 26.04
+    runs-on: ubuntu-latest
+    container: ubuntu:26.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install prerequisites
+        run: |
+          apt-get update
+          apt-get install -y ansible git zsh curl sudo python3 build-essential
+
+      - name: Create test user
+        run: |
+          useradd -m -s /bin/zsh testuser
+          echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+      - name: Install Ansible collections
+        run: ansible-galaxy collection install -r requirements.yml
+
+      - name: Run toolbox playbook
+        env:
+          SUDO_USER: testuser
+        run: |
+          ansible-playbook playbooks/toolbox.yml \
+            -i localhost, -c local \
+            --skip-tags spark-http-proxy,ai-coding-agents
+
+      - name: Verify installed tools
+        run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          just --version
+          gum --version
+          glab --version
+          opencode version || opencode --version
+          /opt/google-cloud-sdk/bin/gcloud --version
+
+  toolbox-arch:
+    name: Arch Linux
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install prerequisites
+        run: |
+          pacman -Syu --noconfirm \
+            ansible git python nodejs npm zsh sudo
+
+      - name: Create test user
+        run: |
+          useradd -m -s /bin/zsh testuser
+          echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+      - name: Install Ansible collections
+        run: ansible-galaxy collection install -r requirements.yml
+
+      - name: Run toolbox playbook
+        env:
+          SUDO_USER: testuser
+        run: |
+          ansible-playbook playbooks/toolbox.yml \
+            -i localhost, -c local \
+            --skip-tags spark-http-proxy,ai-coding-agents
+
+      - name: Verify installed tools
+        run: |
+          opencode version || opencode --version
+          just --version
+          gum --version
+          glab --version
+          /opt/google-cloud-sdk/bin/gcloud --version
