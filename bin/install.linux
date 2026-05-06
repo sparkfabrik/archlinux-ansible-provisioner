@@ -206,6 +206,16 @@ create_symlink() {
   fi
 }
 
+shell_enable() {
+  # Skip in non-interactive mode (CI)
+  [[ "${NONINTERACTIVE:-0}" == "1" ]] && return 0
+
+  # Only run if ajust is available
+  command -v ajust &>/dev/null || return 0
+
+  ajust shell-enable
+}
+
 # ─── Main ───────────────────────────────────────────────────────────────────
 main() {
   detect_os
@@ -216,6 +226,7 @@ main() {
   clone_or_update
   run_ansible
   create_symlink
+  shell_enable
   log_success "Done. Run 'sf-toolbox' anytime to update."
 }
 

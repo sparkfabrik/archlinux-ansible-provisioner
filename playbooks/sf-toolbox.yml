@@ -13,6 +13,9 @@
     sparkdock_default_path: "{{ current_home }}/.local/spark/sparkdock"
     sparkfabrik: true
 
+  environment:
+    PATH: "/home/linuxbrew/.linuxbrew/bin:{{ ansible_env.PATH }}"
+
   pre_tasks:
     - name: Auto-detect current user
       tags: [always]

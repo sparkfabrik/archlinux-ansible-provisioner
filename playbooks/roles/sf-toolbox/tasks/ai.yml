@@ -1,8 +1,6 @@
 ---
 - name: Configure AI tools
   tags: [sf-toolbox, packages, ai]
-  environment:
-    PATH: "/home/linuxbrew/.linuxbrew/bin:{{ ansible_env.PATH }}"
   block:
     - name: Ensure zsh site-functions directory exists
       ansible.builtin.file:

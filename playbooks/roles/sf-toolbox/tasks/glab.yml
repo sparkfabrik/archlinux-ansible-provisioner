@@ -1,8 +1,6 @@
 ---
 - name: Configure glab
   tags: [sf-toolbox, packages, glab]
-  environment:
-    PATH: "/home/linuxbrew/.linuxbrew/bin:{{ ansible_env.PATH }}"
   block:
     - name: Ensure zsh site-functions directory exists
       become: true

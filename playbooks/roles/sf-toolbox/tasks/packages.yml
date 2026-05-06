@@ -40,6 +40,44 @@
             eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           fi
 
+    - name: Check if ~/.zshrc exists
+      ansible.builtin.stat:
+        path: "{{ system.home | default(current_home) }}/.zshrc"
+      register: user_zshrc
+
+    - name: Add Homebrew shellenv to ~/.zshrc
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.blockinfile:
+        path: "{{ system.home | default(current_home) }}/.zshrc"
+        marker: "# {mark} sf-toolbox: homebrew"
+        block: |
+          # Homebrew (linuxbrew) — managed by sf-toolbox
+          if [ -d /home/linuxbrew/.linuxbrew ]; then
+            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          fi
+        mode: "0644"
+      when: user_zshrc.stat.exists
+
+    - name: Check if ~/.bashrc exists
+      ansible.builtin.stat:
+        path: "{{ system.home | default(current_home) }}/.bashrc"
+      register: user_bashrc
+
+    - name: Add Homebrew shellenv to ~/.bashrc
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.blockinfile:
+        path: "{{ system.home | default(current_home) }}/.bashrc"
+        marker: "# {mark} sf-toolbox: homebrew"
+        block: |
+          # Homebrew (linuxbrew) — managed by sf-toolbox
+          if [ -d /home/linuxbrew/.linuxbrew ]; then
+            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          fi
+        mode: "0644"
+      when: user_bashrc.stat.exists
+
     - name: Add Homebrew taps
       become: true
       become_user: "{{ system.username | default(current_user) }}"
