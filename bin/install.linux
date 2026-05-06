@@ -56,12 +56,12 @@ resolve_repo_dir() {
 
 show_status() {
   local parser="$REPO_DIR/bin/common/parse-toolbox-packages.py"
-  local packages_file="$REPO_DIR/config/toolbox-packages.yml"
+  local packages_file="$REPO_DIR/playbooks/roles/sf-toolbox/vars/main.yml"
 
   [[ -f "$parser" && -f "$packages_file" ]] || return 0
 
   local installed=() missing=()
-  mapfile -t tools < <(python3 "$parser" "$packages_file" detect)
+  mapfile -t tools < <(python3 "$parser" "$packages_file" toolbox.detect)
   for tool in "${tools[@]}"; do
     if command -v "$tool" &>/dev/null; then
       installed+=("$tool")
@@ -128,10 +128,10 @@ ensure_ansible() {
 
 clone_or_update() {
   if [[ -d "$INSTALL_DIR/.git" ]]; then
-    log_info "Updating repository..."
+    log_info "Updating $INSTALL_DIR from $REPO_URL..."
     git -C "$INSTALL_DIR" pull --ff-only
   else
-    log_info "Cloning repository..."
+    log_info "Cloning $REPO_URL → $INSTALL_DIR (requires sudo)..."
     sudo mkdir -p "$INSTALL_DIR"
     sudo chown "$USER:$USER" "$INSTALL_DIR"
     git clone "$REPO_URL" "$INSTALL_DIR"

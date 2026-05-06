@@ -10,13 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added `playbooks/roles/sf-toolbox/` role with per-tool task files (packages, gcloud, ai, glab, ajust, http-proxy)
-- Added `detect` section in `config/toolbox-packages.yml` for binary detection in the installer
-- Added clean arch/debian separation in `config/toolbox-packages.yml` with dotted-path support in the parser
+- Added `detect` section in toolbox package definitions for binary detection in the installer
+- Added clean arch/debian separation in toolbox package definitions with dotted-path support in the parser
 
 ### Changed
 
+- Moved `config/toolbox-packages.yml` into `playbooks/roles/sf-toolbox/vars/main.yml` (auto-loaded by Ansible, no more `include_vars`)
 - Renamed `playbooks/toolbox.yml` to `playbooks/sf-toolbox.yml` for consistent naming with the `sf-toolbox` role and installer
-- Restructured `config/toolbox-packages.yml` from flat keys to nested `arch`/`debian`/`common` sections
+- Restructured toolbox package config from flat keys to nested `arch`/`debian`/`common` sections
 - Moved `src/scripts/parse-packages.py` to `bin/common/parse-toolbox-packages.py` with support for dotted key paths
 - Moved `just`/`gum` package installation from sparkdock role to sf-toolbox role
 - Moved ajust setup (wrapper, justfile, completion, recipes) from sparkdock role to sf-toolbox role

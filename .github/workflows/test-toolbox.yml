@@ -23,7 +23,7 @@ jobs:
 
       - name: Run toolbox playbook
         run: |
-          sudo ansible-playbook playbooks/toolbox.yml \
+          sudo ansible-playbook playbooks/sf-toolbox.yml \
             -i localhost, -c local \
             --skip-tags spark-http-proxy,ai-coding-agents
 
@@ -60,7 +60,7 @@ jobs:
         env:
           SUDO_USER: testuser
         run: |
-          ansible-playbook playbooks/toolbox.yml \
+          ansible-playbook playbooks/sf-toolbox.yml \
             -i localhost, -c local \
             --skip-tags spark-http-proxy,ai-coding-agents
 
@@ -97,7 +97,7 @@ jobs:
         env:
           SUDO_USER: testuser
         run: |
-          ansible-playbook playbooks/toolbox.yml \
+          ansible-playbook playbooks/sf-toolbox.yml \
             -i localhost, -c local \
             --skip-tags spark-http-proxy,ai-coding-agents
 

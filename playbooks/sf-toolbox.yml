@@ -20,12 +20,6 @@
         current_user: "{{ ansible_facts['env']['SUDO_USER'] | default(ansible_facts['user_id']) }}"
         current_home: "/home/{{ ansible_facts['env']['SUDO_USER'] | default(ansible_facts['user_id']) }}"
 
-    - name: Load toolbox package definitions
-      tags: [always]
-      ansible.builtin.include_vars:
-        file: "{{ playbook_dir }}/../config/toolbox-packages.yml"
-        name: toolbox
-
   roles:
     - sparkdock
     - sf-toolbox
