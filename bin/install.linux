@@ -109,12 +109,14 @@ show_status() {
   printf "\n"
 }
 
-# ─── Conflict detection (Debian only) ───────────────────────────────────────
+# ─── Conflict detection ─────────────────────────────────────────────────────
 is_sf_managed() {
   local tool="$1" path="$2"
-  # Brew-managed
+  # Brew-managed (Debian)
   [[ "$path" == /home/linuxbrew/.linuxbrew/bin/* ]] && return 0
-  # sf-toolbox direct installs (non-brew)
+  # Pacman/npm-global managed (Arch) — both install to /usr/bin
+  [[ "$OS_FAMILY" == "Archlinux" && "$path" == /usr/bin/* ]] && return 0
+  # sf-toolbox direct installs (non-brew, non-pacman)
   case "$tool" in
     gcloud) [[ "$path" == "/opt/google-cloud-sdk/bin/gcloud" ]] && return 0 ;;
     ajust) [[ "$path" == "/usr/local/bin/ajust" ]] && return 0 ;;
@@ -127,10 +129,29 @@ get_provenance() {
   local path="$1"
   local pkg
 
-  # Check apt
-  if pkg=$(dpkg -S "$path" 2>/dev/null | head -1 | cut -d: -f1); then
-    echo "apt: $pkg"
-    return
+  # Check npm (symlink into node_modules)
+  if [[ -L "$path" ]]; then
+    local target
+    target=$(readlink -f "$path" 2>/dev/null)
+    if [[ "$target" == *"node_modules"* ]]; then
+      echo "npm"
+      return
+    fi
+  fi
+
+  # Check apt (Debian)
+  if [[ "$OS_FAMILY" == "Debian" ]]; then
+    if pkg=$(dpkg -S "$path" 2>/dev/null | head -1 | cut -d: -f1); then
+      echo "apt: $pkg"
+      return
+    fi
+  fi
+
+  # Check pacman (Arch)
+  if [[ "$OS_FAMILY" == "Archlinux" ]]; then
+    if pkg=$(pacman -Qo "$path" 2>/dev/null | awk '{print $(NF-1)}'); then
+      [[ -n "$pkg" ]] && { echo "pacman: $pkg"; return; }
+    fi
   fi
 
   # Check snap
@@ -150,8 +171,28 @@ get_removal_cmd() {
       local pkg="${provenance#apt: }"
       echo "sudo apt remove --purge $pkg"
       ;;
+    pacman:*)
+      local pkg="${provenance#pacman: }"
+      echo "sudo pacman -Rns $pkg"
+      ;;
     snap)
       echo "sudo snap remove $tool"
+      ;;
+    npm)
+      # Extract npm package name from symlink target (handles @scope/name)
+      local target npm_pkg
+      target=$(readlink -f "$path" 2>/dev/null)
+      npm_pkg=$(echo "$target" | sed -n 's|.*node_modules/\(@[^/]*/[^/]*\)/.*|\1|p')
+      if [[ -z "$npm_pkg" ]]; then
+        npm_pkg=$(echo "$target" | sed -n 's|.*node_modules/\([^/]*\)/.*|\1|p')
+      fi
+      npm_pkg="${npm_pkg:-$tool}"
+      # User-local install (under $HOME) doesn't need sudo
+      if [[ "$path" == "$HOME"/* || "$path" == /home/* ]]; then
+        echo "npm uninstall -g $npm_pkg"
+      else
+        echo "sudo npm uninstall -g $npm_pkg"
+      fi
       ;;
     *)
       echo "sudo rm $path"
@@ -160,9 +201,6 @@ get_removal_cmd() {
 }
 
 check_conflicts() {
-  # Only on Debian — Arch handles removal in Ansible
-  [[ "$OS_FAMILY" != "Debian" ]] && return 0
-
   # Skip in non-interactive mode (CI environments are controlled)
   [[ "${NONINTERACTIVE:-0}" == "1" ]] && return 0
 
@@ -200,7 +238,7 @@ check_conflicts() {
   printf "\n"
   log_warn "Conflicting tools detected"
   printf "\n"
-  printf "  sf-toolbox manages these tools via Homebrew (linuxbrew).\n"
+  printf "  sf-toolbox manages these tools and needs to be the sole provider.\n"
   printf "  Existing versions installed via other methods must be removed\n"
   printf "  first to avoid version conflicts and confusion.\n"
   printf "\n"
@@ -213,12 +251,15 @@ check_conflicts() {
   printf "\n"
   printf "  Remove them with:\n\n"
 
-  # Deduplicate and group apt packages into a single command
-  local -a apt_pkgs=() other_cmds=()
+  # Deduplicate and group package-manager packages into single commands
+  local -a apt_pkgs=() pacman_pkgs=() other_cmds=()
   for i in "${!conflict_cmds[@]}"; do
     if [[ "${conflict_provs[$i]}" == apt:* ]]; then
       local pkg="${conflict_provs[$i]#apt: }"
       apt_pkgs+=("$pkg")
+    elif [[ "${conflict_provs[$i]}" == pacman:* ]]; then
+      local pkg="${conflict_provs[$i]#pacman: }"
+      pacman_pkgs+=("$pkg")
     else
       other_cmds+=("${conflict_cmds[$i]}")
     fi
@@ -226,6 +267,9 @@ check_conflicts() {
 
   if [[ ${#apt_pkgs[@]} -gt 0 ]]; then
     printf "    sudo apt remove --purge %s\n" "${apt_pkgs[*]}"
+  fi
+  if [[ ${#pacman_pkgs[@]} -gt 0 ]]; then
+    printf "    sudo pacman -Rns %s\n" "${pacman_pkgs[*]}"
   fi
   for cmd in "${other_cmds[@]}"; do
     printf "    %s\n" "$cmd"
