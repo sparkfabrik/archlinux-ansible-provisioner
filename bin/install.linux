@@ -104,7 +104,9 @@ show_status() {
   done
 
   if [[ "$OS_FAMILY" == "Debian" && ${#installed[@]} -gt 0 ]]; then
-    printf "\n  Managed versions: /home/linuxbrew/.linuxbrew/bin (PATH precedence)\n"
+    local brew_bin="/home/linuxbrew/.linuxbrew/bin"
+    [[ -d "$HOME/.linuxbrew/bin" ]] && brew_bin="$HOME/.linuxbrew/bin"
+    printf "\n  Managed versions: %s (PATH precedence)\n" "$brew_bin"
   fi
   printf "\n"
 }
@@ -117,11 +119,15 @@ ensure_ansible() {
   case "$OS_FAMILY" in
     Archlinux) sudo pacman -S --noconfirm ansible ;;
     Debian)
-      if [[ ! -f /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+      if [[ ! -f /home/linuxbrew/.linuxbrew/bin/brew && ! -f "$HOME/.linuxbrew/bin/brew" ]]; then
         log_info "Installing Homebrew..."
         NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
       fi
-      eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+      if [[ -f /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+      elif [[ -f "$HOME/.linuxbrew/bin/brew" ]]; then
+        eval "$("$HOME/.linuxbrew/bin/brew" shellenv)"
+      fi
       brew install ansible
       ;;
   esac

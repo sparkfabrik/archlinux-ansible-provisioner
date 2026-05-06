@@ -25,7 +25,8 @@ jobs:
 
       - name: Verify installed tools
         run: |
-          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
           just --version
           gum --version
           glab --version
@@ -57,7 +58,8 @@ jobs:
 
       - name: Verify installed tools
         run: |
-          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
           just --version
           gum --version
           glab --version
