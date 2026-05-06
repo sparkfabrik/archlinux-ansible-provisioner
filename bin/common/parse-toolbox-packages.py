@@ -1,68 +1,33 @@
 #!/usr/bin/env python3
-"""Parse YAML lists from toolbox-packages.yml without external dependencies.
+"""Parse YAML lists from toolbox vars using PyYAML.
 
-Usage: parse-packages.py <yaml-file> <dotted.key.path>
+Usage: parse-toolbox-packages.py <yaml-file> <dotted.key.path>
 
-Supports dotted paths for nested access (e.g., "prerequisites.common",
-"debian.remove.apt"). Outputs one item per line to stdout.
+Supports dotted paths for nested access (e.g., "toolbox.detect",
+"toolbox.prerequisites.common", "toolbox.debian.homebrew").
+Outputs one item per line to stdout.
 Exits 0 even if key is not found (empty output).
+
+Requires PyYAML (always available — Ansible depends on it).
 """
 import sys
-import re
+
+try:
+    import yaml
+except ImportError:
+    print("Error: PyYAML is not installed. Install it with: pip install pyyaml", file=sys.stderr)
+    sys.exit(1)
 
 
-def parse_nested(filepath, dotted_key):
-    """Extract a list from a YAML file by dotted key path."""
-    with open(filepath) as f:
-        lines = f.readlines()
-
+def resolve_dotted_path(data, dotted_key):
+    """Walk a nested dict by dotted key path, returning the value or None."""
     keys = dotted_key.split(".")
-    target_depth = len(keys)
-    current_depth = 0
-    in_section = False
-    items = []
-
-    for line in lines:
-        stripped = line.rstrip()
-
-        # Skip empty lines and comments when not collecting items
-        if not stripped or stripped.startswith("#"):
-            continue
-
-        # Calculate indentation level (2 spaces per level)
-        indent = len(line) - len(line.lstrip())
-        level = indent // 2
-
-        if not in_section:
-            # Look for each key in the path at the expected depth
-            if current_depth < target_depth:
-                expected_key = keys[current_depth]
-                pattern = rf"^{' ' * (current_depth * 2)}{re.escape(expected_key)}:\s*$"
-                if re.match(pattern, stripped):
-                    current_depth += 1
-                    if current_depth == target_depth:
-                        in_section = True
-                    continue
-                # Reset if we hit a same-level key that doesn't match
-                if level <= (current_depth * 2) // 2 and current_depth > 0:
-                    if not stripped.startswith(" " * (current_depth * 2)):
-                        current_depth = 0
-        else:
-            # We're in the target section — collect list items
-            # End of section: line at same or lower indentation as the key
-            if level < target_depth:
-                break
-
-            # Collect list items at the expected indentation
-            m = re.match(r"^\s+-\s+(.+)", stripped)
-            if m:
-                value = m.group(1).strip().strip('"').strip("'")
-                items.append(value)
-            elif stripped and not stripped.startswith(" " * (target_depth * 2)):
-                # Hit a sibling key at same level — end of section
-                break
-
-    return items
+    current = data
+    for key in keys:
+        if not isinstance(current, dict) or key not in current:
+            return None
+        current = current[key]
+    return current
 
 
 def main():
@@ -74,13 +39,28 @@ def main():
     key = sys.argv[2]
 
     try:
-        items = parse_nested(filepath, key)
+        with open(filepath) as f:
+            data = yaml.safe_load(f)
     except FileNotFoundError:
         print(f"Error: file not found: {filepath}", file=sys.stderr)
         sys.exit(1)
+    except yaml.YAMLError as e:
+        print(f"Error: invalid YAML in {filepath}: {e}", file=sys.stderr)
+        sys.exit(1)
 
-    for item in items:
-        print(item)
+    if data is None:
+        return
+
+    value = resolve_dotted_path(data, key)
+
+    if value is None:
+        return
+
+    if isinstance(value, list):
+        for item in value:
+            print(item)
+    else:
+        print(value)
 
 
 if __name__ == "__main__":

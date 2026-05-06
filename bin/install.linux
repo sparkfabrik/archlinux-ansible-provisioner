@@ -154,14 +154,7 @@ ensure_ansible() {
   log_info "Installing Ansible..."
   case "$OS_FAMILY" in
     Archlinux) sudo pacman -S --noconfirm ansible ;;
-    Debian)
-      if [[ ! -f /home/linuxbrew/.linuxbrew/bin/brew ]]; then
-        log_info "Installing Homebrew..."
-        NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-      fi
-      eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-      brew install ansible
-      ;;
+    Debian) sudo apt-get update -qq && sudo apt-get install -y -qq ansible ;;
   esac
 }
 

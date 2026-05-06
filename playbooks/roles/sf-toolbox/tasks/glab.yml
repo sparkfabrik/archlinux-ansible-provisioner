@@ -13,9 +13,21 @@
     - name: Generate glab zsh completion
       become: true
       become_user: "{{ system.username | default(current_user) }}"
-      ansible.builtin.shell: |
-        glab completion -s zsh > "{{ system.home | default(current_home) }}/.local/share/zsh/site-functions/_glab"
-      changed_when: true
+      ansible.builtin.command: glab completion -s zsh
+      register: glab_completion_output
+      changed_when: false
+      failed_when: false
+
+    - name: Write glab completions to file
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.copy:
+        content: "{{ glab_completion_output.stdout }}\n"
+        dest: "{{ system.home | default(current_home) }}/.local/share/zsh/site-functions/_glab"
+        mode: "0644"
+      when:
+        - glab_completion_output is not skipped
+        - glab_completion_output.rc == 0
 
     - name: Ensure ajust recipes directory exists
       become: true
