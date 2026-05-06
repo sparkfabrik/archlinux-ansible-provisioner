@@ -1,7 +1,4 @@
 ---
-- name: Bootstrap Homebrew (Debian/Ubuntu)
-  import_tasks: homebrew.yml
-
 - name: Set up base packages
   import_tasks: base.yml
 
@@ -22,12 +19,3 @@
 
 - name: Set up office packages
   import_tasks: office.yml
-
-- name: Set up AI packages
-  import_tasks: ai.yml
-
-- name: Set up Google Cloud SDK
-  import_tasks: gcloud.yml
-
-- name: Set up GitLab CLI (glab) and configuration
-  import_tasks: glab.yml

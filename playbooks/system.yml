@@ -1,13 +1,23 @@
 - hosts: all
+  vars:
+    sparkdock_default_path: "{{ current_home }}/.local/spark/sparkdock"
+
   pre_tasks:
     - name: Auto-detect current user (like sparkdock uses ansible_facts['user_id'])
       tags: [always]
       ansible.builtin.set_fact:
         current_user: "{{ ansible_facts['env']['SUDO_USER'] | default(ansible_facts['user_id']) }}"
         current_home: "/home/{{ ansible_facts['env']['SUDO_USER'] | default(ansible_facts['user_id']) }}"
+
+    - name: Load toolbox package definitions
+      tags: [always]
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../config/toolbox-packages.yml"
+        name: toolbox
   roles:
     - role: system
     - role: sparkdock
+    - role: sf-toolbox
     - role: packages
     - role: docker
     - role: nvidia

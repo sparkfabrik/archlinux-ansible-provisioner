@@ -68,7 +68,7 @@ detect_os() {
 
 check_prereqs() {
   local packages_file="$REPO_DIR/config/toolbox-packages.yml"
-  local parser="$REPO_DIR/src/scripts/parse-packages.py"
+  local parser="$REPO_DIR/bin/common/parse-toolbox-packages.py"
 
   if [[ ! -f "$packages_file" ]] || [[ ! -f "$parser" ]]; then
     error "Package config or parser not found. Are you running from the repo directory?"
@@ -77,7 +77,7 @@ check_prereqs() {
   local missing=()
 
   # Common prerequisites
-  mapfile -t prereqs < <(python3 "$parser" "$packages_file" prerequisites)
+  mapfile -t prereqs < <(python3 "$parser" "$packages_file" prerequisites.common)
   for cmd in "${prereqs[@]}"; do
     if ! command -v "$cmd" &>/dev/null; then
       missing+=("$cmd")
@@ -86,7 +86,7 @@ check_prereqs() {
 
   # Arch-specific prerequisites
   if [[ "$OS_FAMILY" == "Archlinux" ]]; then
-    mapfile -t prereqs_arch < <(python3 "$parser" "$packages_file" prerequisites_arch)
+    mapfile -t prereqs_arch < <(python3 "$parser" "$packages_file" prerequisites.arch)
     for cmd in "${prereqs_arch[@]}"; do
       if ! command -v "$cmd" &>/dev/null; then
         missing+=("$cmd")
@@ -115,10 +115,10 @@ detect_conflicts() {
   [[ "$OS_FAMILY" != "Debian" ]] && return 0
 
   local packages_file="$REPO_DIR/config/toolbox-packages.yml"
-  local parser="$REPO_DIR/src/scripts/parse-packages.py"
+  local parser="$REPO_DIR/bin/common/parse-toolbox-packages.py"
 
   # Check installed apt packages
-  mapfile -t removed_pkgs < <(python3 "$parser" "$packages_file" removed_apt_packages)
+  mapfile -t removed_pkgs < <(python3 "$parser" "$packages_file" debian.remove.apt)
   for pkg in "${removed_pkgs[@]}"; do
     if dpkg -l "$pkg" &>/dev/null 2>&1; then
       CONFLICTS+=("$pkg")
@@ -126,7 +126,7 @@ detect_conflicts() {
   done
 
   # Check PPA sources
-  mapfile -t source_patterns < <(python3 "$parser" "$packages_file" removed_apt_sources)
+  mapfile -t source_patterns < <(python3 "$parser" "$packages_file" debian.remove.apt_sources)
   for pattern in "${source_patterns[@]}"; do
     # shellcheck disable=SC2206
     local matches=(/etc/apt/sources.list.d/$pattern)
@@ -287,7 +287,7 @@ run_ansible() {
   ansible-galaxy collection install -r "$REPO_DIR/requirements.yml" --force-with-deps 2>/dev/null
 
   info "Running toolbox playbook..."
-  local cmd=(sudo ansible-playbook "$REPO_DIR/playbooks/toolbox.yml" -i "localhost," -c local)
+  local cmd=(sudo ansible-playbook "$REPO_DIR/playbooks/sf-toolbox.yml" -i "localhost," -c local)
 
   if [[ -n "${TAGS:-}" ]]; then
     cmd+=(--tags "$TAGS")

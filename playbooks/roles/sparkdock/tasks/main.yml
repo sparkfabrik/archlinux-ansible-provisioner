@@ -37,20 +37,6 @@
         line: "{{ include_string }}"
       when: zshrc_stat.stat.exists
 
-- name: Install ajust packages (Archlinux)
-  when:
-    - sparkfabrik | default(true)
-    - ansible_facts['os_family'] == "Archlinux"
-  tags: [sparkfabrik, sparkdock, ajust]
-  import_tasks: packages-arch.yml
-
-- name: Install ajust packages (Debian/Ubuntu)
-  when:
-    - sparkfabrik | default(true)
-    - ansible_facts['os_family'] == "Debian"
-  tags: [sparkfabrik, sparkdock, ajust]
-  import_tasks: packages-debian.yml
-
 - name: Setup ajust (SparkJust for Linux)
   when: sparkfabrik | default(true)
   tags: [sparkfabrik, sparkdock, ajust]

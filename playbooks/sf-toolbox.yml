@@ -5,8 +5,8 @@
 # http-proxy). Does NOT provision the full system (no desktop, drivers, kernel).
 #
 # Usage:
-#   sudo ansible-playbook playbooks/toolbox.yml -i localhost, -c local
-#   sudo ansible-playbook playbooks/toolbox.yml -i localhost, -c local --tags sparkdock,ai
+#   sudo ansible-playbook playbooks/sf-toolbox.yml -i localhost, -c local
+#   sudo ansible-playbook playbooks/sf-toolbox.yml -i localhost, -c local --tags ai,glab
 
 - hosts: all
   vars:
@@ -26,32 +26,6 @@
         file: "{{ playbook_dir }}/../config/toolbox-packages.yml"
         name: toolbox
 
-  tasks:
-    - name: Bootstrap Homebrew (Debian/Ubuntu)
-      import_role:
-        name: packages
-        tasks_from: homebrew.yml
-
-    - name: Setup sparkdock
-      import_role:
-        name: sparkdock
-
-    - name: Install AI coding tools
-      import_role:
-        name: packages
-        tasks_from: ai.yml
-
-    - name: Install GitLab CLI
-      import_role:
-        name: packages
-        tasks_from: glab.yml
-
-    - name: Install Google Cloud SDK
-      import_role:
-        name: packages
-        tasks_from: gcloud.yml
-
-    - name: Install SparkFabrik HTTP Proxy
-      import_role:
-        name: docker
-        tasks_from: sparkfabrik-http-proxy.yml
+  roles:
+    - sparkdock
+    - sf-toolbox

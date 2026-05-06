@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `playbooks/roles/sf-toolbox/` role consolidating all SparkFabrik dev tools (AI, glab, gcloud, http-proxy, homebrew bootstrap) into a single self-contained role
+- Added clean arch/debian separation in `config/toolbox-packages.yml` with dotted-path support in the parser
+
+### Changed
+
+- Renamed `playbooks/toolbox.yml` to `playbooks/sf-toolbox.yml` for consistent naming with the `sf-toolbox` role and installer
+- Restructured `config/toolbox-packages.yml` from flat keys to nested `arch`/`debian`/`common` sections
+- Moved `src/scripts/parse-packages.py` to `bin/common/parse-toolbox-packages.py` with support for dotted key paths
+- Moved `just`/`gum` package installation from sparkdock role to sf-toolbox role
+- Updated `system.yml` to import sf-toolbox role (alongside existing roles)
+
+### Removed
+
+- Removed `playbooks/roles/packages/tasks/ai.yml`, `glab.yml`, `gcloud.yml`, `homebrew.yml` (merged into sf-toolbox)
+- Removed `playbooks/roles/docker/tasks/sparkfabrik-http-proxy.yml` (merged into sf-toolbox)
+- Removed `playbooks/roles/sparkdock/tasks/packages-arch.yml` and `packages-debian.yml` (merged into sf-toolbox)
+
 - Added GitHub Actions CI workflow testing the toolbox playbook on Ubuntu 24.04, Ubuntu 26.04, and Arch Linux
 - Added `bin/install.linux` single-command installer/updater (`sf-toolbox`) with detect→plan→confirm→execute flow, gum integration, and conflict removal on Debian
 - Added `playbooks/toolbox.yml` lightweight playbook for company tooling only (sparkdock, AI, glab, gcloud, http-proxy) without full system provisioning
