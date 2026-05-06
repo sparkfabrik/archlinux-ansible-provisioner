@@ -7,7 +7,8 @@
 # Usage:
 #   bin/install.linux          # First install or update
 #   sf-toolbox                 # After symlink is created
-#   TAGS=sparkdock,ai sf-toolbox  # Partial run
+#   TAGS=sparkdock,ai sf-toolbox            # Partial run
+#   SKIP_TAGS=gcloud,http-proxy sf-toolbox  # Skip specific tags
 #
 set -euo pipefail
 
@@ -149,6 +150,7 @@ run_ansible() {
   ansible-galaxy collection install -r "$REPO_DIR/requirements.yml" --force-with-deps
   local cmd=(sudo ansible-playbook "$REPO_DIR/playbooks/sf-toolbox.yml" -i "localhost," -c local)
   [[ -n "${TAGS:-}" ]] && cmd+=(--tags "$TAGS")
+  [[ -n "${SKIP_TAGS:-}" ]] && cmd+=(--skip-tags "$SKIP_TAGS")
   "${cmd[@]}"
 }
 

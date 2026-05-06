@@ -18,14 +18,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ansible zsh
 
-      - name: Install Ansible collections
-        run: ansible-galaxy collection install -r requirements.yml
-
-      - name: Run toolbox playbook
-        run: |
-          sudo ansible-playbook playbooks/sf-toolbox.yml \
-            -i localhost, -c local \
-            --skip-tags spark-http-proxy,ai-coding-agents
+      - name: Run sf-toolbox installer
+        env:
+          SKIP_TAGS: spark-http-proxy,ai-coding-agents
+        run: bin/install.linux
 
       - name: Verify installed tools
         run: |
@@ -53,16 +49,11 @@ jobs:
           useradd -m -s /bin/zsh testuser
           echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-      - name: Install Ansible collections
-        run: ansible-galaxy collection install -r requirements.yml
-
-      - name: Run toolbox playbook
+      - name: Run sf-toolbox installer
         env:
           SUDO_USER: testuser
-        run: |
-          ansible-playbook playbooks/sf-toolbox.yml \
-            -i localhost, -c local \
-            --skip-tags spark-http-proxy,ai-coding-agents
+          SKIP_TAGS: spark-http-proxy,ai-coding-agents
+        run: bin/install.linux
 
       - name: Verify installed tools
         run: |
@@ -90,16 +81,11 @@ jobs:
           useradd -m -s /bin/zsh testuser
           echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-      - name: Install Ansible collections
-        run: ansible-galaxy collection install -r requirements.yml
-
-      - name: Run toolbox playbook
+      - name: Run sf-toolbox installer
         env:
           SUDO_USER: testuser
-        run: |
-          ansible-playbook playbooks/sf-toolbox.yml \
-            -i localhost, -c local \
-            --skip-tags spark-http-proxy,ai-coding-agents
+          SKIP_TAGS: spark-http-proxy,ai-coding-agents
+        run: bin/install.linux
 
       - name: Verify installed tools
         run: |
