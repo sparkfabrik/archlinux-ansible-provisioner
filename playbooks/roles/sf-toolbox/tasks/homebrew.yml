@@ -1,0 +1,88 @@
+---
+# ─── Homebrew bootstrap (Debian/Ubuntu only) ───────────────────────────────
+- name: Bootstrap Homebrew on Debian/Ubuntu
+  tags: [sf-toolbox, packages, homebrew]
+  when: ansible_facts['os_family'] == "Debian"
+  block:
+    - name: Check if Homebrew is already installed
+      ansible.builtin.stat:
+        path: /home/linuxbrew/.linuxbrew/bin/brew
+      register: homebrew_binary
+
+    - name: Install Homebrew dependencies
+      ansible.builtin.apt:
+        name:
+          - build-essential
+          - procps
+          - curl
+          - file
+          - git
+        state: present
+        update_cache: true
+      when: not homebrew_binary.stat.exists
+
+    - name: Install Homebrew
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.shell:
+        cmd: NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        creates: /home/linuxbrew/.linuxbrew/bin/brew
+      environment:
+        HOME: "{{ system.home | default(current_home) }}"
+
+    - name: Add Homebrew to PATH via /etc/profile.d
+      ansible.builtin.copy:
+        dest: /etc/profile.d/homebrew.sh
+        mode: "0644"
+        content: |
+          # Homebrew (linuxbrew) PATH integration
+          if [ -d /home/linuxbrew/.linuxbrew ]; then
+            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          fi
+
+    - name: Check if ~/.zshrc exists
+      ansible.builtin.stat:
+        path: "{{ system.home | default(current_home) }}/.zshrc"
+      register: user_zshrc
+
+    - name: Add Homebrew shellenv to ~/.zshrc
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.blockinfile:
+        path: "{{ system.home | default(current_home) }}/.zshrc"
+        marker: "# {mark} sf-toolbox: homebrew"
+        block: |
+          # Homebrew (linuxbrew) — managed by sf-toolbox
+          if [ -d /home/linuxbrew/.linuxbrew ]; then
+            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          fi
+        mode: "0644"
+      when: user_zshrc.stat.exists
+
+    - name: Check if ~/.bashrc exists
+      ansible.builtin.stat:
+        path: "{{ system.home | default(current_home) }}/.bashrc"
+      register: user_bashrc
+
+    - name: Add Homebrew shellenv to ~/.bashrc
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.blockinfile:
+        path: "{{ system.home | default(current_home) }}/.bashrc"
+        marker: "# {mark} sf-toolbox: homebrew"
+        block: |
+          # Homebrew (linuxbrew) — managed by sf-toolbox
+          if [ -d /home/linuxbrew/.linuxbrew ]; then
+            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          fi
+        mode: "0644"
+      when: user_bashrc.stat.exists
+
+    - name: Add Homebrew taps
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      community.general.homebrew_tap:
+        name: "{{ item }}"
+        path: /home/linuxbrew/.linuxbrew/bin
+        state: present
+      loop: "{{ toolbox.debian.homebrew_taps | default([]) }}"

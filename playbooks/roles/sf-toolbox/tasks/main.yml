@@ -1,4 +1,7 @@
 ---
+- name: Bootstrap Homebrew
+  import_tasks: homebrew.yml
+
 - name: Install toolbox packages
   import_tasks: packages.yml
 
