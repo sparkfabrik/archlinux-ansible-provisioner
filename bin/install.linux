@@ -20,8 +20,8 @@ SYMLINK_PATH="/usr/local/bin/sf-toolbox"
 # Source shared logging helpers (provides log_info, log_success, log_warn,
 # log_error, log_section; uses gum when available, falls back to ANSI).
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=../src/scripts/logging.sh disable=SC1091
-source "${SCRIPT_DIR}/../src/scripts/logging.sh"
+# shellcheck source=common/logging.sh disable=SC1091
+source "${SCRIPT_DIR}/common/logging.sh"
 
 DIM='\033[2m'; NC='\033[0m'
 

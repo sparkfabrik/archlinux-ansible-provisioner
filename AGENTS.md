@@ -175,7 +175,7 @@ Before committing changes to shell scripts, run shellcheck:
 
 ```bash
 shellcheck bin/install.linux
-shellcheck src/scripts/logging.sh
+shellcheck bin/common/logging.sh
 ```
 
 All shell scripts must pass shellcheck with no errors or warnings. Use inline
@@ -189,7 +189,7 @@ positive and add a comment explaining why.
 - Use `[[ ... ]]` over `[ ... ]` for conditionals.
 - Quote all variable expansions unless word splitting is intentionally needed.
 - Use `local` for function-scoped variables.
-- Source shared helpers from `src/scripts/` (e.g., `logging.sh`) instead of
+- Source shared helpers from `bin/common/` (e.g., `logging.sh`) instead of
   duplicating color codes or utility functions.
 
 ## CHANGELOG.md Conventions
