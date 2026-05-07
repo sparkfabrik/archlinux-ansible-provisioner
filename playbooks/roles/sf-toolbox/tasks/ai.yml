@@ -56,10 +56,25 @@
         owner: "{{ system.username | default(current_user) }}"
         group: "{{ system.username | default(current_user) }}"
 
+    - name: Notify user about personal opencode configuration
+      ansible.builtin.debug:
+        msg: >-
+          You can create ~/.config/opencode/opencode.json for personal
+          customizations. It will be merged with the system-wide configuration
+          shipped in /etc/opencode/opencode.json.
+
+    - name: Create /etc/opencode directory
+      ansible.builtin.file:
+        path: /etc/opencode
+        state: directory
+        mode: "0755"
+        owner: root
+        group: root
+
     - name: Copy opencode config file from sparkdock
       ansible.builtin.copy:
         src: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
-        dest: "{{ system.home | default(current_home) }}/.config/opencode/opencode.json"
+        dest: /etc/opencode/opencode.json
         mode: "0644"
-        owner: "{{ system.username | default(current_user) }}"
-        group: "{{ system.username | default(current_user) }}"
+        owner: root
+        group: root
