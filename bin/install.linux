@@ -17,7 +17,7 @@ set -euo pipefail
 INSTALL_DIR="/opt/archlinux-provisioner"
 REPO_URL="https://github.com/sparkfabrik/archlinux-ansible-provisioner.git"
 SYMLINK_PATH="/usr/local/bin/sf-toolbox"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 
 # ─── Logging ────────────────────────────────────────────────────────────────
 # shellcheck source=common/logging.sh disable=SC1091
