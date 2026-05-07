@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Moved opencode base configuration from `~/.config/opencode/opencode.json` to `/etc/opencode/opencode.json` (owned by `root:root`) to support user-local overrides via `~/.config/opencode/opencode.json`
+- Added automatic cleanup of duplicate `~/.config/opencode/opencode.json` when identical to the shipped source, with a warning when the file contains non-custom content
 - Standardized all shell variable references in `bin/install.linux` to use curly braces syntax (`${VAR}`)
 - Moved `config/toolbox-packages.yml` into `playbooks/roles/sf-toolbox/vars/main.yml` (auto-loaded by Ansible, no more `include_vars`)
 - Renamed `playbooks/toolbox.yml` to `playbooks/sf-toolbox.yml` for consistent naming with the `sf-toolbox` role and installer

@@ -22,6 +22,9 @@ still uses the existing owner/group variables.
   configuration overrides.
 - Inform the user (via `ansible.builtin.debug`) that they can create
   `~/.config/opencode/opencode.json` for custom settings.
+- Automatically clean up a user-local `~/.config/opencode/opencode.json` that
+  is identical to the shipped source, and warn the user if the file contains
+  non-custom content.
 
 **Non-Goals:**
 
@@ -51,6 +54,22 @@ unprivileged modification. This is standard practice on Linux systems.
 A one-line `ansible.builtin.debug` message at provision time is the lightest
 way to inform users without creating additional files they might need to
 maintain. It keeps the role self-contained.
+
+### 4. User-local config cleanup via `diff -q`
+
+Use `ansible.builtin.stat` to check if `~/.config/opencode/opencode.json`
+exists, then `ansible.builtin.command: diff -q` to compare it against the
+sparkdock source file. This avoids reading file contents into Ansible variables
+and delegates comparison to the OS. Based on the exit code:
+
+- `rc == 0` (identical): delete the user-local file with
+  `ansible.builtin.file: state=absent`.
+- `rc != 0` (different): display a warning via `ansible.builtin.debug`
+  advising the user to keep only personal customizations.
+
+**Alternative considered:** Using `ansible.builtin.slurp` to read both files
+and compare checksums in Jinja2 — rejected as unnecessarily complex when
+`diff -q` is simpler and already available on all target systems.
 
 ## Risks / Trade-offs
 

@@ -63,6 +63,41 @@
           customizations. It will be merged with the system-wide configuration
           shipped in /etc/opencode/opencode.json.
 
+    - name: Check if user-local opencode config exists
+      ansible.builtin.stat:
+        path: "{{ system.home | default(current_home) }}/.config/opencode/opencode.json"
+      register: user_opencode_config
+
+    - name: Compare user-local opencode config with source
+      ansible.builtin.command:
+        cmd: >-
+          diff -q
+          "{{ system.home | default(current_home) }}/.config/opencode/opencode.json"
+          "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
+      register: opencode_config_diff
+      changed_when: false
+      failed_when: false
+      when: user_opencode_config.stat.exists
+
+    - name: Remove duplicate user-local opencode config
+      ansible.builtin.file:
+        path: "{{ system.home | default(current_home) }}/.config/opencode/opencode.json"
+        state: absent
+      when:
+        - user_opencode_config.stat.exists
+        - opencode_config_diff.rc == 0
+
+    - name: Warn user about non-custom opencode config
+      ansible.builtin.debug:
+        msg: >-
+          The file ~/.config/opencode/opencode.json should contain only your
+          personal customizations. Any configuration already present in the
+          system-wide /etc/opencode/opencode.json can be safely removed from
+          your local file.
+      when:
+        - user_opencode_config.stat.exists
+        - opencode_config_diff.rc != 0
+
     - name: Create /etc/opencode directory
       ansible.builtin.file:
         path: /etc/opencode
