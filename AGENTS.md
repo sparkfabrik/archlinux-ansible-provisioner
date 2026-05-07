@@ -62,11 +62,11 @@ config/
   - name: Install and configure docker
     tags: [docker]
     block:
-        - name: Install docker
-          community.general.pacman:
-            name:
-              - docker
-              - docker-compose
+      - name: Install docker
+        community.general.pacman:
+          name:
+            - docker
+            - docker-compose
   ```
 
 ### Boolean Values
@@ -85,7 +85,7 @@ config/
 
 - Use **sentence case** (capitalize first word only): `"Install docker"`.
 - Be descriptive but concise. No trailing period.
-- Use backticks for technical terms: `` "Create the `aur_builder` user" ``.
+- Use backticks for technical terms: ``"Create the `aur_builder` user"``.
 
 ### Tags
 
@@ -163,6 +163,7 @@ config/
 ### Configuration Schema
 
 When adding new configurable features:
+
 1. Add the variable to `config/default.yaml.tpl` with a sensible default.
 2. Add the schema definition to `config/schemas/configuration.schema.yaml`.
 3. Use `| default()` in tasks for backward compatibility.
@@ -188,6 +189,10 @@ positive and add a comment explaining why.
 - Prefer early-return / guard-clause style over `else` branches.
 - Use `[[ ... ]]` over `[ ... ]` for conditionals.
 - Quote all variable expansions unless word splitting is intentionally needed.
+- Always use curly braces for variable references: `${VAR}`, not `$VAR`.
+  This applies everywhere: assignments, string interpolations, conditionals,
+  and command arguments. The only exceptions are positional parameters in
+  simple contexts (`$1`, `$2`, `$@`, `$?`).
 - Use `local` for function-scoped variables.
 - Source shared helpers from `bin/common/` (e.g., `logging.sh`) instead of
   duplicating color codes or utility functions.
