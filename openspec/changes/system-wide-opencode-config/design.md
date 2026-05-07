@@ -1,0 +1,60 @@
+## Context
+
+The `sf-toolbox` role's `ai.yml` currently deploys the base `opencode.json`
+into the user's home directory at `~/.config/opencode/opencode.json`. Because
+opencode merges system-wide (`/etc/opencode/opencode.json`) and user-local
+(`~/.config/opencode/opencode.json`) configuration, placing the shipped
+defaults under `/etc/opencode/` frees the user-local path for personal
+overrides that survive re-provisioning.
+
+All tasks in `ai.yml` run inside a single `block:` under the
+`Configure AI tools` play. The playbook is executed with `sudo`, so writing to
+`/etc/` requires no additional `become:` directive; writing user-owned paths
+still uses the existing owner/group variables.
+
+## Goals / Non-Goals
+
+**Goals:**
+
+- Deploy the base opencode configuration to `/etc/opencode/opencode.json`
+  owned by `root:root`.
+- Keep `~/.config/opencode/` as a user-owned directory for personal
+  configuration overrides.
+- Inform the user (via `ansible.builtin.debug`) that they can create
+  `~/.config/opencode/opencode.json` for custom settings.
+
+**Non-Goals:**
+
+- Modifying the opencode configuration content itself.
+- Implementing any config-merge logic (opencode already handles this).
+- Managing additional files under `/etc/opencode/`.
+
+## Decisions
+
+### 1. Destination path: `/etc/opencode/opencode.json`
+
+OpenCode natively reads `/etc/opencode/opencode.json` as the system-wide
+config. Placing the shipped defaults there follows the tool's own convention
+and requires no extra flags or symlinks.
+
+**Alternative considered:** Symlinking `~/.config/opencode/opencode.json` to
+`/etc/opencode/opencode.json` — rejected because it would still occupy the
+user-local path and prevent personal overrides.
+
+### 2. Ownership `root:root` for `/etc/opencode/` and its contents
+
+System-wide configuration under `/etc/` should be owned by root to prevent
+unprivileged modification. This is standard practice on Linux systems.
+
+### 3. Debug message instead of a template or README
+
+A one-line `ansible.builtin.debug` message at provision time is the lightest
+way to inform users without creating additional files they might need to
+maintain. It keeps the role self-contained.
+
+## Risks / Trade-offs
+
+- **[Existing user-local file]** → Users who previously relied on the
+  provisioner writing `~/.config/opencode/opencode.json` will no longer get
+  that file. Mitigation: the debug message tells them where the system config
+  now lives and how to add personal overrides.
