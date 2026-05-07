@@ -9,12 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `--help` / `-h` flag to `sf-toolbox` with colored output and OS detection display
 - Added `playbooks/roles/sf-toolbox/` role with per-tool task files (packages, gcloud, ai, glab, ajust, http-proxy)
 - Added `detect` section in toolbox package definitions for binary detection in the installer
 - Added clean arch/debian separation in toolbox package definitions with dotted-path support in the parser
 
 ### Changed
 
+- Standardized all shell variable references in `bin/install.linux` to use curly braces syntax (`${VAR}`)
 - Moved `config/toolbox-packages.yml` into `playbooks/roles/sf-toolbox/vars/main.yml` (auto-loaded by Ansible, no more `include_vars`)
 - Renamed `playbooks/toolbox.yml` to `playbooks/sf-toolbox.yml` for consistent naming with the `sf-toolbox` role and installer
 - Restructured toolbox package config from flat keys to nested `arch`/`debian`/`common` sections

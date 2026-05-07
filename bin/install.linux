@@ -13,6 +13,36 @@
 #
 set -euo pipefail
 
+# ─── Help ───────────────────────────────────────────────────────────────────
+show_help() {
+  local os_icon
+  [[ "${OS_FAMILY}" == "Archlinux" ]] && os_icon="🐧" || os_icon="🟠"
+
+  printf "\n"
+  printf "  ${BOLD}${BLUE}sf-toolbox${NC} — SparkFabrik Linux Toolbox installer and updater\n"
+  printf "\n"
+  printf "  Installs/updates SparkFabrik shared dev tooling (sparkdock, AI tools,\n"
+  printf "  cloud-native CLIs, http-proxy) on Arch Linux and Debian/Ubuntu.\n"
+  printf "\n"
+  printf "  ${BOLD}Detected OS:${NC} ${GREEN}%s %s${NC} (%s)\n" "${os_icon}" "${OS_DISPLAY}" "${OS_FAMILY}"
+  printf "\n"
+  printf "  ${BOLD}Usage:${NC}\n"
+  printf "    sf-toolbox                                     # Install or update\n"
+  printf "    TAGS=sparkdock,ai sf-toolbox                   # Run specific tags only\n"
+  printf "    SKIP_TAGS=gcloud,http-proxy sf-toolbox         # Skip specific tags\n"
+  printf "    NONINTERACTIVE=1 sf-toolbox                    # Skip prompts (CI/scripts)\n"
+  printf "\n"
+  printf "  ${BOLD}Environment variables:${NC}\n"
+  printf "    TAGS           Comma-separated list of Ansible tags to run\n"
+  printf "    SKIP_TAGS      Comma-separated list of Ansible tags to skip\n"
+  printf "    CONFIG         Path to config YAML (default: config/default.yaml)\n"
+  printf "    NONINTERACTIVE Set to 1 to skip all interactive prompts\n"
+  printf "\n"
+  printf "  ${BOLD}Options:${NC}\n"
+  printf "    -h, --help     Show this help message and exit\n"
+  printf "\n"
+}
+
 # ─── Configuration ──────────────────────────────────────────────────────────
 INSTALL_DIR="/opt/archlinux-provisioner"
 REPO_URL="https://github.com/sparkfabrik/archlinux-ansible-provisioner.git"
@@ -45,30 +75,37 @@ detect_os() {
       exit 1
       ;;
   esac
-  OS_DISPLAY="${PRETTY_NAME:-$OS_FAMILY}"
+  OS_DISPLAY="${PRETTY_NAME:-${OS_FAMILY}}"
 }
 
+# Handle --help after detect_os so we can show the detected OS
+detect_os
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  show_help
+  exit 0
+fi
+
 resolve_repo_dir() {
-  if [[ -d "$INSTALL_DIR/.git" ]]; then
-    REPO_DIR="$INSTALL_DIR"
+  if [[ -d "${INSTALL_DIR}/.git" ]]; then
+    REPO_DIR="${INSTALL_DIR}"
   else
-    REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+    REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
   fi
 }
 
 show_status() {
-  local parser="$REPO_DIR/bin/common/parse-toolbox-packages.py"
-  local packages_file="$REPO_DIR/playbooks/roles/sf-toolbox/vars/main.yml"
+  local parser="${REPO_DIR}/bin/common/parse-toolbox-packages.py"
+  local packages_file="${REPO_DIR}/playbooks/roles/sf-toolbox/vars/main.yml"
 
-  [[ -f "$parser" && -f "$packages_file" ]] || return 0
+  [[ -f "${parser}" && -f "${packages_file}" ]] || return 0
 
   local installed=() missing=()
-  mapfile -t tools < <(python3 "$parser" "$packages_file" toolbox.detect)
+  mapfile -t tools < <(python3 "${parser}" "${packages_file}" toolbox.detect)
   for tool in "${tools[@]}"; do
-    if command -v "$tool" &>/dev/null; then
-      installed+=("$tool")
+    if command -v "${tool}" &>/dev/null; then
+      installed+=("${tool}")
     else
-      missing+=("$tool")
+      missing+=("${tool}")
     fi
   done
 
@@ -79,7 +116,7 @@ show_status() {
     missing+=("sparkdock")
   fi
 
-  log_info "sf-toolbox — $OS_DISPLAY"
+  log_info "sf-toolbox — ${OS_DISPLAY}"
 
   if [[ ${#missing[@]} -eq 0 ]]; then
     log_info "All tools present. Ensuring latest versions..."
@@ -87,22 +124,22 @@ show_status() {
   fi
 
   # First run or missing tools — show details
-  if [[ "$OS_FAMILY" == "Debian" ]]; then
+  if [[ "${OS_FAMILY}" == "Debian" ]]; then
     printf "\n  Tools to install:\n\n"
     local tool_list=""
     for tool in "${missing[@]}"; do
-      [[ -n "$tool_list" ]] && tool_list+=", "
-      tool_list+="$tool"
+      [[ -n "${tool_list}" ]] && tool_list+=", "
+      tool_list+="${tool}"
     done
     # Wrap at ~54 chars with 4-space indent
-    printf "    %s\n" "$(echo "$tool_list" | fold -s -w 54)"
+    printf "    %s\n" "$(echo "${tool_list}" | fold -s -w 54)"
   else
     printf "\n"
     for tool in "${missing[@]}"; do
-      printf "  + %-18s (will install)\n" "$tool"
+      printf "  + %-18s (will install)\n" "${tool}"
     done
     for tool in "${installed[@]}"; do
-      printf "  ✓ %-18s (installed)\n" "$tool"
+      printf "  ✓ %-18s (installed)\n" "${tool}"
     done
   fi
 
@@ -113,14 +150,14 @@ show_status() {
 is_sf_managed() {
   local tool="$1" path="$2"
   # Brew-managed (Debian)
-  [[ "$path" == /home/linuxbrew/.linuxbrew/bin/* ]] && return 0
+  [[ "${path}" == /home/linuxbrew/.linuxbrew/bin/* ]] && return 0
   # Pacman/npm-global managed (Arch) — both install to /usr/bin
-  [[ "$OS_FAMILY" == "Archlinux" && "$path" == /usr/bin/* ]] && return 0
+  [[ "${OS_FAMILY}" == "Archlinux" && "${path}" == /usr/bin/* ]] && return 0
   # sf-toolbox direct installs (non-brew, non-pacman)
-  case "$tool" in
-    gcloud) [[ "$path" == "/opt/google-cloud-sdk/bin/gcloud" ]] && return 0 ;;
-    ajust) [[ "$path" == "/usr/local/bin/ajust" ]] && return 0 ;;
-    spark-http-proxy) [[ "$path" == "/usr/local/bin/spark-http-proxy" ]] && return 0 ;;
+  case "${tool}" in
+    gcloud) [[ "${path}" == "/opt/google-cloud-sdk/bin/gcloud" ]] && return 0 ;;
+    ajust) [[ "${path}" == "/usr/local/bin/ajust" ]] && return 0 ;;
+    spark-http-proxy) [[ "${path}" == "/usr/local/bin/spark-http-proxy" ]] && return 0 ;;
   esac
   return 1
 }
@@ -130,32 +167,32 @@ get_provenance() {
   local pkg
 
   # Check npm (symlink into node_modules)
-  if [[ -L "$path" ]]; then
+  if [[ -L "${path}" ]]; then
     local target
-    target=$(readlink -f "$path" 2>/dev/null)
-    if [[ "$target" == *"node_modules"* ]]; then
+    target=$(readlink -f "${path}" 2>/dev/null)
+    if [[ "${target}" == *"node_modules"* ]]; then
       echo "npm"
       return
     fi
   fi
 
   # Check apt (Debian)
-  if [[ "$OS_FAMILY" == "Debian" ]]; then
-    if pkg=$(dpkg -S "$path" 2>/dev/null | head -1 | cut -d: -f1); then
-      echo "apt: $pkg"
+  if [[ "${OS_FAMILY}" == "Debian" ]]; then
+    if pkg=$(dpkg -S "${path}" 2>/dev/null | head -1 | cut -d: -f1); then
+      echo "apt: ${pkg}"
       return
     fi
   fi
 
   # Check pacman (Arch)
-  if [[ "$OS_FAMILY" == "Archlinux" ]]; then
-    if pkg=$(pacman -Qo "$path" 2>/dev/null | awk '{print $(NF-1)}'); then
-      [[ -n "$pkg" ]] && { echo "pacman: $pkg"; return; }
+  if [[ "${OS_FAMILY}" == "Archlinux" ]]; then
+    if pkg=$(pacman -Qo "${path}" 2>/dev/null | awk '{print $(NF-1)}'); then
+      [[ -n "${pkg}" ]] && { echo "pacman: ${pkg}"; return; }
     fi
   fi
 
   # Check snap
-  if [[ "$path" == /snap/bin/* ]]; then
+  if [[ "${path}" == /snap/bin/* ]]; then
     echo "snap"
     return
   fi
@@ -166,36 +203,36 @@ get_provenance() {
 
 get_removal_cmd() {
   local tool="$1" path="$2" provenance="$3"
-  case "$provenance" in
+  case "${provenance}" in
     apt:*)
       local pkg="${provenance#apt: }"
-      echo "sudo apt remove --purge $pkg"
+      echo "sudo apt remove --purge ${pkg}"
       ;;
     pacman:*)
       local pkg="${provenance#pacman: }"
-      echo "sudo pacman -Rns $pkg"
+      echo "sudo pacman -Rns ${pkg}"
       ;;
     snap)
-      echo "sudo snap remove $tool"
+      echo "sudo snap remove ${tool}"
       ;;
     npm)
       # Extract npm package name from symlink target (handles @scope/name)
       local target npm_pkg
-      target=$(readlink -f "$path" 2>/dev/null)
-      npm_pkg=$(echo "$target" | sed -n 's|.*node_modules/\(@[^/]*/[^/]*\)/.*|\1|p')
-      if [[ -z "$npm_pkg" ]]; then
-        npm_pkg=$(echo "$target" | sed -n 's|.*node_modules/\([^/]*\)/.*|\1|p')
+      target=$(readlink -f "${path}" 2>/dev/null)
+      npm_pkg=$(echo "${target}" | sed -n 's|.*node_modules/\(@[^/]*/[^/]*\)/.*|\1|p')
+      if [[ -z "${npm_pkg}" ]]; then
+        npm_pkg=$(echo "${target}" | sed -n 's|.*node_modules/\([^/]*\)/.*|\1|p')
       fi
-      npm_pkg="${npm_pkg:-$tool}"
+      npm_pkg="${npm_pkg:-${tool}}"
       # User-local install (under $HOME) doesn't need sudo
-      if [[ "$path" == "$HOME"/* || "$path" == /home/* ]]; then
-        echo "npm uninstall -g $npm_pkg"
+      if [[ "${path}" == "${HOME}"/* || "${path}" == /home/* ]]; then
+        echo "npm uninstall -g ${npm_pkg}"
       else
-        echo "sudo npm uninstall -g $npm_pkg"
+        echo "sudo npm uninstall -g ${npm_pkg}"
       fi
       ;;
     *)
-      echo "sudo rm $path"
+      echo "sudo rm ${path}"
       ;;
   esac
 }
@@ -204,32 +241,32 @@ check_conflicts() {
   # Skip in non-interactive mode (CI environments are controlled)
   [[ "${NONINTERACTIVE:-0}" == "1" ]] && return 0
 
-  local parser="$REPO_DIR/bin/common/parse-toolbox-packages.py"
-  local packages_file="$REPO_DIR/playbooks/roles/sf-toolbox/vars/main.yml"
+  local parser="${REPO_DIR}/bin/common/parse-toolbox-packages.py"
+  local packages_file="${REPO_DIR}/playbooks/roles/sf-toolbox/vars/main.yml"
 
-  [[ -f "$parser" && -f "$packages_file" ]] || return 0
+  [[ -f "${parser}" && -f "${packages_file}" ]] || return 0
 
   local -a conflict_tools=() conflict_paths=() conflict_provs=() conflict_cmds=()
-  mapfile -t tools < <(python3 "$parser" "$packages_file" toolbox.detect)
+  mapfile -t tools < <(python3 "${parser}" "${packages_file}" toolbox.detect)
 
   for tool in "${tools[@]}"; do
     local tool_path
-    tool_path=$(command -v "$tool" 2>/dev/null) || continue
+    tool_path=$(command -v "${tool}" 2>/dev/null) || continue
 
     # If it's already managed by sf-toolbox, no conflict
-    if is_sf_managed "$tool" "$tool_path"; then
+    if is_sf_managed "${tool}" "${tool_path}"; then
       continue
     fi
 
     local prov
-    prov=$(get_provenance "$tool_path")
+    prov=$(get_provenance "${tool_path}")
     local cmd
-    cmd=$(get_removal_cmd "$tool" "$tool_path" "$prov")
+    cmd=$(get_removal_cmd "${tool}" "${tool_path}" "${prov}")
 
-    conflict_tools+=("$tool")
-    conflict_paths+=("$tool_path")
-    conflict_provs+=("$prov")
-    conflict_cmds+=("$cmd")
+    conflict_tools+=("${tool}")
+    conflict_paths+=("${tool_path}")
+    conflict_provs+=("${prov}")
+    conflict_cmds+=("${cmd}")
   done
 
   [[ ${#conflict_tools[@]} -eq 0 ]] && return 0
@@ -256,10 +293,10 @@ check_conflicts() {
   for i in "${!conflict_cmds[@]}"; do
     if [[ "${conflict_provs[$i]}" == apt:* ]]; then
       local pkg="${conflict_provs[$i]#apt: }"
-      apt_pkgs+=("$pkg")
+      apt_pkgs+=("${pkg}")
     elif [[ "${conflict_provs[$i]}" == pacman:* ]]; then
       local pkg="${conflict_provs[$i]#pacman: }"
-      pacman_pkgs+=("$pkg")
+      pacman_pkgs+=("${pkg}")
     else
       other_cmds+=("${conflict_cmds[$i]}")
     fi
@@ -272,7 +309,7 @@ check_conflicts() {
     printf "    sudo pacman -Rns %s\n" "${pacman_pkgs[*]}"
   fi
   for cmd in "${other_cmds[@]}"; do
-    printf "    %s\n" "$cmd"
+    printf "    %s\n" "${cmd}"
   done
 
   printf "\n"
@@ -284,7 +321,7 @@ check_conflicts() {
 # ─── Bootstrap ──────────────────────────────────────────────────────────────
 confirm_homebrew() {
   # Only on Debian, only on first install (brew not yet present)
-  [[ "$OS_FAMILY" != "Debian" ]] && return 0
+  [[ "${OS_FAMILY}" != "Debian" ]] && return 0
   [[ -f /home/linuxbrew/.linuxbrew/bin/brew ]] && return 0
 
   printf "  ────────────────────────────────────────────────────────\n"
@@ -324,7 +361,7 @@ ensure_ansible() {
   command -v ansible-playbook &>/dev/null && return 0
 
   log_info "Installing Ansible..."
-  case "$OS_FAMILY" in
+  case "${OS_FAMILY}" in
     Archlinux) sudo pacman -S --noconfirm ansible ;;
     Debian) sudo apt-get update -qq && sudo apt-get install -y -qq ansible ;;
   esac
@@ -332,42 +369,42 @@ ensure_ansible() {
 
 clone_or_update() {
   # When running from a local dev checkout (not the installed copy), skip clone
-  if [[ "$REPO_DIR" != "$INSTALL_DIR" ]]; then
-    log_info "Running from local checkout: $REPO_DIR"
+  if [[ "${REPO_DIR}" != "${INSTALL_DIR}" ]]; then
+    log_info "Running from local checkout: ${REPO_DIR}"
     return 0
   fi
 
-  if [[ -d "$INSTALL_DIR/.git" ]]; then
-    log_info "Updating $INSTALL_DIR from $REPO_URL..."
-    git -C "$INSTALL_DIR" pull --ff-only
+  if [[ -d "${INSTALL_DIR}/.git" ]]; then
+    log_info "Updating ${INSTALL_DIR} from ${REPO_URL}..."
+    git -C "${INSTALL_DIR}" pull --ff-only
   else
-    log_info "Cloning $REPO_URL → $INSTALL_DIR (requires sudo)..."
-    sudo mkdir -p "$INSTALL_DIR"
-    sudo chown "$USER:$USER" "$INSTALL_DIR"
-    git clone "$REPO_URL" "$INSTALL_DIR"
-    REPO_DIR="$INSTALL_DIR"
+    log_info "Cloning ${REPO_URL} → ${INSTALL_DIR} (requires sudo)..."
+    sudo mkdir -p "${INSTALL_DIR}"
+    sudo chown "${USER}:${USER}" "${INSTALL_DIR}"
+    git clone "${REPO_URL}" "${INSTALL_DIR}"
+    REPO_DIR="${INSTALL_DIR}"
   fi
 }
 
 run_ansible() {
   log_info "Installing Ansible dependencies..."
-  if ! ansible-galaxy collection install -r "$REPO_DIR/requirements.yml" --force-with-deps >/dev/null 2>&1; then
+  if ! ansible-galaxy collection install -r "${REPO_DIR}/requirements.yml" --force-with-deps >/dev/null 2>&1; then
     log_error "Failed to install Ansible collections. Run manually:"
-    log_error "  ansible-galaxy collection install -r $REPO_DIR/requirements.yml --force-with-deps"
+    log_error "  ansible-galaxy collection install -r ${REPO_DIR}/requirements.yml --force-with-deps"
     exit 1
   fi
-  local cmd=(sudo ansible-playbook "$REPO_DIR/playbooks/sf-toolbox.yml" -i "localhost," -c local)
-  [[ -n "${TAGS:-}" ]] && cmd+=(--tags "$TAGS")
-  [[ -n "${SKIP_TAGS:-}" ]] && cmd+=(--skip-tags "$SKIP_TAGS")
+  local cmd=(sudo ansible-playbook "${REPO_DIR}/playbooks/sf-toolbox.yml" -i "localhost," -c local)
+  [[ -n "${TAGS:-}" ]] && cmd+=(--tags "${TAGS}")
+  [[ -n "${SKIP_TAGS:-}" ]] && cmd+=(--skip-tags "${SKIP_TAGS}")
   "${cmd[@]}"
 }
 
 create_symlink() {
   # Only create symlink when running from the installed copy
-  [[ "$REPO_DIR" != "$INSTALL_DIR" ]] && return 0
+  [[ "${REPO_DIR}" != "${INSTALL_DIR}" ]] && return 0
 
-  if [[ ! -L "$SYMLINK_PATH" ]] || [[ "$(readlink -f "$SYMLINK_PATH")" != "$INSTALL_DIR/bin/install.linux" ]]; then
-    sudo ln -sf "$INSTALL_DIR/bin/install.linux" "$SYMLINK_PATH"
+  if [[ ! -L "${SYMLINK_PATH}" ]] || [[ "$(readlink -f "${SYMLINK_PATH}")" != "${INSTALL_DIR}/bin/install.linux" ]]; then
+    sudo ln -sf "${INSTALL_DIR}/bin/install.linux" "${SYMLINK_PATH}"
   fi
 }
 
@@ -383,7 +420,6 @@ shell_enable() {
 
 # ─── Main ───────────────────────────────────────────────────────────────────
 main() {
-  detect_os
   resolve_repo_dir
   show_status
   check_conflicts
