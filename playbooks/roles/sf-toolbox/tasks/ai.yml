@@ -76,7 +76,7 @@
           "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
       register: opencode_config_diff
       changed_when: false
-      failed_when: false
+      failed_when: opencode_config_diff.rc > 1
       when: user_opencode_config.stat.exists
 
     - name: Remove duplicate user-local opencode config
@@ -85,6 +85,7 @@
         state: absent
       when:
         - user_opencode_config.stat.exists
+        - opencode_config_diff is not skipped
         - opencode_config_diff.rc == 0
 
     - name: Warn user about non-custom opencode config
@@ -96,6 +97,7 @@
           your local file.
       when:
         - user_opencode_config.stat.exists
+        - opencode_config_diff is not skipped
         - opencode_config_diff.rc != 0
 
     - name: Create /etc/opencode directory

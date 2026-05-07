@@ -62,7 +62,12 @@ maintain. It keeps the role self-contained.
 Use `ansible.builtin.stat` to check if `~/.config/opencode/opencode.json`
 exists, then `ansible.builtin.command: diff -q` to compare it against the
 sparkdock source file. This avoids reading file contents into Ansible variables
-and delegates comparison to the OS. Based on the exit code:
+and delegates comparison to the OS. The task uses
+`failed_when: opencode_config_diff.rc > 1` so that `diff` errors (rc=2, e.g.
+missing source file or permission issues) fail the play instead of being
+silently treated as "files differ". Downstream tasks guard against the diff
+task being skipped with `opencode_config_diff is not skipped`. Based on the
+exit code:
 
 - `rc == 0` (identical): delete the user-local file with
   `ansible.builtin.file: state=absent`.

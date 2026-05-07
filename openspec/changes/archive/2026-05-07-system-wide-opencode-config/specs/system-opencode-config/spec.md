@@ -51,11 +51,12 @@ that will be merged with the system-wide configuration.
 
 The provisioner SHALL check whether `~/.config/opencode/opencode.json` exists.
 If it does, the provisioner SHALL compare it with the sparkdock source
-configuration file. If the files are identical, the user-local file SHALL be
-deleted. If the files differ, the provisioner SHALL display a warning message
-informing the user that the file should contain only personal customizations
-and that any configuration already present in the system-wide file can be
-removed.
+configuration file. If the comparison fails due to an error (e.g. missing
+source file, permission issues), the provisioner SHALL fail the play. If the
+files are identical, the user-local file SHALL be deleted. If the files differ,
+the provisioner SHALL display a warning message informing the user that the
+file should contain only personal customizations and that any configuration
+already present in the system-wide file can be removed.
 
 #### Scenario: User-local file does not exist
 
@@ -71,3 +72,8 @@ removed.
 
 - **WHEN** `~/.config/opencode/opencode.json` exists and differs from the sparkdock source configuration
 - **THEN** a warning message is displayed informing the user that the file should contain only personal customizations and that configurations already present in the system-wide file can be removed
+
+#### Scenario: Comparison encounters an error
+
+- **WHEN** `~/.config/opencode/opencode.json` exists but the comparison command fails with an error (exit code greater than 1)
+- **THEN** the provisioner fails the play with the error details
