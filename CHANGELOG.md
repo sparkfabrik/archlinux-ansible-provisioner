@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed invasive apt package and PPA source removal on Debian (Homebrew PATH precedence handles conflicts)
 - Updated `system.yml` to import sf-toolbox role (alongside existing roles)
 
+### Fixed
+
+- Fixed `sf-toolbox` symlink breaking `SCRIPT_DIR` resolution by resolving symlinks with `readlink -f` before computing the directory
+
 ### Removed
 
 - Removed `playbooks/roles/packages/tasks/ai.yml`, `glab.yml`, `gcloud.yml`, `homebrew.yml` (merged into sf-toolbox)
