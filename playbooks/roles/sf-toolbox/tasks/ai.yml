@@ -111,5 +111,5 @@
         src: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/macos/opencode.json"
         dest: /etc/opencode/opencode.json
         mode: "0644"
-        owner: root
-        group: root
+        owner: "{{ system.username | default(current_user) }}"
+        group: "{{ system.username | default(current_user) }}"

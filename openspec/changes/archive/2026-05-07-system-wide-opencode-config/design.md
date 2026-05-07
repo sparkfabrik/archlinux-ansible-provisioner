@@ -44,10 +44,12 @@ and requires no extra flags or symlinks.
 `/etc/opencode/opencode.json` — rejected because it would still occupy the
 user-local path and prevent personal overrides.
 
-### 2. Ownership `root:root` for `/etc/opencode/` and its contents
+### 2. Ownership for `/etc/opencode/` and its contents
 
-System-wide configuration under `/etc/` should be owned by root to prevent
-unprivileged modification. This is standard practice on Linux systems.
+The `/etc/opencode/` directory is owned by `root:root` to prevent unprivileged
+users from adding or removing files. The `opencode.json` file inside it is
+owned by the provisioned user so they can edit the system-wide configuration
+directly without requiring elevated privileges.
 
 ### 3. Debug message instead of a template or README
 

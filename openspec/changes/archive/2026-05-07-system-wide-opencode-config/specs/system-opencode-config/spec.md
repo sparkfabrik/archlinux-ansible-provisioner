@@ -18,13 +18,13 @@ with mode `0755` before copying the configuration file.
 ### Requirement: Deploy base opencode configuration to system-wide path
 
 The provisioner SHALL copy the base `opencode.json` from the sparkdock config
-path to `/etc/opencode/opencode.json` with owner `root`, group `root`, and
-mode `0644`.
+path to `/etc/opencode/opencode.json` with owner and group set to the
+provisioned user and mode `0644`.
 
 #### Scenario: Configuration file is copied
 
 - **WHEN** the provisioner runs the copy task
-- **THEN** `/etc/opencode/opencode.json` exists with owner `root`, group `root`, and mode `0644`
+- **THEN** `/etc/opencode/opencode.json` exists with the provisioned user as owner and group, and mode `0644`
 
 ### Requirement: User-local opencode directory is preserved
 
