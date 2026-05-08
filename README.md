@@ -15,7 +15,7 @@ The official guide is an invaluable resource for understanding the installation 
 
 ## sf-toolbox — SparkFabrik Linux Toolbox
 
-Standalone installer for SparkFabrik shared dev tools on Arch Linux and Debian/Ubuntu. Works independently from the full system provisioner.
+Standalone installer for SparkFabrik shared dev tools on Arch Linux, CachyOS, and Debian/Ubuntu. Works independently from the full system provisioner.
 
 ### Quick Bootstrap
 
@@ -41,7 +41,7 @@ SKIP_TAGS=gcloud sf-toolbox             # Skip specific tags
 
 ### Requirements
 
-- Arch Linux, Debian, or Ubuntu
+- Arch Linux, CachyOS, Debian, or Ubuntu
 - `git`, `zsh`, `docker`, `curl`, `python3` (and `node`/`npm` on Arch)
 
 ## About This Provisioner
@@ -85,5 +85,4 @@ TAGS=gnome-config CONFIG=./config/default.yaml make local-install-tags
 
 Contributions to this repository are welcome. Please ensure that any contributions follow the existing structure and standards. For significant changes, open an issue first to discuss what you would like to change.
 
-Enjoy your Archlinux setup with this Ansible provisioner, and remember to use it wisely and at your own risk.
-
+Enjoy your Arch Linux setup with this Ansible provisioner, and remember to use it wisely and at your own risk.

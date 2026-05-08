@@ -2,7 +2,7 @@
 # sf-toolbox — SparkFabrik Linux Toolbox installer and updater
 #
 # Installs/updates SparkFabrik shared dev tooling (sparkdock, AI tools,
-# cloud-native CLIs, http-proxy) on Arch Linux and Debian/Ubuntu.
+# cloud-native CLIs, http-proxy) on Arch Linux, CachyOS, and Debian/Ubuntu.
 #
 # Usage:
 #   bin/install.linux          # First install or update
@@ -19,26 +19,26 @@ show_help() {
   [[ "${OS_FAMILY}" == "Archlinux" ]] && os_icon="🐧" || os_icon="🟠"
 
   printf "\n"
-  printf "  ${BOLD}${BLUE}sf-toolbox${NC} — SparkFabrik Linux Toolbox installer and updater\n"
+  printf "  %s%ssf-toolbox%s — SparkFabrik Linux Toolbox installer and updater\n" "${BOLD}" "${BLUE}" "${NC}"
   printf "\n"
   printf "  Installs/updates SparkFabrik shared dev tooling (sparkdock, AI tools,\n"
-  printf "  cloud-native CLIs, http-proxy) on Arch Linux and Debian/Ubuntu.\n"
+  printf "  cloud-native CLIs, http-proxy) on Arch Linux, CachyOS, and Debian/Ubuntu.\n"
   printf "\n"
   printf "  ${BOLD}Detected OS:${NC} ${GREEN}%s %s${NC} (%s)\n" "${os_icon}" "${OS_DISPLAY}" "${OS_FAMILY}"
   printf "\n"
-  printf "  ${BOLD}Usage:${NC}\n"
+  printf "  %sUsage:%s\n" "${BOLD}" "${NC}"
   printf "    sf-toolbox                                     # Install or update\n"
   printf "    TAGS=sparkdock,ai sf-toolbox                   # Run specific tags only\n"
   printf "    SKIP_TAGS=gcloud,http-proxy sf-toolbox         # Skip specific tags\n"
   printf "    NONINTERACTIVE=1 sf-toolbox                    # Skip prompts (CI/scripts)\n"
   printf "\n"
-  printf "  ${BOLD}Environment variables:${NC}\n"
+  printf "  %sEnvironment variables:%s\n" "${BOLD}" "${NC}"
   printf "    TAGS           Comma-separated list of Ansible tags to run\n"
   printf "    SKIP_TAGS      Comma-separated list of Ansible tags to skip\n"
   printf "    CONFIG         Path to config YAML (default: config/default.yaml)\n"
   printf "    NONINTERACTIVE Set to 1 to skip all interactive prompts\n"
   printf "\n"
-  printf "  ${BOLD}Options:${NC}\n"
+  printf "  %sOptions:%s\n" "${BOLD}" "${NC}"
   printf "    -h, --help     Show this help message and exit\n"
   printf "\n"
 }
@@ -55,23 +55,25 @@ source "${SCRIPT_DIR}/common/logging.sh"
 
 # ─── Detection ──────────────────────────────────────────────────────────────
 detect_os() {
-  if [[ ! -f /etc/os-release ]]; then
+  local os_release_file="${OS_RELEASE_FILE:-/etc/os-release}"
+
+  if [[ ! -f "${os_release_file}" ]]; then
     log_error "Cannot detect OS (no /etc/os-release)"
     exit 1
   fi
 
   # shellcheck source=/dev/null
-  . /etc/os-release
+  . "${os_release_file}"
 
   case "${ID:-}" in
-    arch|archlinux|endeavouros|manjaro)
+    arch|archlinux|cachyos|endeavouros|manjaro)
       OS_FAMILY="Archlinux"
       ;;
     ubuntu|debian|pop|linuxmint)
       OS_FAMILY="Debian"
       ;;
     *)
-      log_error "Unsupported OS: ${ID:-unknown}. Only Arch Linux and Debian/Ubuntu are supported."
+      log_error "Unsupported OS: ${ID:-unknown}. Only Arch Linux, CachyOS, and Debian/Ubuntu are supported."
       exit 1
       ;;
   esac
