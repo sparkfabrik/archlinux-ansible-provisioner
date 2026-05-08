@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fixed `sf-toolbox` OS detection to treat `CachyOS` as an `Archlinux`-family distribution
+- Fixed `sf-toolbox` OS detection to treat `CachyOS` as `Archlinux`
 - Fixed `sf-toolbox` symlink breaking `SCRIPT_DIR` resolution by resolving symlinks with `readlink -f` before computing the directory
 
 ### Removed

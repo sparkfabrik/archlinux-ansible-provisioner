@@ -15,7 +15,7 @@ The official guide is an invaluable resource for understanding the installation 
 
 ## sf-toolbox — SparkFabrik Linux Toolbox
 
-Standalone installer for SparkFabrik shared dev tools on Arch Linux-based distributions (including CachyOS) and Debian/Ubuntu. Works independently from the full system provisioner.
+Standalone installer for SparkFabrik shared dev tools on Arch Linux, CachyOS, and Debian/Ubuntu. Works independently from the full system provisioner.
 
 ### Quick Bootstrap
 
@@ -41,7 +41,7 @@ SKIP_TAGS=gcloud sf-toolbox             # Skip specific tags
 
 ### Requirements
 
-- Arch Linux-based distributions (including CachyOS), Debian, or Ubuntu
+- Arch Linux, CachyOS, Debian, or Ubuntu
 - `git`, `zsh`, `docker`, `curl`, `python3` (and `node`/`npm` on Arch)
 
 ## About This Provisioner
