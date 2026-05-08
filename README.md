@@ -85,4 +85,4 @@ TAGS=gnome-config CONFIG=./config/default.yaml make local-install-tags
 
 Contributions to this repository are welcome. Please ensure that any contributions follow the existing structure and standards. For significant changes, open an issue first to discuss what you would like to change.
 
-Enjoy your Archlinux setup with this Ansible provisioner, and remember to use it wisely and at your own risk.
+Enjoy your Arch Linux setup with this Ansible provisioner, and remember to use it wisely and at your own risk.
