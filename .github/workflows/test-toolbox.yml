@@ -16,6 +16,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verify `CachyOS` is detected as `Archlinux`
+        run: |
+          cat > /tmp/os-release.cachyos <<'EOF'
+          ID=cachyos
+          PRETTY_NAME="CachyOS"
+          EOF
+
+          output=$(OS_RELEASE_FILE=/tmp/os-release.cachyos bin/install.linux --help)
+          echo "${output}"
+
+          echo "${output}" | grep -q "CachyOS"
+          echo "${output}" | grep -q "(Archlinux)"
+
       - name: Install prerequisites
         run: |
           sudo apt-get update
