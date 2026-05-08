@@ -220,3 +220,9 @@ impact.
 - **One line per entry**: Keep entries concise. No sub-headings or multi-level
   nesting inside `## [Unreleased]`
 - **No trailing whitespace** on any line
+
+## Markdown Formatting
+
+After creating or editing any Markdown file (`.md`), **always** run the
+formatter before committing. Never format Markdown by hand -- delegate to
+the tool.
