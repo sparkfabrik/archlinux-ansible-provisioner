@@ -23,9 +23,17 @@
 
     - name: Run Google Cloud SDK install script
       ansible.builtin.command:
-        cmd: /opt/google-cloud-sdk/install.sh --quiet --path-update false --command-completion false
+        cmd: /opt/google-cloud-sdk/install.sh --quiet --path-update false --command-completion false --usage-reporting false
       when: not gcloud_installed.stat.exists
       changed_when: true
+
+    - name: Disable gcloud usage reporting
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.command:
+        cmd: /opt/google-cloud-sdk/bin/gcloud config set core/disable_usage_reporting true
+      changed_when: false
+      when: gcloud_installed.stat.exists
 
     - name: Install gke-gcloud-auth-plugin component
       ansible.builtin.command:
