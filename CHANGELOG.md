@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Disabled Google Cloud SDK usage reporting both at install time (`--usage-reporting false`) and persistently via `gcloud config set core/disable_usage_reporting true` to avoid sending telemetry to Google
 - Moved opencode base configuration from `~/.config/opencode/opencode.json` to `/etc/opencode/opencode.json` (user-owned, in a `root:root` directory) to support user-local overrides via `~/.config/opencode/opencode.json`
 - Added automatic cleanup of duplicate `~/.config/opencode/opencode.json` when identical to the shipped source, with a warning when the file contains non-custom content
 - Standardized all shell variable references in `bin/install.linux` to use curly braces syntax (`${VAR}`)
