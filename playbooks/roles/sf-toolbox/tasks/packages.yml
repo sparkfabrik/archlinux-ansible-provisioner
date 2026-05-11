@@ -51,3 +51,22 @@
         state: present
         path: /home/linuxbrew/.linuxbrew/bin
       when: ansible_facts['os_family'] == "Debian"
+
+    - name: Install homebrew casks (Debian/Ubuntu)
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      community.general.homebrew_cask:
+        name: "{{ toolbox.debian.homebrew_casks }}"
+        state: present
+        path: /home/linuxbrew/.linuxbrew/bin
+      when:
+        - ansible_facts['os_family'] == "Debian"
+        - toolbox.debian.homebrew_casks | default([]) | length > 0
+
+    - name: Install npm packages (Debian/Ubuntu)
+      community.general.npm:
+        name: "{{ item }}"
+        global: true
+        state: present
+      loop: "{{ toolbox.debian.npm | default([]) }}"
+      when: ansible_facts['os_family'] == "Debian"

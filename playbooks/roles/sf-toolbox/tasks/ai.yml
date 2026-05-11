@@ -1,4 +1,25 @@
 ---
+- name: Install Claude Code (Archlinux)
+  tags: [sf-toolbox, packages, ai]
+  when: ansible_facts['os_family'] == "Archlinux"
+  block:
+    - name: Check if Claude Code is already installed
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.command: claude --version
+      register: claude_installed
+      changed_when: false
+      failed_when: false
+
+    - name: Install Claude Code via official installer
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://claude.ai/install.sh | bash
+      environment:
+        HOME: "{{ system.home | default(current_home) }}"
+      when: claude_installed.rc != 0
+
 - name: Configure AI tools
   tags: [sf-toolbox, packages, ai]
   block:

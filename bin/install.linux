@@ -88,10 +88,10 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
 fi
 
 resolve_repo_dir() {
-  if [[ -d "${INSTALL_DIR}/.git" ]]; then
-    REPO_DIR="${INSTALL_DIR}"
-  else
+  if [[ "${SCRIPT_DIR}" != "${INSTALL_DIR}/bin" ]]; then
     REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+  else
+    REPO_DIR="${INSTALL_DIR}"
   fi
 }
 
@@ -160,6 +160,7 @@ is_sf_managed() {
     gcloud) [[ "${path}" == "/opt/google-cloud-sdk/bin/gcloud" ]] && return 0 ;;
     ajust) [[ "${path}" == "/usr/local/bin/ajust" ]] && return 0 ;;
     spark-http-proxy) [[ "${path}" == "/usr/local/bin/spark-http-proxy" ]] && return 0 ;;
+    claude) [[ "${path}" == "${HOME}/.local/bin/claude" ]] && return 0 ;;
   esac
   return 1
 }
