@@ -46,6 +46,8 @@ jobs:
           gum --version
           glab --version
           opencode version || opencode --version
+          copilot --version
+          claude --version
           /opt/google-cloud-sdk/bin/gcloud --version
 
   toolbox-ubuntu-2604:
@@ -58,7 +60,7 @@ jobs:
       - name: Install prerequisites
         run: |
           apt-get update
-          apt-get install -y ansible git zsh curl sudo python3 build-essential
+          apt-get install -y ansible git zsh curl sudo python3 build-essential nodejs npm
 
       - name: Create test user
         run: |
@@ -78,6 +80,8 @@ jobs:
           gum --version
           glab --version
           opencode version || opencode --version
+          copilot --version
+          claude --version
           /opt/google-cloud-sdk/bin/gcloud --version
 
   toolbox-arch:
@@ -106,6 +110,8 @@ jobs:
       - name: Verify installed tools
         run: |
           opencode version || opencode --version
+          copilot --version
+          find /home/testuser -name claude -type f -executable 2>/dev/null | head -1 | xargs -I{} {} --version
           just --version
           gum --version
           glab --version
@@ -185,6 +191,8 @@ jobs:
       - name: Verify installed tools
         run: |
           opencode version || opencode --version
+          copilot --version
+          find /home/testuser -name claude -type f -executable 2>/dev/null | head -1 | xargs -I{} {} --version
           just --version
           gum --version
           glab --version
@@ -203,7 +211,7 @@ jobs:
       - name: Install prerequisites
         run: |
           apt-get update
-          apt-get install -y git zsh curl sudo python3 python3-yaml
+          apt-get install -y git zsh curl sudo python3 python3-yaml nodejs npm
 
       - name: Create test user
         run: |

@@ -17,6 +17,7 @@ toolbox:
       - opencode
     npm:
       - "@fission-ai/openspec"
+      - "@github/copilot"
     remove:
       pacman:
         - google-cloud-cli
@@ -26,6 +27,8 @@ toolbox:
   debian:
     apt:
       - libnss3-tools
+      - nodejs
+      - npm
     homebrew_taps:
       - anomalyco/tap
     homebrew:
@@ -35,6 +38,13 @@ toolbox:
       - mkcert
       - anomalyco/tap/opencode
       - openspec
+    homebrew_casks:
+      - claude-code
+    # copilot-cli is installed via npm instead of brew cask because the
+    # cask definition uses generate_completions_from_executable which is
+    # broken on older Homebrew versions (e.g. Ubuntu 24.04).
+    npm:
+      - "@github/copilot"
 
   # ─── Common (both OSes) ─────────────────────────────────────────────────
   common:
@@ -48,6 +58,8 @@ toolbox:
   detect:
     - opencode
     - openspec
+    - copilot
+    - claude
     - glab
     - gcloud
     - mkcert

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added GitHub Copilot CLI as a managed sf-toolbox coding agent (npm on Arch, brew cask on Debian/Ubuntu)
+- Added Claude Code as a managed sf-toolbox coding agent (curl installer on Arch, brew cask on Debian/Ubuntu)
+- Added Homebrew cask support to sf-toolbox packages task for Debian/Ubuntu
 - Added `--help` / `-h` flag to `sf-toolbox` with colored output and OS detection display
 - Added `playbooks/roles/sf-toolbox/` role with per-tool task files (packages, gcloud, ai, glab, ajust, http-proxy)
 - Added `detect` section in toolbox package definitions for binary detection in the installer
@@ -16,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Moved GitHub Copilot CLI installation from `packages/tasks/development.yml` to sf-toolbox role
 - Disabled Google Cloud SDK usage reporting both at install time (`--usage-reporting false`) and persistently via `gcloud config set core/disable_usage_reporting true` to avoid sending telemetry to Google
 - Moved opencode base configuration from `~/.config/opencode/opencode.json` to `/etc/opencode/opencode.json` (user-owned, in a `root:root` directory) to support user-local overrides via `~/.config/opencode/opencode.json`
 - Added automatic cleanup of duplicate `~/.config/opencode/opencode.json` when identical to the shipped source, with a warning when the file contains non-custom content
@@ -33,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed `resolve_repo_dir` in `bin/install.linux` always preferring `/opt/archlinux-provisioner` over local checkout, preventing local development testing
 - Fixed `sf-toolbox` OS detection to treat `CachyOS` as `Archlinux`
 - Fixed `sf-toolbox` symlink breaking `SCRIPT_DIR` resolution by resolving symlinks with `readlink -f` before computing the directory
 
