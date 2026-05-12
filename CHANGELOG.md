@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added rtk-ai (Rust Token Killer) installation to `sf-toolbox` role with automatic version management from GitHub releases
 - Added GitHub Copilot CLI as a managed sf-toolbox coding agent (npm on Arch, brew cask on Debian/Ubuntu)
 - Added Claude Code as a managed sf-toolbox coding agent (curl installer on Arch, brew cask on Debian/Ubuntu)
 - Added Homebrew cask support to sf-toolbox packages task for Debian/Ubuntu
