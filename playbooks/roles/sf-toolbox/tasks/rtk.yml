@@ -1,0 +1,114 @@
+---
+- name: Install rtk (Rust Token Killer)
+  tags: [sf-toolbox, packages, rtk]
+  block:
+    - name: Check if rtk is installed
+      ansible.builtin.command: /usr/local/bin/rtk --version
+      register: rtk_installed
+      changed_when: false
+      failed_when: false
+
+    - name: Get latest rtk release version from GitHub
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/rtk-ai/rtk/releases/latest
+        return_content: true
+        headers:
+          Accept: application/vnd.github.v3+json
+      register: rtk_latest_release
+      changed_when: false
+
+    - name: Set rtk version facts
+      ansible.builtin.set_fact:
+        rtk_current_version: "{{ rtk_installed.stdout | default('') | regex_replace('^rtk\\s+', '') }}"
+        rtk_latest_version: "{{ rtk_latest_release.json.tag_name | regex_replace('^v', '') }}"
+
+    - name: Fail on unsupported architecture for rtk
+      ansible.builtin.fail:
+        msg: "rtk does not provide a binary for architecture: {{ ansible_facts['architecture'] }}"
+      when: ansible_facts['architecture'] not in ['x86_64', 'aarch64']
+
+    - name: Set rtk target architecture
+      ansible.builtin.set_fact:
+        rtk_target: "{{ rtk_arch_map[ansible_facts['architecture']] }}"
+      vars:
+        rtk_arch_map:
+          x86_64: x86_64-unknown-linux-musl
+          aarch64: aarch64-unknown-linux-gnu
+
+    - name: Notify rtk fresh installation
+      ansible.builtin.debug:
+        msg: "rtk is not installed, installing version {{ rtk_latest_version }}"
+      when: rtk_installed.rc != 0
+
+    - name: Notify rtk version upgrade
+      ansible.builtin.debug:
+        msg: "rtk {{ rtk_current_version }} is outdated, upgrading to {{ rtk_latest_version }}"
+      when:
+        - rtk_installed.rc == 0
+        - rtk_current_version != rtk_latest_version
+
+    - name: Notify rtk is up to date
+      ansible.builtin.debug:
+        msg: "rtk {{ rtk_current_version }} is already the latest version"
+      when:
+        - rtk_installed.rc == 0
+        - rtk_current_version == rtk_latest_version
+
+    - name: Download rtk release tarball
+      ansible.builtin.get_url:
+        url: "https://github.com/rtk-ai/rtk/releases/download/v{{ rtk_latest_version }}/rtk-{{ rtk_target }}.tar.gz"
+        dest: /tmp/rtk.tar.gz
+        mode: "0644"
+      when: rtk_installed.rc != 0 or rtk_current_version != rtk_latest_version
+
+    - name: Create temporary extraction directory for rtk
+      ansible.builtin.file:
+        path: /tmp/rtk-extract
+        state: directory
+        mode: "0755"
+      when: rtk_installed.rc != 0 or rtk_current_version != rtk_latest_version
+
+    - name: Extract rtk tarball to temporary directory
+      ansible.builtin.unarchive:
+        src: /tmp/rtk.tar.gz
+        dest: /tmp/rtk-extract
+        remote_src: true
+      when: rtk_installed.rc != 0 or rtk_current_version != rtk_latest_version
+
+    - name: Install rtk binary to /usr/local/bin
+      ansible.builtin.copy:
+        src: /tmp/rtk-extract/rtk
+        dest: /usr/local/bin/rtk
+        mode: "0755"
+        remote_src: true
+      when: rtk_installed.rc != 0 or rtk_current_version != rtk_latest_version
+
+    - name: Verify rtk installation
+      ansible.builtin.command: /usr/local/bin/rtk --version
+      changed_when: false
+      when: rtk_installed.rc != 0 or rtk_current_version != rtk_latest_version
+
+    - name: Clean up rtk temporary files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/rtk.tar.gz
+        - /tmp/rtk-extract
+
+    - name: Detect other rtk installations outside /usr/local/bin
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.command: which -a rtk
+      register: rtk_all_paths
+      changed_when: false
+      failed_when: false
+
+    - name: Warn about unmanaged rtk installations
+      ansible.builtin.debug:
+        msg: >-
+          WARNING: Found rtk installed at {{ item }} which is not managed by
+          sf-toolbox. This may shadow /usr/local/bin/rtk depending on your
+          PATH order. Consider removing it so that the sf-toolbox-managed
+          version at /usr/local/bin/rtk is used consistently.
+      loop: "{{ rtk_all_paths.stdout_lines | default([]) | reject('equalto', '/usr/local/bin/rtk') | list }}"

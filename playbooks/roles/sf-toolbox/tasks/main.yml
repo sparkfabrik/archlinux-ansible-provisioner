@@ -11,6 +11,9 @@
 - name: Configure AI tools
   import_tasks: ai.yml
 
+- name: Install rtk
+  import_tasks: rtk.yml
+
 - name: Configure glab
   import_tasks: glab.yml
 
