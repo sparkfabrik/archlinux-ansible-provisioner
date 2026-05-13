@@ -1,6 +1,7 @@
 ---
-- name: Install rtk (Rust Token Killer)
+- name: Install rtk from GitHub releases (Archlinux)
   tags: [sf-toolbox, packages, rtk]
+  when: ansible_facts['os_family'] == "Archlinux"
   block:
     - name: Check if rtk is installed
       ansible.builtin.command: /usr/local/bin/rtk --version
@@ -96,6 +97,53 @@
         - /tmp/rtk.tar.gz
         - /tmp/rtk-extract
 
+    - name: Detect other rtk installations outside /usr/local/bin
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.command: which -a rtk
+      register: rtk_all_paths
+      changed_when: false
+      failed_when: false
+
+    - name: Warn about unmanaged rtk installations
+      ansible.builtin.debug:
+        msg: >-
+          WARNING: Found rtk installed at {{ item }} which is not managed by
+          sf-toolbox. This may shadow /usr/local/bin/rtk depending on your
+          PATH order. Consider removing it so that the sf-toolbox-managed
+          version at /usr/local/bin/rtk is used consistently.
+      loop: "{{ rtk_all_paths.stdout_lines | default([]) | reject('equalto', '/usr/local/bin/rtk') | list }}"
+
+- name: Install rtk via Homebrew (Debian/Ubuntu)
+  tags: [sf-toolbox, packages, rtk]
+  when: ansible_facts['os_family'] == "Debian"
+  become: true
+  become_user: "{{ system.username | default(current_user) }}"
+  block:
+    - name: Install rtk via Homebrew
+      community.general.homebrew:
+        name: rtk
+        state: present
+        path: /home/linuxbrew/.linuxbrew/bin
+
+    - name: Detect other rtk installations outside Homebrew
+      ansible.builtin.command: which -a rtk
+      register: rtk_all_paths
+      changed_when: false
+      failed_when: false
+
+    - name: Warn about unmanaged rtk installations
+      ansible.builtin.debug:
+        msg: >-
+          WARNING: Found rtk installed at {{ item }} which is not managed by
+          sf-toolbox. This may shadow the Homebrew-managed rtk depending on
+          your PATH order. Consider removing it so that the sf-toolbox-managed
+          version is used consistently.
+      loop: "{{ rtk_all_paths.stdout_lines | default([]) | reject('match', '/home/linuxbrew/') | list }}"
+
+- name: Configure rtk
+  tags: [sf-toolbox, packages, rtk]
+  block:
     - name: Check if rtk setup script exists and is executable
       become: true
       become_user: "{{ system.username | default(current_user) }}"
@@ -118,20 +166,3 @@
           WARNING: Automatic rtk configuration was not possible.
           Please run `ajust sf-rtk-setup` manually to complete the setup.
       when: not rtk_setup_script.stat.exists or not (rtk_setup_script.stat.executable | default(false))
-
-    - name: Detect other rtk installations outside /usr/local/bin
-      become: true
-      become_user: "{{ system.username | default(current_user) }}"
-      ansible.builtin.command: which -a rtk
-      register: rtk_all_paths
-      changed_when: false
-      failed_when: false
-
-    - name: Warn about unmanaged rtk installations
-      ansible.builtin.debug:
-        msg: >-
-          WARNING: Found rtk installed at {{ item }} which is not managed by
-          sf-toolbox. This may shadow /usr/local/bin/rtk depending on your
-          PATH order. Consider removing it so that the sf-toolbox-managed
-          version at /usr/local/bin/rtk is used consistently.
-      loop: "{{ rtk_all_paths.stdout_lines | default([]) | reject('equalto', '/usr/local/bin/rtk') | list }}"
