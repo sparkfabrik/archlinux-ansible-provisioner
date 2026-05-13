@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Split rtk installation by OS: GitHub releases on Archlinux, Homebrew on Debian/Ubuntu
 - Moved `github-cli` (gh) installation from `packages` role to `sf-toolbox` role with Debian/Ubuntu support via Homebrew
 - Moved GitHub Copilot CLI installation from `packages/tasks/development.yml` to sf-toolbox role
 - Disabled Google Cloud SDK usage reporting both at install time (`--usage-reporting false`) and persistently via `gcloud config set core/disable_usage_reporting true` to avoid sending telemetry to Google
