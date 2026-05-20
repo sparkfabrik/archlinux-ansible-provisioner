@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed rtk not detected by sf-toolbox conflict system; added `rtk` to `toolbox.detect` list and `is_sf_managed()`, removed redundant per-role `which -a` detection that didn't feed into the conflict resolver
 - Fixed `resolve_repo_dir` in `bin/install.linux` always preferring `/opt/archlinux-provisioner` over local checkout, preventing local development testing
 - Fixed `sf-toolbox` OS detection to treat `CachyOS` as `Archlinux`
 - Fixed `sf-toolbox` symlink breaking `SCRIPT_DIR` resolution by resolving symlinks with `readlink -f` before computing the directory

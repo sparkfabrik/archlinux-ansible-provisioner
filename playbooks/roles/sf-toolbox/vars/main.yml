@@ -69,6 +69,7 @@ toolbox:
     - just
     - gum
     - ajust
+    - rtk
     - spark-http-proxy
 
   # ─── Prerequisites ──────────────────────────────────────────────────────
