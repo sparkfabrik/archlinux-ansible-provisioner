@@ -1,0 +1,26 @@
+---
+- name: Configure caveman
+  tags: [sf-toolbox, packages, caveman]
+  block:
+    - name: Check if caveman setup script exists and is executable
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.stat:
+        path: "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/caveman/setup.sh"
+      register: caveman_setup_script
+
+    - name: Run caveman setup script
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.command: "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/caveman/setup.sh"
+      when:
+        - caveman_setup_script.stat.exists
+        - caveman_setup_script.stat.executable | default(false)
+      changed_when: true
+
+    - name: Warn user to manually run caveman setup
+      ansible.builtin.debug:
+        msg: >-
+          WARNING: Automatic caveman configuration was not possible.
+          Please run `ajust sf-caveman-install` manually to complete the setup.
+      when: not caveman_setup_script.stat.exists or not (caveman_setup_script.stat.executable | default(false))
