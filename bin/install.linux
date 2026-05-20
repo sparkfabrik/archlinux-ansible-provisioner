@@ -159,6 +159,7 @@ is_sf_managed() {
   case "${tool}" in
     gcloud) [[ "${path}" == "/opt/google-cloud-sdk/bin/gcloud" ]] && return 0 ;;
     ajust) [[ "${path}" == "/usr/local/bin/ajust" ]] && return 0 ;;
+    rtk) [[ "${path}" == "/usr/local/bin/rtk" ]] && return 0 ;;
     spark-http-proxy) [[ "${path}" == "/usr/local/bin/spark-http-proxy" ]] && return 0 ;;
     claude) [[ "${path}" == "${HOME}/.local/bin/claude" ]] && return 0 ;;
   esac
