@@ -8,12 +8,6 @@
 - name: Install Google Cloud SDK
   import_tasks: gcloud.yml
 
-- name: Configure AI tools
-  import_tasks: ai.yml
-
-- name: Install rtk
-  import_tasks: rtk.yml
-
 - name: Configure glab
   import_tasks: glab.yml
 
@@ -22,3 +16,12 @@
 
 - name: Install SparkFabrik HTTP Proxy
   import_tasks: http-proxy.yml
+
+- name: Configure AI tools
+  import_tasks: ai.yml
+
+- name: Install rtk
+  import_tasks: rtk.yml
+
+- name: Configure caveman
+  import_tasks: caveman.yml

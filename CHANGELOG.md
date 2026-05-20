@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added automatic caveman configuration via sparkdock setup script (`sjust/scripts/caveman/setup.sh`) in `sf-toolbox` role, with fallback warning to run `ajust sf-caveman-install` manually
 - Added automatic rtk configuration via sparkdock setup script after installation, with fallback warning to run `ajust sf-rtk-setup` manually
 - Added rtk-ai (Rust Token Killer) installation to `sf-toolbox` role with automatic version management from GitHub releases
 - Added GitHub Copilot CLI as a managed sf-toolbox coding agent (npm on Arch, brew cask on Debian/Ubuntu)
