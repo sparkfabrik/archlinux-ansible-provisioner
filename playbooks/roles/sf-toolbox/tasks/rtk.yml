@@ -106,7 +106,7 @@
     - name: Install rtk via Homebrew
       community.general.homebrew:
         name: rtk
-        state: present
+        state: latest
         path: /home/linuxbrew/.linuxbrew/bin
 
 - name: Configure rtk

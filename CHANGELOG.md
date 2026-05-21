@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Homebrew formulae, casks, and rtk now install with `state: latest` so packages upgrade on every run
 - Split rtk installation by OS: GitHub releases on Archlinux, Homebrew on Debian/Ubuntu
 - Moved `github-cli` (gh) installation from `packages` role to `sf-toolbox` role with Debian/Ubuntu support via Homebrew
 - Moved GitHub Copilot CLI installation from `packages/tasks/development.yml` to sf-toolbox role
