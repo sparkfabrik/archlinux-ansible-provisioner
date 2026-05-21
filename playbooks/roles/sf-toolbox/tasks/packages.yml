@@ -48,7 +48,7 @@
       become_user: "{{ system.username | default(current_user) }}"
       community.general.homebrew:
         name: "{{ toolbox.debian.homebrew }}"
-        state: present
+        state: latest
         path: /home/linuxbrew/.linuxbrew/bin
       when: ansible_facts['os_family'] == "Debian"
 
@@ -57,7 +57,7 @@
       become_user: "{{ system.username | default(current_user) }}"
       community.general.homebrew_cask:
         name: "{{ toolbox.debian.homebrew_casks }}"
-        state: present
+        state: latest
         path: /home/linuxbrew/.linuxbrew/bin
       when:
         - ansible_facts['os_family'] == "Debian"
