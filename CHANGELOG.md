@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `/usr/local/bin/sparkfabrik-claude-code-otel-headers` — a small generic helper installed via the `sf-toolbox` Ansible role (`ai` tag). Claude Code calls it through the `otelHeadersHelper` field in the org [managed-settings](https://github.com/sparkfabrik/claude-code-managed-settings) repo to produce the OTLP `Authorization: Bearer …` header at runtime. The script reads the bearer from Secret Manager using the user's own gcloud session (no token at rest on disk, no MDM dependency — same path Mac users get via [sparkfabrik/sparkdock#483](https://github.com/sparkfabrik/sparkdock/pull/483)); the Secret Manager secret/project come from env vars set by the private managed-settings file, so this public script stays generic
 - Added automatic caveman configuration via sparkdock setup script (`sjust/scripts/caveman/setup.sh`) in `sf-toolbox` role, with fallback warning to run `ajust sf-caveman-install` manually
 - Added automatic rtk configuration via sparkdock setup script after installation, with fallback warning to run `ajust sf-rtk-setup` manually
 - Added rtk-ai (Rust Token Killer) installation to `sf-toolbox` role with automatic version management from GitHub releases
