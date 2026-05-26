@@ -137,10 +137,10 @@
         owner: "{{ system.username | default(current_user) }}"
         group: "{{ system.username | default(current_user) }}"
 
-    - name: Install Claude Code OTel headers helper
+    - name: Install Claude Code OTel headers helper (sourced from sparkdock)
       become: true
       ansible.builtin.copy:
-        src: sparkfabrik-claude-code-otel-headers
+        src: "{{ sparkdock.path | default(sparkdock_default_path) }}/config/bin/sparkfabrik-claude-code-otel-headers"
         dest: /usr/local/bin/sparkfabrik-claude-code-otel-headers
         mode: "0755"
         owner: root
