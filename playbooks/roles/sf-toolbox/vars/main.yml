@@ -16,9 +16,14 @@ toolbox:
       - mkcert
       - nss
       - opencode
+      - gopls
     npm:
       - "@fission-ai/openspec"
       - "@github/copilot"
+      - intelephense
+      - typescript
+      - typescript-language-server
+      - pyright
     remove:
       pacman:
         - google-cloud-cli
@@ -40,6 +45,7 @@ toolbox:
       - mkcert
       - anomalyco/tap/opencode
       - openspec
+      - gopls
     homebrew_casks:
       - claude-code
     # copilot-cli is installed via npm instead of brew cask because the
@@ -47,6 +53,10 @@ toolbox:
     # broken on older Homebrew versions (e.g. Ubuntu 24.04).
     npm:
       - "@github/copilot"
+      - intelephense
+      - typescript
+      - typescript-language-server
+      - pyright
 
   # ─── Common (both OSes) ─────────────────────────────────────────────────
   common:
@@ -71,6 +81,10 @@ toolbox:
     - ajust
     - rtk
     - spark-http-proxy
+    - intelephense
+    - typescript-language-server
+    - pyright-langserver
+    - gopls
 
   # ─── Prerequisites ──────────────────────────────────────────────────────
   # Must be available as commands before sf-toolbox runs.
