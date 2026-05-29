@@ -37,7 +37,7 @@
       community.general.pacman:
         name:
           - gum
-          - nodejs-lts-iron
+          - nodejs-lts-krypton
           - npm
           - zsh
         state: present
