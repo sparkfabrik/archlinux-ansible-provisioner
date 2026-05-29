@@ -52,6 +52,17 @@
         path: /home/linuxbrew/.linuxbrew/bin
       when: ansible_facts['os_family'] == "Debian"
 
+    # Migration: uninstall claude-code (stable) before installing claude-code@latest
+    - name: Remove claude-code stable cask (replaced by claude-code@latest)
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      community.general.homebrew_cask:
+        name: claude-code
+        state: absent
+        path: /home/linuxbrew/.linuxbrew/bin
+      when: ansible_facts['os_family'] == "Debian"
+      ignore_errors: true
+
     - name: Install homebrew casks (Debian/Ubuntu)
       become: true
       become_user: "{{ system.username | default(current_user) }}"
