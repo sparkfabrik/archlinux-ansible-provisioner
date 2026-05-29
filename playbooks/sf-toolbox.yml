@@ -23,6 +23,28 @@
         current_user: "{{ ansible_facts['env']['SUDO_USER'] | default(ansible_facts['user_id']) }}"
         current_home: "/home/{{ ansible_facts['env']['SUDO_USER'] | default(ansible_facts['user_id']) }}"
 
+    # The sparkdock and sf-toolbox roles assume a base dev environment is
+    # already present (on full workstation installs it is provided by the
+    # `packages` role). On a minimal Arch base these commands are missing,
+    # which made the playbook fail mid-run instead of up-front:
+    #   - gum            -> sparkdock "Run agent resources sync"
+    #   - zsh            -> sparkdock oh-my-zsh setup
+    #   - nodejs, npm    -> sf-toolbox "Install npm packages"
+    # (the oh-my-zsh shasum failure is fixed in sparkdock via a sha256sum
+    #  fallback; coreutils is always present, so no perl/shasum dependency.)
+    # These run before the roles so the toolbox playbook is self-contained.
+    - name: Ensure base runtime dependencies (Archlinux)
+      community.general.pacman:
+        name:
+          - gum
+          - nodejs-lts-iron
+          - npm
+          - zsh
+        state: present
+      become: true
+      when: ansible_facts['os_family'] == "Archlinux"
+      tags: [always]
+
   roles:
     - sparkdock
     - sf-toolbox
