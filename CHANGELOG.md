@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Switched Claude Code from `claude-code` (stable) to `claude-code@latest` cask on Debian/Ubuntu, which tracks latest releases instead of pinned stable versions; includes migration task to auto-uninstall old cask
 - Added `/usr/local/bin/sparkfabrik-claude-code-otel-headers` — Claude Code OTLP `otelHeadersHelper` script, sourced from sparkdock ([sparkfabrik/sparkdock#483](https://github.com/sparkfabrik/sparkdock/pull/483)).
 - Added automatic caveman configuration via sparkdock setup script (`sjust/scripts/caveman/setup.sh`) in `sf-toolbox` role, with fallback warning to run `ajust sf-caveman-install` manually
 - Added automatic rtk configuration via sparkdock setup script after installation, with fallback warning to run `ajust sf-rtk-setup` manually
