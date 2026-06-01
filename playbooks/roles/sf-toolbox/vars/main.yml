@@ -17,6 +17,7 @@ toolbox:
       - nss
       - opencode
       - gopls
+      - ripgrep
     npm:
       - "@fission-ai/openspec"
       - "@github/copilot"
@@ -46,6 +47,7 @@ toolbox:
       - anomalyco/tap/opencode
       - openspec
       - gopls
+      - ripgrep
     homebrew_casks:
       - claude-code@latest
     # copilot-cli is installed via npm instead of brew cask because the
@@ -79,6 +81,7 @@ toolbox:
     - just
     - gum
     - ajust
+    - rg
     - rtk
     - spark-http-proxy
     - intelephense
