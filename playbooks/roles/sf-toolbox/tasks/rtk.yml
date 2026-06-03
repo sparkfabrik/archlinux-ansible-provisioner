@@ -36,6 +36,10 @@
           x86_64: x86_64-unknown-linux-musl
           aarch64: aarch64-unknown-linux-gnu
 
+    - name: Check rtk release asset availability
+      ansible.builtin.set_fact:
+        rtk_asset_available: "{{ rtk_latest_release.json.assets | default([]) | map(attribute='name') | select('equalto', 'rtk-' ~ rtk_target ~ '.tar.gz') | list | length > 0 }}"
+
     - name: Notify rtk fresh installation
       ansible.builtin.debug:
         msg: "rtk is not installed, installing version {{ rtk_latest_version }}"
@@ -55,26 +59,42 @@
         - rtk_installed.rc == 0
         - rtk_current_version == rtk_latest_version
 
+    - name: Warn when rtk release asset is not yet available
+      ansible.builtin.debug:
+        msg: >-
+          WARNING: rtk release v{{ rtk_latest_version }} does not provide
+          rtk-{{ rtk_target }}.tar.gz yet (release assets may still be uploading).
+          Skipping rtk installation/upgrade, re-run the provisioner later.
+      when:
+        - rtk_installed.rc != 0 or rtk_current_version != rtk_latest_version
+        - not rtk_asset_available
+
     - name: Download rtk release tarball
       ansible.builtin.get_url:
         url: "https://github.com/rtk-ai/rtk/releases/download/v{{ rtk_latest_version }}/rtk-{{ rtk_target }}.tar.gz"
         dest: /tmp/rtk.tar.gz
         mode: "0644"
-      when: rtk_installed.rc != 0 or rtk_current_version != rtk_latest_version
+      when:
+        - rtk_installed.rc != 0 or rtk_current_version != rtk_latest_version
+        - rtk_asset_available
 
     - name: Create temporary extraction directory for rtk
       ansible.builtin.file:
         path: /tmp/rtk-extract
         state: directory
         mode: "0755"
-      when: rtk_installed.rc != 0 or rtk_current_version != rtk_latest_version
+      when:
+        - rtk_installed.rc != 0 or rtk_current_version != rtk_latest_version
+        - rtk_asset_available
 
     - name: Extract rtk tarball to temporary directory
       ansible.builtin.unarchive:
         src: /tmp/rtk.tar.gz
         dest: /tmp/rtk-extract
         remote_src: true
-      when: rtk_installed.rc != 0 or rtk_current_version != rtk_latest_version
+      when:
+        - rtk_installed.rc != 0 or rtk_current_version != rtk_latest_version
+        - rtk_asset_available
 
     - name: Install rtk binary to /usr/local/bin
       ansible.builtin.copy:
@@ -82,12 +102,16 @@
         dest: /usr/local/bin/rtk
         mode: "0755"
         remote_src: true
-      when: rtk_installed.rc != 0 or rtk_current_version != rtk_latest_version
+      when:
+        - rtk_installed.rc != 0 or rtk_current_version != rtk_latest_version
+        - rtk_asset_available
 
     - name: Verify rtk installation
       ansible.builtin.command: /usr/local/bin/rtk --version
       changed_when: false
-      when: rtk_installed.rc != 0 or rtk_current_version != rtk_latest_version
+      when:
+        - rtk_installed.rc != 0 or rtk_current_version != rtk_latest_version
+        - rtk_asset_available
 
     - name: Clean up rtk temporary files
       ansible.builtin.file:
