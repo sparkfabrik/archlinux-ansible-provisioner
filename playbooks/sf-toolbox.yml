@@ -14,7 +14,7 @@
     sparkfabrik: true
 
   environment:
-    PATH: "/home/linuxbrew/.linuxbrew/bin:{{ lookup('env', 'PATH') }}"
+    PATH: "{{ current_home | default('') }}/.local/bin:/home/linuxbrew/.linuxbrew/bin:{{ lookup('env', 'PATH') }}"
 
   pre_tasks:
     - name: Auto-detect current user
