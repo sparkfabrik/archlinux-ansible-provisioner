@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed `sf-toolbox` npm packages (e.g. `@fission-ai/openspec`) never upgrading after first install by switching the Arch and Debian/Ubuntu npm install tasks from `state: present` to `state: latest`, matching the existing Homebrew behavior
 - Fixed rtk not detected by sf-toolbox conflict system; added `rtk` to `toolbox.detect` list and `is_sf_managed()`, removed redundant per-role `which -a` detection that didn't feed into the conflict resolver
 - Fixed `resolve_repo_dir` in `bin/install.linux` always preferring `/opt/archlinux-provisioner` over local checkout, preventing local development testing
 - Fixed `sf-toolbox` OS detection to treat `CachyOS` as `Archlinux`
