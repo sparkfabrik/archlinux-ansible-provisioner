@@ -6,13 +6,16 @@
     gesture_ext:
       - x11gestures@joseexposito.github.io
   block:
-  - name: Install touchee and gnome-shell-extension-x11gestures
+  # gnome-shell-extension-x11gestures was removed: it is one of the AUR packages
+  # compromised in the June 2026 supply-chain attack (malicious npm install in the
+  # PKGBUILD). Do not re-add until the AUR package is cleaned and the maintainer
+  # re-verified. See sparkfabrik/archlinux-ansible-provisioner#220.
+  - name: Install touchegg and touche
     kewlfft.aur.aur:
       use: paru
       name:
         - touchegg
         - touche
-        - gnome-shell-extension-x11gestures
     become: yes
     become_user: aur_builder
 
