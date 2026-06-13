@@ -53,8 +53,14 @@
 - name: Configure gnome keybindings
   import_tasks: keybindings.yml
 
-- name: Configure multitouch gestures (x11)
-  import_tasks: gestures.yml
+- name: Ensure compromised gesture packages are removed
+  community.general.pacman:
+    name:
+      - gnome-shell-extension-x11gestures
+      - touchegg
+      - touche
+    state: absent
+  become: yes
 
 - name: Install flameshot
   import_tasks: flameshot.yml
