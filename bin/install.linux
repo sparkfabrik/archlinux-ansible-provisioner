@@ -53,6 +53,24 @@ SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 # shellcheck source=common/logging.sh disable=SC1091
 source "${SCRIPT_DIR}/common/logging.sh"
 
+# ─── Python interpreter ───────────────────────────────────────────────────────
+# Pick a python3 that has PyYAML. Homebrew's python3 often shadows the system
+# interpreter on PATH (common on SparkFabrik dev machines), and that python
+# lacks PyYAML even though Ansible's system python has it. Prefer the system
+# interpreter, then fall back to whatever python3 is on PATH.
+yaml_python() {
+  local candidate
+  for candidate in /usr/bin/python3 python3; do
+    if command -v "${candidate}" &>/dev/null \
+      && "${candidate}" -c "import yaml" &>/dev/null; then
+      printf '%s' "${candidate}"
+      return 0
+    fi
+  done
+  log_error "No python3 with PyYAML found. Install it: /usr/bin/python3 -m pip install pyyaml"
+  return 1
+}
+
 # ─── Detection ──────────────────────────────────────────────────────────────
 detect_os() {
   local os_release_file="${OS_RELEASE_FILE:-/etc/os-release}"
@@ -101,8 +119,9 @@ show_status() {
 
   [[ -f "${parser}" && -f "${packages_file}" ]] || return 0
 
-  local installed=() missing=()
-  mapfile -t tools < <(python3 "${parser}" "${packages_file}" toolbox.detect)
+  local installed=() missing=() py
+  py="$(yaml_python)" || return 0
+  mapfile -t tools < <("${py}" "${parser}" "${packages_file}" toolbox.detect)
   for tool in "${tools[@]}"; do
     if command -v "${tool}" &>/dev/null; then
       installed+=("${tool}")
@@ -251,7 +270,9 @@ check_conflicts() {
   [[ -f "${parser}" && -f "${packages_file}" ]] || return 0
 
   local -a conflict_tools=() conflict_paths=() conflict_provs=() conflict_cmds=()
-  mapfile -t tools < <(python3 "${parser}" "${packages_file}" toolbox.detect)
+  local py
+  py="$(yaml_python)" || return 0
+  mapfile -t tools < <("${py}" "${parser}" "${packages_file}" toolbox.detect)
 
   for tool in "${tools[@]}"; do
     local tool_path
