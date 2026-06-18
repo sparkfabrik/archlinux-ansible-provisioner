@@ -6,12 +6,14 @@
       community.general.pacman:
         name:
           - neofetch
+          - yq
         state: absent
 
     - name: Install cloud native packages
       community.general.pacman:
         name:
           - aws-cli-v2
+          - go-yq
           - helm
           - jless
           - jq
@@ -20,7 +22,6 @@
           - kustomize
           - terraform
           - yamllint
-          - yq
 
     - name: Install cloud native packages from aur
       kewlfft.aur.aur:

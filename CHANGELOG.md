@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Replaced the obsolete Python `yq` package (pacman) with `go-yq`, the mikefarah Go yq v4 (`extra` repo); the old `yq` is now removed first since the two packages conflict
 - Homebrew formulae, casks, and rtk now install with `state: latest` so packages upgrade on every run
 - Split rtk installation by OS: GitHub releases on Archlinux, Homebrew on Debian/Ubuntu
 - Moved `github-cli` (gh) installation from `packages` role to `sf-toolbox` role with Debian/Ubuntu support via Homebrew
