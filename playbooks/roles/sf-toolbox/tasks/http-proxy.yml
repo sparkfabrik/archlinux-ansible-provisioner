@@ -11,6 +11,7 @@
         url: https://raw.githubusercontent.com/sparkfabrik/http-proxy/refs/heads/main/bin/spark-http-proxy
         dest: /usr/local/bin/spark-http-proxy
         mode: "0755"
+        force: true
 
     - name: Create ~/.local/spark/http-proxy directory
       ansible.builtin.file:
@@ -33,6 +34,7 @@
         mode: "0644"
         owner: "{{ system.username | default(current_user) }}"
         group: "{{ system.username | default(current_user) }}"
+        force: true
       register: proxy_compose
 
     - name: Set ownership of spark-http-proxy script
