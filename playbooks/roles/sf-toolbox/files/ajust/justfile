@@ -87,8 +87,8 @@ provision-tags tags:
       --tags "{{tags}}" \
       --extra-vars "@{{config_file}}"
 
-# Install/update spark-http-proxy to the latest version (downloads latest binary +
-# compose.yml and reconfigures *.loc DNS via configure-dns).
+# Install/update spark-http-proxy to the latest version (updates the git clone,
+# re-links the CLI, and reconfigures *.loc DNS via configure-dns).
 [group('http-proxy')]
 http-proxy-install-update:
     @just --justfile "{{justfile()}}" provision-tags spark-http-proxy
