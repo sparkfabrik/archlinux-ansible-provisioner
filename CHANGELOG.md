@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `http-proxy-install-update` ajust recipe (group `http-proxy`) for parity with macOS sjust; installs/updates `spark-http-proxy` via the `spark-http-proxy` provisioner tag
 - Configured `*.loc` local DNS resolution on all OSes (including Debian/Ubuntu) by invoking `spark-http-proxy configure-dns` during `sf-toolbox` provisioning
 - Added `ripgrep` (`rg`) to `sf-toolbox` packages for both Arch Linux (pacman) and Debian/Ubuntu (Homebrew)
 - Added language server binaries for Claude Code's official code-intelligence plugins to the `sf-toolbox` role so org-level `enabledPlugins` can wire them in without per-machine setup: `intelephense`, `typescript`, `typescript-language-server`, `pyright` via npm (covers `php-lsp`, `typescript-lsp`, `pyright-lsp` plugins) and `gopls` via pacman on Arch / Homebrew on Debian/Ubuntu (covers `gopls-lsp` plugin). LSP processes only spawn when matching file extensions are present in the workspace, so devs not working in a given language pay no runtime cost
