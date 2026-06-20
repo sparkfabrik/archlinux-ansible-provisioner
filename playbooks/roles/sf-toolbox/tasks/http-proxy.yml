@@ -1,47 +1,50 @@
 ---
 - name: Install and configure SparkFabrik HTTP Proxy
   tags: [sf-toolbox, packages, spark-http-proxy]
+  vars:
+    proxy_home: "{{ system.home | default(current_home) }}/.local/spark/http-proxy"
+    proxy_src: "{{ proxy_home }}/src"
   block:
     - name: Configure mkcert
       ansible.builtin.command: mkcert -install
       changed_when: false
 
-    - name: Download SparkFabrik HTTP Proxy script
-      ansible.builtin.get_url:
-        url: https://raw.githubusercontent.com/sparkfabrik/http-proxy/refs/heads/main/bin/spark-http-proxy
-        dest: /usr/local/bin/spark-http-proxy
-        mode: "0755"
+    # Install via a git clone + symlink (mirrors the macOS sparkdock mechanism,
+    # but under $HOME). A clone — rather than a standalone downloaded script —
+    # lets `spark-http-proxy self-update` work and keeps the compose file in sync
+    # with the CLI. force/update keep it pinned to the latest main on every run.
+    - name: Clone/update the SparkFabrik HTTP Proxy repository
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.git:
+        repo: https://github.com/sparkfabrik/http-proxy.git
+        dest: "{{ proxy_src }}"
+        version: main
+        update: true
         force: true
 
-    - name: Create ~/.local/spark/http-proxy directory
+    - name: Ensure the spark-http-proxy CLI is executable
       ansible.builtin.file:
-        path: "{{ system.home | default(current_home) }}/.local/spark/http-proxy"
-        state: directory
+        path: "{{ proxy_src }}/bin/spark-http-proxy"
         mode: "0755"
-        owner: "{{ system.username | default(current_user) }}"
-        group: "{{ system.username | default(current_user) }}"
 
-    - name: Ensure ~/.local/spark directory ownership
+    # state: link with force replaces a pre-existing standalone file (the old
+    # get_url install) with a symlink into the clone.
+    - name: Symlink spark-http-proxy onto PATH
       ansible.builtin.file:
-        dest: "{{ system.home | default(current_home) }}/.local/spark"
-        owner: "{{ system.username | default(current_user) }}"
-        group: "{{ system.username | default(current_user) }}"
-
-    - name: Download SparkFabrik HTTP Proxy compose file
-      ansible.builtin.get_url:
-        url: https://raw.githubusercontent.com/sparkfabrik/http-proxy/refs/heads/main/bin/compose.yml
-        dest: "{{ system.home | default(current_home) }}/.local/spark/http-proxy/compose.yml"
-        mode: "0644"
-        owner: "{{ system.username | default(current_user) }}"
-        group: "{{ system.username | default(current_user) }}"
-        force: true
-      register: proxy_compose
-
-    - name: Set ownership of spark-http-proxy script
-      ansible.builtin.file:
+        src: "{{ proxy_src }}/bin/spark-http-proxy"
         dest: /usr/local/bin/spark-http-proxy
-        owner: "{{ system.username | default(current_user) }}"
-        group: "{{ system.username | default(current_user) }}"
+        state: link
+        force: true
+
+    # Migration: older installs downloaded a standalone compose.yml here. The CLI
+    # prefers ~/.local/spark/http-proxy/compose.yml over the clone's
+    # src/bin/compose.yml, so a leftover copy would shadow the clone and never
+    # update. Remove it and let the CLI use the clone's compose file.
+    - name: Remove legacy standalone compose.yml superseded by the clone
+      ansible.builtin.file:
+        path: "{{ proxy_home }}/compose.yml"
+        state: absent
 
     - name: Remove legacy docker-dev-dns.conf drop-in superseded by spark-http-proxy
       ansible.builtin.file:
@@ -52,7 +55,7 @@
     - name: Configure system DNS for proxy domains via spark-http-proxy
       ansible.builtin.command: spark-http-proxy configure-dns
       environment:
-        COMPOSE_FILE: "{{ proxy_compose.dest }}"
+        COMPOSE_FILE: "{{ proxy_src }}/bin/compose.yml"
       register: configure_dns
       changed_when: "'succeeded' in configure_dns.stdout"
 
