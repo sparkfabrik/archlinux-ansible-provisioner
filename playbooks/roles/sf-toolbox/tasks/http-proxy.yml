@@ -33,6 +33,7 @@
         mode: "0644"
         owner: "{{ system.username | default(current_user) }}"
         group: "{{ system.username | default(current_user) }}"
+      register: proxy_compose
 
     - name: Set ownership of spark-http-proxy script
       ansible.builtin.file:
@@ -48,6 +49,8 @@
 
     - name: Configure system DNS for proxy domains via spark-http-proxy
       ansible.builtin.command: spark-http-proxy configure-dns
+      environment:
+        COMPOSE_FILE: "{{ proxy_compose.dest }}"
       register: configure_dns
       changed_when: "'succeeded' in configure_dns.stdout"
 
