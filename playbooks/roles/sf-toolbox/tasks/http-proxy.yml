@@ -9,6 +9,20 @@
       ansible.builtin.command: mkcert -install
       changed_when: false
 
+    # Migration safety: an earlier get_url install left no repo here. If src/
+    # exists but is not a git checkout (leftover junk), remove it so the clone
+    # below starts clean instead of failing on a non-git directory.
+    - name: Check for an existing http-proxy git checkout
+      ansible.builtin.stat:
+        path: "{{ proxy_src }}/.git"
+      register: proxy_src_git
+
+    - name: Remove a non-git http-proxy directory before cloning
+      ansible.builtin.file:
+        path: "{{ proxy_src }}"
+        state: absent
+      when: not proxy_src_git.stat.exists
+
     # Install via a git clone + symlink (mirrors the macOS sparkdock mechanism,
     # but under $HOME). A clone — rather than a standalone downloaded script —
     # lets `spark-http-proxy self-update` work and keeps the compose file in sync
