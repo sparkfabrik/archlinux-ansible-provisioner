@@ -87,9 +87,10 @@ provision-tags tags:
       --tags "{{tags}}" \
       --extra-vars "@{{config_file}}"
 
-# Update spark-http-proxy to the latest version. Uses the CLI's own self-update,
-# which git-pulls the clone it was installed from — no provisioner checkout or
-# config needed. Run `spark-http-proxy upgrade` afterwards to pull new images.
+# Uses the CLI's own self-update, which git-pulls the clone it was installed from
+# (no provisioner checkout or config needed). Run `spark-http-proxy upgrade`
+# afterwards to pull new images.
+# Update spark-http-proxy to the latest version.
 [group('http-proxy')]
 http-proxy-install-update:
     spark-http-proxy self-update
