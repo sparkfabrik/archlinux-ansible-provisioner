@@ -39,3 +39,20 @@
         dest: /usr/local/bin/spark-http-proxy
         owner: "{{ system.username | default(current_user) }}"
         group: "{{ system.username | default(current_user) }}"
+
+    - name: Remove legacy docker-dev-dns.conf drop-in superseded by spark-http-proxy
+      ansible.builtin.file:
+        path: /etc/systemd/resolved.conf.d/docker-dev-dns.conf
+        state: absent
+      register: legacy_dns_dropin
+
+    - name: Configure system DNS for proxy domains via spark-http-proxy
+      ansible.builtin.command: spark-http-proxy configure-dns
+      register: configure_dns
+      changed_when: "'succeeded' in configure_dns.stdout"
+
+    - name: Restart systemd-resolved when the legacy drop-in was removed
+      ansible.builtin.systemd:
+        name: systemd-resolved
+        state: restarted
+      when: legacy_dns_dropin.changed
