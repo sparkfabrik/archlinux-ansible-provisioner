@@ -25,3 +25,6 @@
 
 - name: Configure caveman
   import_tasks: caveman.yml
+
+- name: Configure Claude gh skill gate
+  import_tasks: claude-gh-gate.yml

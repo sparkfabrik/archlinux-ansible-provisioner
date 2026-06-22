@@ -1,0 +1,28 @@
+---
+- name: Configure Claude gh skill gate
+  tags: [sf-toolbox, ai, claude-gh-gate]
+  block:
+    - name: Check if the Claude gh-gate script exists
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.stat:
+        path: "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/claude-gh-gate.py"
+      register: claude_gh_gate_script
+
+    - name: Enable the Claude gh skill gate
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.command: "python3 {{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/claude-gh-gate.py enable"
+      environment:
+        HOME: "{{ system.home | default(current_home) }}"
+      register: claude_gh_gate_output
+      changed_when: "'already enabled' not in claude_gh_gate_output.stdout"
+      when:
+        - claude_gh_gate_script.stat.exists
+
+    - name: Warn user to manually enable the Claude gh-gate
+      ansible.builtin.debug:
+        msg: >-
+          WARNING: Automatic Claude gh-gate configuration was not possible.
+          Please run `ajust claude-gh-gate-enable` manually to complete the setup.
+      when: not claude_gh_gate_script.stat.exists
