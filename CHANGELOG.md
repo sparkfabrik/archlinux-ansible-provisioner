@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Enable the Claude Code `gh` skill gate automatically in the `sf-toolbox` role by running the sparkdock-installed `claude-gh-gate.py enable` (blocks raw `gh` commands until the `gh` skill is loaded), with a fallback warning to run `ajust claude-gh-gate-enable` manually if the sparkdock script is missing. Mirrors the existing caveman/rtk setup pattern and the macOS sparkdock provisioning.
 - Install `spark-http-proxy` on Linux via a git clone + symlink (under `~/.local/spark/http-proxy/src`) instead of a standalone downloaded script, mirroring the macOS sparkdock mechanism. This makes `spark-http-proxy self-update` work, keeps the compose file in sync with the CLI, and deterministically updates to the latest `main` on every provision. Migrates existing installs by replacing the standalone CLI file with a symlink and removing the now-stale standalone `compose.yml` that would otherwise shadow the clone
 - Added `http-proxy-install-update` ajust recipe (group `http-proxy`) for parity with macOS sjust; updates `spark-http-proxy` via the CLI's own `self-update` (git-pulls the clone it was installed from), so it needs no provisioner checkout or config
 - Fixed the `provision-tags` ajust recipe default `provisioner_path` (`$HOME/provisioner` → `/opt/archlinux-provisioner`, where `bootstrap.sh`/`install.linux` install the provisioner) so provisioner-tag recipes find the checkout without manually setting `AJUST_PROVISIONER_PATH`
