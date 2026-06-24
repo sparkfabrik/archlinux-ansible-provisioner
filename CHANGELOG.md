@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed `sf-toolbox` failing with "PyYAML is not installed" when a Homebrew `python3` shadows the system interpreter on `PATH`; the installer now selects a `python3` that has PyYAML (preferring `/usr/bin/python3`) for the toolbox package parser
 - Fixed `sf-toolbox` npm packages (e.g. `@fission-ai/openspec`) never upgrading after first install by switching the Arch and Debian/Ubuntu npm install tasks from `state: present` to `state: latest`, matching the existing Homebrew behavior
 - Fixed rtk not detected by sf-toolbox conflict system; added `rtk` to `toolbox.detect` list and `is_sf_managed()`, removed redundant per-role `which -a` detection that didn't feed into the conflict resolver
 - Fixed `resolve_repo_dir` in `bin/install.linux` always preferring `/opt/archlinux-provisioner` over local checkout, preventing local development testing
