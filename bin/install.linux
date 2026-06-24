@@ -67,7 +67,7 @@ yaml_python() {
       return 0
     fi
   done
-  log_error "No python3 with PyYAML found. Install it: /usr/bin/python3 -m pip install pyyaml"
+  log_error "No python3 with PyYAML found. Install your distro's PyYAML package (Arch: python-yaml, Debian/Ubuntu: python3-yaml)." >&2
   return 1
 }
 
