@@ -50,6 +50,12 @@
         name: "{{ toolbox.debian.homebrew }}"
         state: latest
         path: /home/linuxbrew/.linuxbrew/bin
+      environment:
+        # Homebrew 6.0 enables a Bubblewrap build sandbox on Linux by default,
+        # which fails on distros that restrict unprivileged user namespaces
+        # (e.g. Ubuntu 24.04+ AppArmor). Disable it so source builds (opencode)
+        # succeed without relaxing kernel/AppArmor hardening.
+        HOMEBREW_NO_SANDBOX_LINUX: "1"
       when: ansible_facts['os_family'] == "Debian"
 
     # Migration: uninstall claude-code (stable) before installing claude-code@latest
@@ -70,6 +76,8 @@
         name: "{{ toolbox.debian.homebrew_casks }}"
         state: latest
         path: /home/linuxbrew/.linuxbrew/bin
+      environment:
+        HOMEBREW_NO_SANDBOX_LINUX: "1"
       when:
         - ansible_facts['os_family'] == "Debian"
         - toolbox.debian.homebrew_casks | default([]) | length > 0

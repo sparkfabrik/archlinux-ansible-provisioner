@@ -38,6 +38,9 @@
           # Homebrew (linuxbrew) PATH integration
           if [ -d /home/linuxbrew/.linuxbrew ]; then
             eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+            # Homebrew 6.0's Linux build sandbox fails where unprivileged user
+            # namespaces are restricted (e.g. Ubuntu 24.04+ AppArmor); disable it.
+            export HOMEBREW_NO_SANDBOX_LINUX=1
           fi
 
     - name: Check if ~/.zshrc exists
@@ -55,6 +58,9 @@
           # Homebrew (linuxbrew) — managed by sf-toolbox
           if [ -d /home/linuxbrew/.linuxbrew ]; then
             eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+            # Homebrew 6.0's Linux build sandbox fails where unprivileged user
+            # namespaces are restricted (e.g. Ubuntu 24.04+ AppArmor); disable it.
+            export HOMEBREW_NO_SANDBOX_LINUX=1
           fi
         mode: "0644"
       when: user_zshrc.stat.exists
@@ -74,6 +80,9 @@
           # Homebrew (linuxbrew) — managed by sf-toolbox
           if [ -d /home/linuxbrew/.linuxbrew ]; then
             eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+            # Homebrew 6.0's Linux build sandbox fails where unprivileged user
+            # namespaces are restricted (e.g. Ubuntu 24.04+ AppArmor); disable it.
+            export HOMEBREW_NO_SANDBOX_LINUX=1
           fi
         mode: "0644"
       when: user_bashrc.stat.exists
