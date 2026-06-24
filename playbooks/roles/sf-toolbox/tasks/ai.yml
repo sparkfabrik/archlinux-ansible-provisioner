@@ -69,6 +69,22 @@
         - openspec_completion_output is not skipped
         - openspec_completion_output.rc == 0
 
+    - name: Check if openspec command is available
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.shell: command -v openspec >/dev/null 2>&1 && echo "available" || echo "not-available"
+      register: openspec_available
+      changed_when: false
+
+    - name: Install or update global OpenSpec skills and prompts for Claude
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.command: ajust sf-openspec-install-global claude
+      environment:
+        HOME: "{{ system.home | default(current_home) }}"
+      when: openspec_available.stdout == "available"
+      changed_when: true
+
     - name: Create ~/.config/opencode directory
       ansible.builtin.file:
         path: "{{ system.home | default(current_home) }}/.config/opencode"
