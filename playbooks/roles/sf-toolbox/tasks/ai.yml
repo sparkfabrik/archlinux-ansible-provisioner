@@ -20,6 +20,16 @@
         HOME: "{{ system.home | default(current_home) }}"
       when: claude_installed.rc != 0
 
+    - name: Update Claude Code to the latest version
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.command: claude update
+      environment:
+        HOME: "{{ system.home | default(current_home) }}"
+      register: claude_update
+      changed_when: "'updated' in claude_update.stdout | lower or 'installed' in claude_update.stdout | lower"
+      when: claude_installed.rc == 0
+
 - name: Configure AI tools
   tags: [sf-toolbox, packages, ai]
   block:

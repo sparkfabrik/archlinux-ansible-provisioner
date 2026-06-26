@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed `sf-toolbox` Claude Code never upgrading on Arch Linux after first install; the `claude --version` check only gated a fresh install, so re-running the provisioner left an already-installed Claude Code untouched. The role now runs `claude update` when Claude Code is already present, matching the `state: latest` upgrade behavior of the Debian/Ubuntu Homebrew cask path
 - Fixed `sf-toolbox` Homebrew package installs failing on Debian/Ubuntu with "Bubblewrap is installed but cannot create a rootless sandbox" when building source-only formulae (e.g. `opencode`). Homebrew 6.0 enables a Bubblewrap build sandbox on Linux by default, which fails on distros that restrict unprivileged user namespaces (Ubuntu 24.04+ AppArmor). The brew install tasks now set `HOMEBREW_NO_SANDBOX_LINUX=1`, and the managed Homebrew shellenv (`/etc/profile.d/homebrew.sh`, `~/.zshrc`, `~/.bashrc`) exports it so manual `brew` commands work too, without relaxing kernel or AppArmor hardening
 - Fixed `sf-toolbox` failing with "PyYAML is not installed" when a Homebrew `python3` shadows the system interpreter on `PATH`; the installer now selects a `python3` that has PyYAML (preferring `/usr/bin/python3`) for the toolbox package parser
 - Fixed `sf-toolbox` npm packages (e.g. `@fission-ai/openspec`) never upgrading after first install by switching the Arch and Debian/Ubuntu npm install tasks from `state: present` to `state: latest`, matching the existing Homebrew behavior
