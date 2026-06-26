@@ -7,6 +7,8 @@
       become: true
       become_user: "{{ system.username | default(current_user) }}"
       ansible.builtin.command: claude --version
+      environment:
+        PATH: "{{ system.home | default(current_home) }}/.local/bin:{{ ansible_facts['env']['PATH'] }}"
       register: claude_installed
       changed_when: false
       failed_when: false
@@ -26,6 +28,7 @@
       ansible.builtin.command: claude update
       environment:
         HOME: "{{ system.home | default(current_home) }}"
+        PATH: "{{ system.home | default(current_home) }}/.local/bin:{{ ansible_facts['env']['PATH'] }}"
       register: claude_update
       changed_when: "'updated' in claude_update.stdout | lower or 'installed' in claude_update.stdout | lower"
       when: claude_installed.rc == 0
