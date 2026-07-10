@@ -6,7 +6,7 @@ If you have troubles booting the Arch Linux OS, the first action to take is to u
 
 ### Accessing encrypted disk when booting from live media
 
-If you have followed [installation instructions](./INSTALLATION.md) and you have a BTRFS setup with the proposed layout and an encrypted root partition, you can follow along this section in order to mount your encrypted file system. If you made changes to the proposed layout, you should reflect those changes into the following commands.
+If you have followed [installation instructions](INSTALLATION.md) and you have a BTRFS setup with the proposed layout and an encrypted root partition, you can follow along this section in order to mount your encrypted file system. If you made changes to the proposed layout, you should reflect those changes into the following commands.
 
 All the programs you need to decrypt and mount the partitions are already installed in the Arch Live USB distribution, so you don't need an Internet connection to install them.
 
