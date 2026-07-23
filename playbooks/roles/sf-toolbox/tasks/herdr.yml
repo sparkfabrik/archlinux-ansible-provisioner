@@ -1,0 +1,74 @@
+---
+- name: Install herdr from GitHub releases (Archlinux)
+  tags: [sf-toolbox, packages, herdr]
+  when: ansible_facts['os_family'] == "Archlinux"
+  block:
+    - name: Check if herdr is installed
+      ansible.builtin.command: /usr/local/bin/herdr --version
+      register: herdr_installed
+      changed_when: false
+      failed_when: false
+
+    - name: Get latest herdr release version from GitHub
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/ogulcancelik/herdr/releases/latest
+        return_content: true
+        headers:
+          Accept: application/vnd.github.v3+json
+      register: herdr_latest_release
+      changed_when: false
+
+    - name: Set herdr version facts
+      ansible.builtin.set_fact:
+        herdr_current_version: "{{ herdr_installed.stdout | default('') | regex_replace('^herdr\\s+', '') }}"
+        herdr_latest_version: "{{ herdr_latest_release.json.tag_name | regex_replace('^v', '') }}"
+
+    - name: Fail on unsupported architecture for herdr
+      ansible.builtin.fail:
+        msg: "herdr does not provide a binary for architecture: {{ ansible_facts['architecture'] }}"
+      when: ansible_facts['architecture'] not in ['x86_64', 'aarch64']
+
+    - name: Notify herdr fresh installation
+      ansible.builtin.debug:
+        msg: "herdr is not installed, installing version {{ herdr_latest_version }}"
+      when: herdr_installed.rc != 0
+
+    - name: Notify herdr version upgrade
+      ansible.builtin.debug:
+        msg: "herdr {{ herdr_current_version }} is outdated, upgrading to {{ herdr_latest_version }}"
+      when:
+        - herdr_installed.rc == 0
+        - herdr_current_version != herdr_latest_version
+
+    - name: Notify herdr is up to date
+      ansible.builtin.debug:
+        msg: "herdr {{ herdr_current_version }} is already the latest version"
+      when:
+        - herdr_installed.rc == 0
+        - herdr_current_version == herdr_latest_version
+
+    - name: Download herdr binary
+      ansible.builtin.get_url:
+        url: "https://github.com/ogulcancelik/herdr/releases/download/v{{ herdr_latest_version }}/herdr-linux-{{ ansible_facts['architecture'] }}"
+        dest: /usr/local/bin/herdr
+        mode: "0755"
+      when:
+        - herdr_installed.rc != 0 or herdr_current_version != herdr_latest_version
+
+    - name: Verify herdr installation
+      ansible.builtin.command: /usr/local/bin/herdr --version
+      changed_when: false
+      when:
+        - herdr_installed.rc != 0 or herdr_current_version != herdr_latest_version
+
+- name: Install herdr via Homebrew (Debian/Ubuntu)
+  tags: [sf-toolbox, packages, herdr]
+  when: ansible_facts['os_family'] == "Debian"
+  become: true
+  become_user: "{{ system.username | default(current_user) }}"
+  block:
+    - name: Install herdr via Homebrew
+      community.general.homebrew:
+        name: herdr
+        state: latest
+        path: /home/linuxbrew/.linuxbrew/bin
