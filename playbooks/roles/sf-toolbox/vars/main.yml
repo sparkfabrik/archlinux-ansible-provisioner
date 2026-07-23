@@ -83,6 +83,7 @@ toolbox:
     - ajust
     - rg
     - rtk
+    - herdr
     - spark-http-proxy
     - intelephense
     - typescript-language-server

@@ -23,6 +23,9 @@
 - name: Install rtk
   import_tasks: rtk.yml
 
+- name: Install herdr
+  import_tasks: herdr.yml
+
 - name: Configure caveman
   import_tasks: caveman.yml
 
