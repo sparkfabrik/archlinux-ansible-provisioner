@@ -35,6 +35,13 @@
       changed_when: false
       when: gcloud_installed.stat.exists
 
+    - name: Update Google Cloud SDK components
+      ansible.builtin.command:
+        cmd: /opt/google-cloud-sdk/bin/gcloud components update --quiet
+      register: gcloud_components_update
+      changed_when: "'All components are up to date' not in gcloud_components_update.stderr"
+      when: gcloud_installed.stat.exists
+
     - name: Install gke-gcloud-auth-plugin component
       ansible.builtin.command:
         cmd: /opt/google-cloud-sdk/bin/gcloud components install gke-gcloud-auth-plugin --quiet
