@@ -7,6 +7,13 @@
         path: /opt/google-cloud-sdk/bin/gcloud
       register: gcloud_installed
 
+    - name: Update Google Cloud SDK components
+      ansible.builtin.command:
+        cmd: /opt/google-cloud-sdk/bin/gcloud components update --quiet
+      register: gcloud_update
+      changed_when: "'All components are up to date' not in gcloud_update.stderr"
+      when: gcloud_installed.stat.exists
+
     - name: Download Google Cloud SDK tarball
       ansible.builtin.get_url:
         url: https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz
