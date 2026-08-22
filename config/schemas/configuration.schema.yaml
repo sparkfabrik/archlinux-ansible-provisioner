@@ -116,6 +116,22 @@ properties:
             default: true
             description: Install an alternative and more extensible status bar
             type: boolean
+      hyprland:
+        $id: "#/properties/desktop/properties/hyprland"
+        additionalProperties: true
+        default: {}
+        description: Install Hyprland tiling manager
+        properties:
+          enable:
+            $id: "#/properties/desktop/properties/hyprland/properties/enable"
+            default: false
+            description: Install Hyprland when true
+            type: boolean
+          waybar:
+            $id: "#/properties/desktop/properties/hyprland/properties/waybar"
+            default: true
+            description: Install an alternative and more extensible status bar
+            type: boolean
       i3:
         $id: "#/properties/desktop/properties/i3"
         additionalProperties: true

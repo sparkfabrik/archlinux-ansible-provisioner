@@ -21,4 +21,5 @@
     - role: logitech
     - role: sparkfabrik
     - role: sway
+    - role: hyprland
     - role: i3

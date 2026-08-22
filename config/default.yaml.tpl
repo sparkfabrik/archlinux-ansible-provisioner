@@ -47,6 +47,9 @@ desktop:
   sway:
     enable: false
     waybar: true
+  hyprland:
+    enable: false
+    waybar: true
   i3:
     enable: false
   x11_gestures: false

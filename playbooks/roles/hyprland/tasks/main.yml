@@ -1,0 +1,49 @@
+---
+- name: Install Hyprland
+  tags: [wm, hyprland]
+  when: desktop.hyprland.enable == true
+  block:
+    # Hyprland and its whole ecosystem live in the official extra repo,
+    # so no AUR builds are needed.
+    - name: Install Hyprland wm and ecosystem
+      community.general.pacman:
+        name:
+          - hyprland
+          - hypridle
+          - hyprlock
+          - hyprpaper
+          - hyprpicker
+          - hyprpolkitagent
+          - hyprshot
+          - hyprsunset
+          - rofi
+          - mako
+          - grim
+          - slurp
+          - wl-clipboard
+          - qt6-wayland
+
+    - name: Screensharing and file chooser portals
+      community.general.pacman:
+        name:
+          - xdg-desktop-portal
+          - xdg-desktop-portal-hyprland
+          # xdg-desktop-portal-hyprland does not implement a FileChooser.
+          - xdg-desktop-portal-gtk
+
+    - name: On-screen display for volume and brightness keys
+      community.general.pacman:
+        name:
+          - swayosd
+
+    - name: Enable swayosd-libinput-backend service
+      ansible.builtin.systemd:
+        name: swayosd-libinput-backend.service
+        enabled: true
+
+    - name: Waybar
+      when: desktop.hyprland.waybar == true
+      community.general.pacman:
+        name:
+          - waybar
+          - otf-font-awesome
