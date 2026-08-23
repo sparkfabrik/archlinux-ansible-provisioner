@@ -22,9 +22,18 @@
           - slurp
           - wl-clipboard
           - qt6-wayland
-          # Capture stack (screenshots, annotations, screen recording).
+          # Capture stack (screenshots, screen recording).
           - gpu-screen-recorder
-          - satty
+
+    # Screenshot annotation editor with movable annotations, maintained on
+    # the AUR by the tensaku author.
+    - name: Install tensaku screenshot editor
+      kewlfft.aur.aur:
+        use: paru
+        name:
+          - tensaku-bin
+      become: true
+      become_user: aur_builder
 
     - name: Screensharing and file chooser portals
       community.general.pacman:
