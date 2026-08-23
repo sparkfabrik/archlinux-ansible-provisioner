@@ -22,6 +22,10 @@
           - slurp
           - wl-clipboard
           - qt6-wayland
+          # Capture stack (screenshots, annotations, screen recording).
+          - gpu-screen-recorder
+          - satty
+          - hyprpicker
 
     - name: Screensharing and file chooser portals
       community.general.pacman:
