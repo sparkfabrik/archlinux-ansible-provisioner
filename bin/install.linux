@@ -2,7 +2,7 @@
 # sf-toolbox — SparkFabrik Linux Toolbox installer and updater
 #
 # Installs/updates SparkFabrik shared dev tooling (sparkdock, AI tools,
-# cloud-native CLIs, http-proxy) on Arch Linux, CachyOS, and Debian/Ubuntu.
+# cloud-native CLIs, http-proxy) on Arch Linux, CachyOS, Omarchy, and Debian/Ubuntu.
 #
 # Usage:
 #   bin/install.linux          # First install or update
@@ -22,7 +22,7 @@ show_help() {
   printf "  %s%ssf-toolbox%s — SparkFabrik Linux Toolbox installer and updater\n" "${BOLD}" "${BLUE}" "${NC}"
   printf "\n"
   printf "  Installs/updates SparkFabrik shared dev tooling (sparkdock, AI tools,\n"
-  printf "  cloud-native CLIs, http-proxy) on Arch Linux, CachyOS, and Debian/Ubuntu.\n"
+  printf "  cloud-native CLIs, http-proxy) on Arch Linux, CachyOS, Omarchy, and Debian/Ubuntu.\n"
   printf "\n"
   printf "  ${BOLD}Detected OS:${NC} ${GREEN}%s %s${NC} (%s)\n" "${os_icon}" "${OS_DISPLAY}" "${OS_FAMILY}"
   printf "\n"
@@ -84,15 +84,23 @@ detect_os() {
   . "${os_release_file}"
 
   case "${ID:-}" in
-    arch|archlinux|cachyos|endeavouros|manjaro)
+    arch|archlinux|cachyos|endeavouros|manjaro|omarchy)
       OS_FAMILY="Archlinux"
       ;;
     ubuntu|debian|pop|linuxmint)
       OS_FAMILY="Debian"
       ;;
     *)
-      log_error "Unsupported OS: ${ID:-unknown}. Only Arch Linux, CachyOS, and Debian/Ubuntu are supported."
-      exit 1
+      # Fall back to ID_LIKE so unlisted derivatives (Arch- or Debian-based)
+      # are still recognized instead of rejected outright.
+      case " ${ID_LIKE:-} " in
+        *" arch "*)   OS_FAMILY="Archlinux" ;;
+        *" debian "*) OS_FAMILY="Debian" ;;
+        *)
+          log_error "Unsupported OS: ${ID:-unknown}. Only Arch Linux (incl. CachyOS, Omarchy) and Debian/Ubuntu are supported."
+          exit 1
+          ;;
+      esac
       ;;
   esac
   OS_DISPLAY="${PRETTY_NAME:-${OS_FAMILY}}"
