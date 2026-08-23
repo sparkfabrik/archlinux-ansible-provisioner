@@ -25,13 +25,15 @@
           # Capture stack (screenshots, screen recording).
           - gpu-screen-recorder
 
-    # Screenshot annotation editor with movable annotations, maintained on
-    # the AUR by the tensaku author.
-    - name: Install tensaku screenshot editor
+    # Screenshot annotation editor with movable annotations and the
+    # screen-share picker with live thumbnails. Both AUR packages are
+    # maintained by their upstream authors.
+    - name: Install tensaku editor and share picker
       kewlfft.aur.aur:
         use: paru
         name:
           - tensaku-bin
+          - hyprland-preview-share-picker-git
       become: true
       become_user: aur_builder
 
