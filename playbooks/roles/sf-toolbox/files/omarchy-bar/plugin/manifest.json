@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "sparkfabrik.toolbox",
+  "name": "SparkFabrik Toolbox",
+  "version": "0.1.0",
+  "author": "SparkFabrik",
+  "license": "MIT",
+  "homepage": "https://github.com/sparkfabrik/archlinux-ansible-provisioner",
+  "description": "Status and quick actions for the SparkFabrik Linux toolbox: toolbox and sparkdock freshness, package updates, HTTP proxy, Docker, and CLI auth.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Toolbox.qml"
+  },
+  "barWidget": {
+    "displayName": "SparkFabrik Toolbox",
+    "description": "SparkFabrik dev environment status: updates, HTTP proxy, Docker, and auth at a glance, with one-click upgrades.",
+    "category": "Hardware",
+    "defaultSection": "right",
+    "allowMultiple": false
+  }
+}
