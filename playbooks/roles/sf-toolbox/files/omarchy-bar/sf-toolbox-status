@@ -1,0 +1,319 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# sf-toolbox-status — Update and health checks for the SparkFabrik Linux toolbox.
+#
+# Linux counterpart of the macOS sparkdock `sparkdock-check-updates` dispatcher.
+# Two modes:
+#
+#   sf-toolbox-status <subsystem>   Per-subsystem check with the shared exit
+#                                   code contract:
+#                                     0 = updates available
+#                                     1 = up to date
+#                                     2 = error / usage
+#                                     3 = not configured (not installed yet)
+#                                   Subsystems: toolbox, sparkdock, packages,
+#                                   http-proxy.
+#
+#   sf-toolbox-status --json        One aggregated JSON document covering every
+#                                   subsystem (toolbox, sparkdock, packages,
+#                                   http-proxy, docker, auth). Meant for UI
+#                                   consumers such as the Omarchy bar widget,
+#                                   which need one process instead of many.
+#
+# Options:
+#   --offline    Skip `git fetch` on freshness checks; compare against the
+#                already-fetched remote refs. Used by UIs for cheap refreshes.
+
+SCRIPT_NAME="$(basename "$0")"
+TOOLBOX_DIR="${SF_TOOLBOX_DIR:-/opt/archlinux-provisioner}"
+SPARKDOCK_DIR="${SF_SPARKDOCK_DIR:-${HOME}/.local/spark/sparkdock}"
+HTTP_PROXY_DIR="${SF_HTTP_PROXY_DIR:-${HOME}/.local/spark/http-proxy/src}"
+FETCH_TIMEOUT="${SF_STATUS_FETCH_TIMEOUT:-15}"
+OFFLINE=0
+
+# Compare a git clone against its upstream.
+# Prints nothing; the return code carries the answer:
+#   0 = behind upstream (updates available), 1 = up to date,
+#   2 = error, 3 = not a configured git clone.
+git_freshness() (
+    set -euo pipefail
+    local dir="$1"
+    local fallback_ref="$2"
+
+    if [[ ! -d "${dir}/.git" ]]; then
+        return 3
+    fi
+
+    cd "${dir}"
+
+    local upstream
+    upstream=$(git rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2>/dev/null || echo "${fallback_ref}")
+
+    if [[ "${OFFLINE}" -eq 0 ]]; then
+        timeout "${FETCH_TIMEOUT}" git fetch --quiet "${upstream%%/*}" 2>/dev/null || return 2
+    fi
+
+    local local_rev remote_rev
+    local_rev=$(git rev-parse HEAD 2>/dev/null) || return 2
+    remote_rev=$(git rev-parse "${upstream}" 2>/dev/null) || return 2
+
+    if [[ "${local_rev}" != "${remote_rev}" ]]; then
+        return 0
+    fi
+    return 1
+)
+
+check_toolbox() {
+    git_freshness "${TOOLBOX_DIR}" "origin/main"
+}
+
+check_sparkdock() {
+    git_freshness "${SPARKDOCK_DIR}" "origin/master"
+}
+
+check_http_proxy_freshness() {
+    if ! command -v spark-http-proxy >/dev/null 2>&1; then
+        return 3
+    fi
+    git_freshness "${HTTP_PROXY_DIR}" "origin/main"
+}
+
+http_proxy_running() {
+    command -v docker >/dev/null 2>&1 || return 1
+    docker ps --format '{{.Names}}' 2>/dev/null | grep -qiE 'traefik|http-proxy'
+}
+
+# Count pending package updates. Prints "<repo_count> <aur_count>".
+# Return codes follow the shared contract.
+count_package_updates() {
+    local repo_count=0 aur_count=0 rc
+
+    if ! command -v checkupdates >/dev/null 2>&1; then
+        return 3
+    fi
+
+    # checkupdates exits 2 on "no updates", 1 on error.
+    local repo_out=""
+    rc=0
+    repo_out=$(timeout "${FETCH_TIMEOUT}" checkupdates 2>/dev/null) || rc=$?
+    if [[ ${rc} -eq 1 || ${rc} -eq 124 ]]; then
+        return 2
+    fi
+    if [[ -n "${repo_out}" ]]; then
+        repo_count=$(wc -l <<<"${repo_out}")
+    fi
+
+    local aur_helper=""
+    if command -v yay >/dev/null 2>&1; then
+        aur_helper="yay"
+    elif command -v paru >/dev/null 2>&1; then
+        aur_helper="paru"
+    fi
+    if [[ -n "${aur_helper}" ]]; then
+        local aur_out=""
+        aur_out=$(timeout "${FETCH_TIMEOUT}" "${aur_helper}" -Qua 2>/dev/null || true)
+        if [[ -n "${aur_out}" ]]; then
+            aur_count=$(wc -l <<<"${aur_out}")
+        fi
+    fi
+
+    echo "${repo_count} ${aur_count}"
+    if [[ $((repo_count + aur_count)) -gt 0 ]]; then
+        return 0
+    fi
+    return 1
+}
+
+docker_state() {
+    if ! command -v docker >/dev/null 2>&1; then
+        echo "missing"
+        return
+    fi
+    if systemctl is-active --quiet docker 2>/dev/null; then
+        echo "running"
+        return
+    fi
+    echo "stopped"
+}
+
+auth_state() {
+    local tool="$1"
+
+    if ! command -v "${tool}" >/dev/null 2>&1; then
+        echo "missing"
+        return
+    fi
+
+    case "${tool}" in
+        gcloud)
+            local account=""
+            account=$(timeout "${FETCH_TIMEOUT}" gcloud auth list --filter=status:ACTIVE --format='value(account)' 2>/dev/null || true)
+            [[ -n "${account}" ]] && echo "ok" || echo "none"
+            ;;
+        glab)
+            # `glab auth status` exits non-zero when ANY configured host fails
+            # (for example a stale gitlab.com token), so grep for at least one
+            # successfully logged-in host instead of trusting the exit code.
+            # Capture first: under pipefail, glab's exit code would otherwise
+            # poison the pipeline even when grep matches.
+            local glab_out=""
+            glab_out=$(timeout "${FETCH_TIMEOUT}" glab auth status 2>&1 || true)
+            if grep -q "Logged in to" <<<"${glab_out}"; then
+                echo "ok"
+            else
+                echo "none"
+            fi
+            ;;
+        gh)
+            if timeout "${FETCH_TIMEOUT}" gh auth status >/dev/null 2>&1; then
+                echo "ok"
+            else
+                echo "none"
+            fi
+            ;;
+        *)
+            echo "missing"
+            ;;
+    esac
+}
+
+# Map a git_freshness return code to a JSON state string.
+state_from_rc() {
+    case "$1" in
+        0) echo "stale" ;;
+        1) echo "fresh" ;;
+        3) echo "missing" ;;
+        *) echo "error" ;;
+    esac
+}
+
+json_output() {
+    local rc
+
+    rc=0; check_toolbox || rc=$?
+    local toolbox_state
+    toolbox_state=$(state_from_rc "${rc}")
+
+    rc=0; check_sparkdock || rc=$?
+    local sparkdock_state
+    sparkdock_state=$(state_from_rc "${rc}")
+
+    local pkg_counts="0 0" pkg_state
+    rc=0; pkg_counts=$(count_package_updates) || rc=$?
+    pkg_state=$(state_from_rc "${rc}")
+    [[ "${pkg_state}" == "stale" || "${pkg_state}" == "fresh" ]] || pkg_counts="0 0"
+    local repo_count aur_count
+    read -r repo_count aur_count <<<"${pkg_counts}"
+
+    rc=0; check_http_proxy_freshness || rc=$?
+    local proxy_state proxy_running="false"
+    proxy_state=$(state_from_rc "${rc}")
+    if http_proxy_running; then
+        proxy_running="true"
+    fi
+
+    local docker_st gcloud_st glab_st gh_st
+    docker_st=$(docker_state)
+    gcloud_st=$(auth_state gcloud)
+    glab_st=$(auth_state glab)
+    gh_st=$(auth_state gh)
+
+    printf '{'
+    printf '"toolbox":{"state":"%s"},' "${toolbox_state}"
+    printf '"sparkdock":{"state":"%s"},' "${sparkdock_state}"
+    printf '"packages":{"state":"%s","repo":%d,"aur":%d},' "${pkg_state}" "${repo_count}" "${aur_count}"
+    printf '"http_proxy":{"state":"%s","running":%s},' "${proxy_state}" "${proxy_running}"
+    printf '"docker":{"state":"%s"},' "${docker_st}"
+    printf '"auth":{"gcloud":"%s","glab":"%s","gh":"%s"}' "${gcloud_st}" "${glab_st}" "${gh_st}"
+    printf '}\n'
+}
+
+usage() {
+    cat <<USAGE
+Usage: ${SCRIPT_NAME} [--offline] <subsystem>
+       ${SCRIPT_NAME} [--offline] --json
+
+Check for updates in a SparkFabrik toolbox subsystem.
+
+Subsystems:
+  toolbox      The archlinux-ansible-provisioner clone (sf-toolbox itself)
+  sparkdock    The sparkdock clone (AI agent resources)
+  packages     Pending pacman/AUR package updates
+  http-proxy   The spark-http-proxy clone
+
+Modes:
+  --json       Aggregated JSON for all subsystems (plus docker and auth)
+  --offline    Skip git fetch; compare against already-fetched remote refs
+
+Exit codes (subsystem mode):
+  0  Updates available
+  1  No updates available
+  2  Usage or check error
+  3  Not configured (subsystem not set up yet)
+USAGE
+}
+
+main() {
+    local subsystem="" want_json=0
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --offline)
+                OFFLINE=1
+                ;;
+            --json)
+                want_json=1
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            -*)
+                echo "Error: unknown option '$1'" >&2
+                usage >&2
+                exit 2
+                ;;
+            *)
+                subsystem="$1"
+                ;;
+        esac
+        shift
+    done
+
+    if [[ ${want_json} -eq 1 ]]; then
+        json_output
+        exit 0
+    fi
+
+    if [[ -z "${subsystem}" ]]; then
+        usage >&2
+        exit 2
+    fi
+
+    local rc=0
+    case "${subsystem}" in
+        toolbox)
+            check_toolbox || rc=$?
+            ;;
+        sparkdock)
+            check_sparkdock || rc=$?
+            ;;
+        packages)
+            count_package_updates >/dev/null || rc=$?
+            ;;
+        http-proxy)
+            check_http_proxy_freshness || rc=$?
+            ;;
+        *)
+            echo "Error: unknown subsystem '${subsystem}'" >&2
+            usage >&2
+            exit 2
+            ;;
+    esac
+
+    exit "${rc}"
+}
+
+main "$@"
