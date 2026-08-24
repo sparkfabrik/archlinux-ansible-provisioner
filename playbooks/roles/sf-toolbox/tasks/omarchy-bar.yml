@@ -1,0 +1,63 @@
+---
+- name: Install the SparkFabrik Omarchy bar widget
+  tags: [sf-toolbox, omarchy-bar]
+  vars:
+    plugin_dir: "{{ system.home | default(current_home) }}/.config/omarchy/plugins/sparkfabrik.toolbox"
+  block:
+    - name: Check for an Omarchy installation
+      ansible.builtin.stat:
+        path: /usr/share/omarchy
+      register: omarchy_install
+
+    - name: Install the Omarchy bar widget and its status backend
+      when: omarchy_install.stat.exists
+      block:
+        - name: Install the sf-toolbox-status update checker
+          ansible.builtin.copy:
+            src: omarchy-bar/sf-toolbox-status
+            dest: /usr/local/bin/sf-toolbox-status
+            mode: "0755"
+
+        - name: Create the plugin directory
+          become: true
+          become_user: "{{ system.username | default(current_user) }}"
+          ansible.builtin.file:
+            path: "{{ plugin_dir }}"
+            state: directory
+            mode: "0755"
+
+        - name: Install the plugin files
+          become: true
+          become_user: "{{ system.username | default(current_user) }}"
+          ansible.builtin.copy:
+            src: "omarchy-bar/plugin/{{ item }}"
+            dest: "{{ plugin_dir }}/{{ item }}"
+            mode: "0644"
+          loop:
+            - manifest.json
+            - Toolbox.qml
+            - sparkfabrik-logo.png
+          register: plugin_files
+
+        - name: Check whether the widget is already in the bar layout
+          become: true
+          become_user: "{{ system.username | default(current_user) }}"
+          ansible.builtin.command: grep -q sparkfabrik.toolbox {{ system.home | default(current_home) }}/.config/omarchy/shell.json
+          register: widget_enabled
+          changed_when: false
+          failed_when: false
+
+        # omarchy-plugin-enable writes the user's shell.json, so it runs only
+        # when the widget is not already placed, keeping repeat runs idempotent.
+        - name: Enable the widget in the Omarchy bar
+          become: true
+          become_user: "{{ system.username | default(current_user) }}"
+          ansible.builtin.command: omarchy-plugin-enable sparkfabrik.toolbox --section right
+          when: widget_enabled.rc != 0
+
+        - name: Restart the Omarchy shell to load the widget
+          become: true
+          become_user: "{{ system.username | default(current_user) }}"
+          ansible.builtin.command: omarchy-restart-shell
+          when: widget_enabled.rc != 0 or plugin_files is changed
+          failed_when: false
