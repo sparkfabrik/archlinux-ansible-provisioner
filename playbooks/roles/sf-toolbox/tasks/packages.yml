@@ -22,9 +22,12 @@
 - name: Install toolbox packages
   tags: [sf-toolbox, packages]
   block:
+    # Tools Omarchy already manages via mise (see omarchy-detect.yml) are
+    # excluded: installing them again would put a second copy on PATH with an
+    # independent updater.
     - name: Install pacman packages (Archlinux)
       community.general.pacman:
-        name: "{{ toolbox.arch.pacman }}"
+        name: "{{ toolbox.arch.pacman | difference(omarchy_shadowed_pacman | default([])) }}"
         state: present
       when: ansible_facts['os_family'] == "Archlinux"
 
@@ -33,7 +36,7 @@
         name: "{{ item }}"
         global: true
         state: latest
-      loop: "{{ toolbox.arch.npm }}"
+      loop: "{{ toolbox.arch.npm | difference(omarchy_shadowed_npm | default([])) }}"
       when: ansible_facts['os_family'] == "Archlinux"
 
     - name: Install apt system packages (Debian/Ubuntu)

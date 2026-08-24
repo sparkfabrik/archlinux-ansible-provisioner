@@ -1,4 +1,7 @@
 ---
+- name: Detect Omarchy-managed tooling
+  import_tasks: omarchy-detect.yml
+
 - name: Bootstrap Homebrew
   import_tasks: homebrew.yml
 
@@ -31,3 +34,6 @@
 
 - name: Configure Claude gh skill gate
   import_tasks: claude-gh-gate.yml
+
+- name: Install the Omarchy bar widget
+  import_tasks: omarchy-bar.yml
