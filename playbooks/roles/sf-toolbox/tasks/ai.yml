@@ -1,7 +1,13 @@
 ---
+# On Omarchy, claude is a mise wrapper in ~/.local/bin that omarchy-update
+# keeps current and its migrations regenerate on every update. Installing or
+# updating it from here would fight that mechanism (same path, two updaters),
+# so the whole block delegates to Omarchy when the wrapper is present.
 - name: Install Claude Code (Archlinux)
   tags: [sf-toolbox, packages, ai]
-  when: ansible_facts['os_family'] == "Archlinux"
+  when:
+    - ansible_facts['os_family'] == "Archlinux"
+    - "'claude' not in (omarchy_mise_tools | default([]))"
   block:
     - name: Check if Claude Code is already installed
       become: true
