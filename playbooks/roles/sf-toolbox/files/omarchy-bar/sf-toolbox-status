@@ -196,6 +196,24 @@ mrs_json() {
     jq -c '{mrs: .}' <<<"${enriched}"
 }
 
+# Some GitLab groups hold one subgroup per client, so the subgroup is the name
+# to show. Which groups those are is deployment-specific, so it is configuration
+# rather than code: set SF_GITLAB_CLIENT_GROUPS to a comma separated list of
+# top-level group paths, or write the same assignment in
+# ${XDG_CONFIG_HOME:-~/.config}/sparkfabrik-toolbox/config. With nothing set,
+# every project is named after the project itself.
+client_groups() {
+    local raw="${SF_GITLAB_CLIENT_GROUPS:-}"
+    local cfg="${XDG_CONFIG_HOME:-${HOME}/.config}/sparkfabrik-toolbox/config"
+    if [[ -z "${raw}" && -r "${cfg}" ]]; then
+        raw=$(sed -n 's/^[[:space:]]*SF_GITLAB_CLIENT_GROUPS[[:space:]]*=[[:space:]]*//p' \
+              "${cfg}" 2>/dev/null | tail -1)
+        raw="${raw%\"}"; raw="${raw#\"}"
+        raw="${raw%\'}"; raw="${raw#\'}"
+    fi
+    printf "%s" "${raw}"
+}
+
 # One aggregated view of the developer's GitLab work, built around the projects
 # they actually touched in the last 90 days, merged with the local Docker state.
 # This is what Mission Control renders.
@@ -209,6 +227,8 @@ gitlab_json() {
     local cache="${cache_dir}/gitlab.json"
     local ttl="${SF_GITLAB_CACHE_TTL:-120}"
     local window="${SF_GITLAB_WINDOW_DAYS:-90}"
+    local cgroups
+    cgroups=$(client_groups)
 
     if [[ "${NO_CACHE}" -eq 0 && -s "${cache}" ]]; then
         local age
@@ -279,6 +299,7 @@ gitlab_json() {
     # Fold everything into per-project rows plus the two attention lists.
     local base
     base=$(jq -cn \
+        --arg cgroups "${cgroups}" \
         --slurpfile ev_f "${tmp}/events.json" \
         --slurpfile todos_f "${tmp}/todos.json" \
         --slurpfile ia_f "${tmp}/issues_a.json" \
@@ -292,14 +313,17 @@ gitlab_json() {
         | ($mr_f[0] // []) as $mr
         | ($lp_f[0] // {projects: []}) as $lp
 
-        # A project is named after who the work is for, not the repo slug:
-        # customers/<client>/<repo> -> the client, otherwise the inner group.
+        # A project is named after who the work is for, not the repo slug: in a
+        # configured client group the subgroup is the client, otherwise the
+        # inner group is the container the project sits in.
+        | ($cgroups | split(",") | map(sub("^ +";"") | sub(" +$";""))
+           | map(select(. != ""))) as $client_groups
         | def titleize: gsub("[-_]"; " ") | split(" ")
             | map(select(. != "") | (.[0:1] | ascii_upcase) + .[1:]) | join(" ");
           def client_of(path):
             (path | split("/")) as $s
             | if ($s | length) < 2 then (path | titleize)
-              elif $s[0] == "customers" or $s[0] == "sf-legacy" then ($s[1] | titleize)
+              elif ($client_groups | index($s[0])) then ($s[1] | titleize)
               elif ($s | length) > 2 then ($s[1] | titleize)
               else ($s[0] | titleize) end;
           def todo_row:
@@ -453,6 +477,7 @@ gitlab_json() {
         pissues=$(gl "projects/${pid}/issues?state=opened&order_by=updated_at&per_page=5")
         pmrs=$(gl "projects/${pid}/merge_requests?state=opened&order_by=updated_at&per_page=3")
         enriched=$(jq -c \
+            --arg cgroups "${cgroups}" \
             --argjson r "${row}" \
             --argjson meta "${pmeta}" \
             --argjson pipe "${ppipe}" \
@@ -462,8 +487,10 @@ gitlab_json() {
                 | map(select(. != "") | (.[0:1] | ascii_upcase) + .[1:]) | join(" ");
             def client_of(path):
               (path | split("/")) as $s
+              | ($cgroups | split(",") | map(sub("^ +";"") | sub(" +$";""))
+                 | map(select(. != ""))) as $client_groups
               | if ($s | length) < 2 then (path | titleize)
-                elif $s[0] == "customers" or $s[0] == "sf-legacy" then ($s[1] | titleize)
+                elif ($client_groups | index($s[0])) then ($s[1] | titleize)
                 elif ($s | length) > 2 then ($s[1] | titleize)
                 else ($s[0] | titleize) end;
             ($meta.path_with_namespace // $r.path // "") as $path
@@ -493,14 +520,17 @@ gitlab_json() {
     done
 
     local out
-    out=$(jq -c --argjson top "${enriched}" --arg window "${window}" '
+    out=$(jq -c --argjson top "${enriched}" --arg window "${window}" \
+        --arg cgroups "${cgroups}" '
         ($top | map(.id)) as $ids
         | .projects = (($top + [ .projects[] | select(.id as $i | ($ids | index($i)) | not) ])
                        | sort_by(.events) | reverse)
         | .projects |= map(
             (.path // "") as $path
             | ($path | split("/")) as $seg
-            | (($seg | length) > 1 and ($seg[0] == "customers" or $seg[0] == "sf-legacy")) as $is_customer
+            | ($cgroups | split(",") | map(sub("^ +";"") | sub(" +$";""))
+               | map(select(. != ""))) as $client_groups
+            | (($seg | length) > 1 and (($client_groups | index($seg[0])) != null)) as $is_customer
             | . + { is_customer: $is_customer }
             | . + {
                 display_title: (
