@@ -36,8 +36,29 @@
           loop:
             - manifest.json
             - Toolbox.qml
+            - menu.json
             - sparkfabrik-logo.png
           register: plugin_files
+
+        # The pacman post-transaction hook touches this stamp file (as root);
+        # the widget watches it and refreshes the packages row instantly.
+        - name: Create the pacman stamp directory
+          ansible.builtin.file:
+            path: /var/lib/sparkfabrik-toolbox
+            state: directory
+            mode: "0755"
+
+        - name: Create the pacman hooks directory
+          ansible.builtin.file:
+            path: /etc/pacman.d/hooks
+            state: directory
+            mode: "0755"
+
+        - name: Install the pacman post-transaction hook
+          ansible.builtin.copy:
+            src: omarchy-bar/sparkfabrik-toolbox.hook
+            dest: /etc/pacman.d/hooks/sparkfabrik-toolbox.hook
+            mode: "0644"
 
         - name: Check whether the widget is already in the bar layout
           become: true
