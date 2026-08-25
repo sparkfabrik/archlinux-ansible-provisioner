@@ -450,14 +450,24 @@ gitlab_json() {
         row=$(jq -c --argjson id "${pid}" '.projects[] | select(.id == $id)' <<<"${base}")
         pmeta=$(gl "projects/${pid}")
         ppipe=$(gl "projects/${pid}/pipelines?username=${me_name}&per_page=6")
-        pissues=$(gl "projects/${pid}/issues?state=opened&order_by=updated_at&per_page=5")
-        pmrs=$(gl "projects/${pid}/merge_requests?state=opened&order_by=updated_at&per_page=3")
+        gl "projects/${pid}/issues?state=opened&order_by=updated_at&per_page=12" >"${tmp}/p_issues.json"
+        gl "projects/${pid}/merge_requests?state=opened&order_by=updated_at&per_page=6" >"${tmp}/p_mrs.json"
+        # A comment does not move updated_at on the issue, so the project
+        # comment feed supplies the missing timestamp. One call covers every
+        # issue and merge request in the project, whoever wrote the comment.
+        # These three go through files: a hundred events blow the argv limit.
+        gl "projects/${pid}/events?action=commented&per_page=100" >"${tmp}/p_notes.json"
         enriched=$(jq -c \
             --argjson r "${row}" \
             --argjson meta "${pmeta}" \
             --argjson pipe "${ppipe}" \
-            --argjson issues "${pissues}" \
-            --argjson mrs "${pmrs}" '
+            --slurpfile issues_f "${tmp}/p_issues.json" \
+            --slurpfile mrs_f "${tmp}/p_mrs.json" \
+            --slurpfile notes_f "${tmp}/p_notes.json" '
+            ($issues_f[0] // []) as $issues
+            | ($mrs_f[0] // []) as $mrs
+            | ($notes_f[0] // []) as $notes
+            |
             def titleize: gsub("[-_]"; " ") | split(" ")
                 | map(select(. != "") | (.[0:1] | ascii_upcase) + .[1:]) | join(" ");
             def client_of(path):
@@ -481,13 +491,23 @@ gitlab_json() {
                                                url: (.web_url // ""), updated: (.updated_at // .created_at // "")}))
                             else [] end),
                 recent: (
-                    ( (if ($issues | type) == "array" then $issues else [] end)
+                    ( (if ($notes | type) == "array" then $notes else [] end)
+                      | map(select(.note != null)
+                            | {k: ((.note.noteable_type // "") + "#" + ((.note.noteable_iid // 0) | tostring)),
+                               at: (.created_at // "")})
+                      | group_by(.k)
+                      | map({key: .[0].k, value: ([ .[].at ] | max)})
+                      | from_entries ) as $commented
+                  | ( (if ($issues | type) == "array" then $issues else [] end)
                       | map({kind: "issue", iid: .iid, title: ((.title // "")[0:70]),
-                             state: (.state // ""), url: (.web_url // ""), updated: (.updated_at // "")}) )
+                             state: (.state // ""), url: (.web_url // ""), updated: (.updated_at // ""),
+                             commented: ($commented["Issue#" + ((.iid // 0) | tostring)] // "")}) )
                   + ( (if ($mrs | type) == "array" then $mrs else [] end)
                       | map({kind: "mr", iid: .iid, title: ((.title // "")[0:70]),
-                             state: (.state // ""), url: (.web_url // ""), updated: (.updated_at // "")}) )
-                  | sort_by(.updated) | reverse | .[0:5]
+                             state: (.state // ""), url: (.web_url // ""), updated: (.updated_at // ""),
+                             commented: ($commented["MergeRequest#" + ((.iid // 0) | tostring)] // "")}) )
+                  | map(. + {active: ([ .updated, .commented ] | map(select(. != "")) | max // "")})
+                  | sort_by(.active) | reverse | .[0:5]
                 )
               } ]' <<<"${enriched}")
     done

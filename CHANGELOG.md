@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed the Mission Control project cards giving no sign of how their issues and merge requests are ordered, and ordering them by a timestamp that ignores comments. GitLab does not always move an issue's `updated_at` when someone comments, so each project's comment feed now supplies the missing time and the rows are ordered by the later of the two. Every row carries its age at the right edge
 - Fixed the `sf-toolbox` Homebrew tap task failing the whole provisioning run when Homebrew clones the tap successfully and then exits with `Error: Broken pipe`, a flake that has broken CI on `main` more than once. The task now retries and treats that specific message as success, because the tap is already in place
 - Fixed the `sf-toolbox` conflict detector reporting Omarchy's mise-managed tools (claude, gh) as conflicts to remove and misclassifying `/usr/bin/glab`: mise wrappers, shims, and install directories are now recognized as a delegated provider and skipped, and the wrapper detection reads only the first 512 bytes of a file, because large compiled binaries can contain the same byte sequence by coincidence (glab does)
 - Fixed `sf-toolbox-status` reporting "updates available" for a clone with local commits ahead of upstream: freshness now counts only commits behind (`git rev-list HEAD..upstream`), so a feature branch in progress reads as up to date
