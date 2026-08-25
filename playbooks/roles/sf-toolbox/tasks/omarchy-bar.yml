@@ -36,8 +36,10 @@
           loop:
             - manifest.json
             - Toolbox.qml
+            - MissionControl.qml
             - menu.json
             - sparkfabrik-logo.png
+            - sparkfabrik-logo-white.png
           register: plugin_files
 
         # The pacman post-transaction hook touches this stamp file (as root);
@@ -59,6 +61,31 @@
             src: omarchy-bar/sparkfabrik-toolbox.hook
             dest: /etc/pacman.d/hooks/sparkfabrik-toolbox.hook
             mode: "0644"
+
+        # Plugins cannot register Hyprland keybindings themselves, so the
+        # shortcut goes into the user's own bindings.lua inside a marked block.
+        # Users can change the combination there, or set the variable below.
+        - name: Bind the Mission Control shortcut in Hyprland
+          become: true
+          become_user: "{{ system.username | default(current_user) }}"
+          ansible.builtin.blockinfile:
+            path: "{{ system.home | default(current_home) }}/.config/hypr/bindings.lua"
+            create: true
+            mode: "0644"
+            marker: "-- {mark} sparkfabrik.toolbox"
+            block: |
+              -- SparkFabrik Mission Control: your GitLab work at a glance.
+              o.bind("{{ sf_toolbox_mission_control_key | default('CTRL + SUPER + ALT + S') }}", "Mission Control",
+                "omarchy-shell -q shell summon sparkfabrik.toolbox '{}'")
+          register: mission_control_bind
+
+        - name: Reload Hyprland to pick up the shortcut
+          become: true
+          become_user: "{{ system.username | default(current_user) }}"
+          ansible.builtin.command: hyprctl reload
+          when: mission_control_bind is changed
+          changed_when: true
+          failed_when: false
 
         - name: Check whether the widget is already in the bar layout
           become: true
