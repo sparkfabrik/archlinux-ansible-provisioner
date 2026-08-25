@@ -202,15 +202,29 @@ mrs_json() {
 # top-level group paths, or write the same assignment in
 # ${XDG_CONFIG_HOME:-~/.config}/sparkfabrik-toolbox/config. With nothing set,
 # every project is named after the project itself.
+#
+# The environment wins whenever the variable is set at all, so exporting it
+# empty means "no client groups" rather than "fall back to the file". The file
+# is hand-editable, so the assignment is accepted with or without an "export"
+# prefix, and a trailing comment is dropped.
 client_groups() {
-    local raw="${SF_GITLAB_CLIENT_GROUPS:-}"
     local cfg="${XDG_CONFIG_HOME:-${HOME}/.config}/sparkfabrik-toolbox/config"
-    if [[ -z "${raw}" && -r "${cfg}" ]]; then
-        raw=$(sed -n 's/^[[:space:]]*SF_GITLAB_CLIENT_GROUPS[[:space:]]*=[[:space:]]*//p' \
-              "${cfg}" 2>/dev/null | tail -1)
-        raw="${raw%\"}"; raw="${raw#\"}"
-        raw="${raw%\'}"; raw="${raw#\'}"
+    local raw
+    if [[ -n "${SF_GITLAB_CLIENT_GROUPS+set}" ]]; then
+        printf "%s" "${SF_GITLAB_CLIENT_GROUPS}"
+        return 0
     fi
+    [[ -r "${cfg}" ]] || return 0
+    raw=$(sed -n \
+        -e 's/^[[:space:]]*export[[:space:]]\{1,\}//' \
+        -e '/^[[:space:]]*SF_GITLAB_CLIENT_GROUPS[[:space:]]*=/!d' \
+        -e 's/^[[:space:]]*SF_GITLAB_CLIENT_GROUPS[[:space:]]*=[[:space:]]*//' \
+        -e 's/[[:space:]]\{1,\}#.*$//' \
+        -e 's/[[:space:]]*$//' \
+        -e p \
+        "${cfg}" 2>/dev/null | tail -1)
+    raw="${raw%\"}"; raw="${raw#\"}"
+    raw="${raw%\'}"; raw="${raw#\'}"
     printf "%s" "${raw}"
 }
 

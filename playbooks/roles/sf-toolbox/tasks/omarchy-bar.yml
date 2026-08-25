@@ -32,16 +32,20 @@
             mode: "0755"
           when: sf_toolbox_gitlab_client_groups | default([]) | length > 0
 
+        # Not gated on the list being non-empty: emptying the variable has to
+        # remove the assignment, otherwise a stale line keeps naming projects
+        # after a group that is no longer configured. With no list and no
+        # config file, lineinfile reports the file as absent and does nothing.
         - name: Record the GitLab client groups for Mission Control
           become: true
           become_user: "{{ system.username | default(current_user) }}"
           ansible.builtin.lineinfile:
             path: "{{ system.home | default(current_home) }}/.config/sparkfabrik-toolbox/config"
             regexp: "^SF_GITLAB_CLIENT_GROUPS="
-            line: "SF_GITLAB_CLIENT_GROUPS={{ sf_toolbox_gitlab_client_groups | join(',') }}"
+            line: "SF_GITLAB_CLIENT_GROUPS={{ sf_toolbox_gitlab_client_groups | default([]) | join(',') }}"
+            state: "{{ 'present' if (sf_toolbox_gitlab_client_groups | default([]) | length > 0) else 'absent' }}"
             create: true
             mode: "0644"
-          when: sf_toolbox_gitlab_client_groups | default([]) | length > 0
 
         - name: Create the plugin directory
           become: true
