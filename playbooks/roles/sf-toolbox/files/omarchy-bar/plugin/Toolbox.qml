@@ -23,6 +23,9 @@ Panel {
   property var menuSections: []
   property var availableBins: ({})
   property bool stampSeen: false
+  // Branding follows the active Omarchy theme: the theme accent when it is
+  // set, the Spark red as the fallback.
+  readonly property color brandColor: Color.accent
 
   readonly property string pluginDir:
     Quickshell.env("HOME") + "/.config/omarchy/plugins/sparkfabrik.toolbox"
@@ -227,6 +230,7 @@ Panel {
   }
 
   readonly property url logoSource: Qt.resolvedUrl("sparkfabrik-logo.png")
+  readonly property url logoBarSource: Qt.resolvedUrl("sparkfabrik-logo-white.png")
 
   BarIconButton {
     id: button
@@ -244,7 +248,7 @@ Panel {
           anchors.centerIn: parent
           width: Style.space(15)
           height: Style.space(15)
-          source: root.logoSource
+          source: root.logoBarSource
           fillMode: Image.PreserveAspectFit
           smooth: true
           mipmap: true
@@ -313,6 +317,7 @@ Panel {
 
             Text {
               text: "SparkFabrik Toolbox"
+              // brandColor follows the active theme accent
               color: root.bar.foreground
               font.family: root.bar.fontFamily
               font.pixelSize: Style.font.heading
