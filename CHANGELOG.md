@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed the `sf-toolbox` Homebrew tap task failing the whole provisioning run when Homebrew clones the tap successfully and then exits with `Error: Broken pipe`, a flake that has broken CI on `main` more than once. The task now retries and treats that specific message as success, because the tap is already in place
 - Fixed the `sf-toolbox` conflict detector reporting Omarchy's mise-managed tools (claude, gh) as conflicts to remove and misclassifying `/usr/bin/glab`: mise wrappers, shims, and install directories are now recognized as a delegated provider and skipped, and the wrapper detection reads only the first 512 bytes of a file, because large compiled binaries can contain the same byte sequence by coincidence (glab does)
 - Fixed `sf-toolbox-status` reporting "updates available" for a clone with local commits ahead of upstream: freshness now counts only commits behind (`git rev-list HEAD..upstream`), so a feature branch in progress reads as up to date
 - Fixed `sf-toolbox` shadowing Omarchy's packaged herdr: on systems where herdr is installed via pacman (Omarchy ships it), the GitHub-release copy in `/usr/local/bin/herdr` took PATH precedence over `/usr/bin/herdr` and drifted from the packaged version. The role now removes the `/usr/local/bin` copy and skips the GitHub-release install when the pacman package is present
