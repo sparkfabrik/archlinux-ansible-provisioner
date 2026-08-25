@@ -31,7 +31,7 @@ Subsystems: `toolbox`, `sparkdock`, `agents`, `packages`, `http-proxy`. `--json`
 
 The `gitlab` data mode is what Mission Control renders. Rules worth keeping:
 
-- **Naming.** A project is named after who the work is for. Under `customers/` or `sf-legacy/` the group IS the client, so the client leads and the repository is the subtitle. Everywhere else the group is just a container: GitLab's own project name leads (`Signals`, not `spark-content-factory-ai`) and the group goes underneath. The subtitle never repeats the title.
+- **Naming.** A project is named after who the work is for. Some GitLab groups hold one subgroup per client: in those the subgroup leads and the repository is the subtitle. Which groups those are is configuration, not code, so it never appears in this repository: `SF_GITLAB_CLIENT_GROUPS` in `~/.config/sparkfabrik-toolbox/config` holds the list, and the `omarchy-bar` task writes it from `sf_toolbox_gitlab_client_groups`. Everywhere else the group is just a container, so GitLab's own project name leads and the group goes underneath. The subtitle never repeats the title, and with nothing configured every project is named after the project itself.
 - **Honest window.** The GitLab event feed truncates (about 500 events), so the requested 90 days is a ceiling, not a promise. `coverage` reports what the data really covers and the UI prints that ("last 3 weeks"), never the requested figure.
 - **Order by frequency.** Projects are sorted by how many of the developer's own events they carry, not by the last timestamp.
 - **Split open and closed.** `attention` holds todos whose target is still open, `closed_recently` the closed and merged ones. Mixing them makes the list lie.
@@ -40,7 +40,11 @@ The `gitlab` data mode is what Mission Control renders. Rules worth keeping:
 
 Data modes (JSON to stdout, no exit-code contract): `projects` (local Docker/compose projects: name, dir, git branch, container counts, and the spark-http-proxy vhosts read from the containers' `VIRTUAL_HOST` env) and `mrs` (the developer's open merge requests on the company GitLab via `glab api`; override the host with `SF_GITLAB_HOST`).
 
-Env overrides for tests and non-standard layouts: `SF_TOOLBOX_DIR`, `SF_SPARKDOCK_DIR`, `SF_HTTP_PROXY_DIR`, `SF_AGENTS_DIR`, `SF_STATUS_FETCH_TIMEOUT`.
+Env overrides for tests and non-standard layouts: `SF_TOOLBOX_DIR`, `SF_SPARKDOCK_DIR`, `SF_HTTP_PROXY_DIR`, `SF_AGENTS_DIR`, `SF_STATUS_FETCH_TIMEOUT`, `SF_GITLAB_CLIENT_GROUPS`.
+
+`SF_GITLAB_CLIENT_GROUPS` wins whenever it is set at all, so exporting it empty is how a test says "no client groups" without touching the config file. The file itself is hand-editable, so the assignment is read with or without an `export` prefix, quoted or bare, and a trailing comment is dropped. Emptying `sf_toolbox_gitlab_client_groups` removes the line rather than leaving a stale one behind.
+
+Keep the code free of any one installation's GitLab layout. Group paths, project names and client names belong in the user's configuration and in the live API responses, never in the code, the comments, the tests or the documentation. Write examples with placeholders.
 
 Two traps already hit once, do not reintroduce them:
 
