@@ -8,10 +8,13 @@
   "homepage": "https://github.com/sparkfabrik/archlinux-ansible-provisioner",
   "description": "Status and quick actions for the SparkFabrik Linux toolbox: toolbox and sparkdock freshness, package updates, HTTP proxy, Docker, and CLI auth.",
   "kinds": [
-    "bar-widget"
+    "bar-widget",
+    "overlay"
   ],
+  "keepLoaded": true,
   "entryPoints": {
-    "barWidget": "Toolbox.qml"
+    "barWidget": "Toolbox.qml",
+    "overlay": "MissionControl.qml"
   },
   "barWidget": {
     "displayName": "SparkFabrik Toolbox",

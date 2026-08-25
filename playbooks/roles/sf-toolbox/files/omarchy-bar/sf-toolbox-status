@@ -30,8 +30,10 @@ SCRIPT_NAME="$(basename "$0")"
 TOOLBOX_DIR="${SF_TOOLBOX_DIR:-/opt/archlinux-provisioner}"
 SPARKDOCK_DIR="${SF_SPARKDOCK_DIR:-${HOME}/.local/spark/sparkdock}"
 HTTP_PROXY_DIR="${SF_HTTP_PROXY_DIR:-${HOME}/.local/spark/http-proxy/src}"
+AGENTS_DIR="${SF_AGENTS_DIR:-${HOME}/.cache/sparkdock/agent-skills}"
 FETCH_TIMEOUT="${SF_STATUS_FETCH_TIMEOUT:-15}"
 OFFLINE=0
+NO_CACHE=0
 
 # Compare a git clone against its upstream.
 # Prints nothing; the return code carries the answer:
@@ -55,11 +57,12 @@ git_freshness() (
         timeout "${FETCH_TIMEOUT}" git fetch --quiet "${upstream%%/*}" 2>/dev/null || return 2
     fi
 
-    local local_rev remote_rev
-    local_rev=$(git rev-parse HEAD 2>/dev/null) || return 2
-    remote_rev=$(git rev-parse "${upstream}" 2>/dev/null) || return 2
+    # Stale only when BEHIND upstream. Local commits ahead of upstream (a
+    # feature branch in progress) are not "updates available".
+    local behind
+    behind=$(git rev-list --count "HEAD..${upstream}" 2>/dev/null) || return 2
 
-    if [[ "${local_rev}" != "${remote_rev}" ]]; then
+    if [[ "${behind}" -gt 0 ]]; then
         return 0
     fi
     return 1
@@ -78,6 +81,528 @@ check_http_proxy_freshness() {
         return 3
     fi
     git_freshness "${HTTP_PROXY_DIR}" "origin/main"
+}
+
+# The AI agent skills cache is a git clone synced by sparkdock-agents-sync;
+# behind upstream means `ajust sf-harness-sync` has work to do.
+check_agents() {
+    git_freshness "${AGENTS_DIR}" "origin/main"
+}
+
+# Inventory the developer's local projects from Docker: compose project labels
+# give the grouping and the working directory (hence the git branch), VIRTUAL_HOST
+# env vars give the spark-http-proxy vhosts. The http-proxy stack itself is
+# excluded. Output: {"projects":[{name,dir,branch,running,total,hosts:[..]}]}
+projects_json() {
+    if ! command -v docker >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
+        echo '{"projects":[]}'
+        return 0
+    fi
+
+    local ids
+    ids=$(docker ps -a -q 2>/dev/null) || { echo '{"projects":[]}'; return 0; }
+    if [[ -z "${ids}" ]]; then
+        echo '{"projects":[]}'
+        return 0
+    fi
+
+    local inspected
+    # shellcheck disable=SC2086 # ids is a list of container ids by design
+    inspected=$(docker inspect ${ids} 2>/dev/null) || { echo '{"projects":[]}'; return 0; }
+
+    local grouped
+    grouped=$(jq -c '
+        [ .[]
+          | {
+              project: (.Config.Labels["com.docker.compose.project"] // empty),
+              dir: (.Config.Labels["com.docker.compose.project.working_dir"] // ""),
+              running: .State.Running,
+              hosts: ([ .Config.Env[]? | select(startswith("VIRTUAL_HOST=")) | sub("^VIRTUAL_HOST="; "") | split(",")[] ] // [])
+            }
+          | select(.project != null and .project != "" and .project != "http-proxy")
+        ]
+        | group_by(.project)
+        | map({
+            name: .[0].project,
+            dir: ([ .[].dir | select(. != "") ] | first // ""),
+            running: ([ .[] | select(.running) ] | length),
+            total: length,
+            hosts: ([ .[].hosts[] ] | unique)
+          })
+    ' <<<"${inspected}" 2>/dev/null) || grouped="[]"
+
+    # Enrich each project with its git branch (cheap, local only).
+    local enriched="[]"
+    local row dir branch
+    while IFS= read -r row; do
+        [[ -n "${row}" ]] || continue
+        dir=$(jq -r '.dir' <<<"${row}")
+        branch=""
+        if [[ -n "${dir}" && -d "${dir}/.git" ]]; then
+            branch=$(git -C "${dir}" branch --show-current 2>/dev/null || echo "")
+        fi
+        enriched=$(jq -c --argjson r "${row}" --arg b "${branch}" '. + [ $r + {branch: $b} ]' <<<"${enriched}")
+    done < <(jq -c '.[]' <<<"${grouped}")
+
+    jq -c '{projects: .}' <<<"${enriched}"
+}
+
+# The developer's open merge requests on the company GitLab, newest first,
+# each enriched with its head pipeline status (the MR list endpoint returns a
+# null pipeline, so the status comes from the per-MR detail endpoint).
+# Output: {"mrs":[{title,ref,url,branch,draft,updated,pipeline,pipeline_url}]}
+mrs_json() {
+    local host="${SF_GITLAB_HOST:-gitlab.sparkfabrik.com}"
+    if ! command -v glab >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
+        echo '{"mrs":[]}'
+        return 0
+    fi
+    local out
+    out=$(GITLAB_HOST="${host}" timeout "${FETCH_TIMEOUT}" \
+        glab api "merge_requests?scope=created_by_me&state=opened&order_by=updated_at&per_page=10" 2>/dev/null) || {
+        echo '{"mrs":[]}'
+        return 0
+    }
+
+    local base
+    base=$(jq -c '[ .[] | {
+        title,
+        ref: (.references.full // ""),
+        url: .web_url,
+        branch: (.source_branch // ""),
+        draft: (.draft // false),
+        updated: (.updated_at // ""),
+        project_id: .project_id,
+        iid: .iid
+    } ]' <<<"${out}" 2>/dev/null) || { echo '{"mrs":[]}'; return 0; }
+
+    local enriched="[]" row pid iid detail status purl
+    while IFS= read -r row; do
+        [[ -n "${row}" ]] || continue
+        pid=$(jq -r '.project_id' <<<"${row}")
+        iid=$(jq -r '.iid' <<<"${row}")
+        status="none"
+        purl=""
+        detail=$(GITLAB_HOST="${host}" timeout "${FETCH_TIMEOUT}" \
+            glab api "projects/${pid}/merge_requests/${iid}" 2>/dev/null) || detail=""
+        if [[ -n "${detail}" ]]; then
+            status=$(jq -r '.head_pipeline.status // "none"' <<<"${detail}" 2>/dev/null || echo "none")
+            purl=$(jq -r '.head_pipeline.web_url // ""' <<<"${detail}" 2>/dev/null || echo "")
+        fi
+        enriched=$(jq -c --argjson r "${row}" --arg s "${status}" --arg u "${purl}" \
+            '. + [ ($r | del(.project_id, .iid)) + {pipeline: $s, pipeline_url: $u} ]' <<<"${enriched}")
+    done < <(jq -c '.[]' <<<"${base}")
+
+    jq -c '{mrs: .}' <<<"${enriched}"
+}
+
+# One aggregated view of the developer's GitLab work, built around the projects
+# they actually touched in the last 90 days, merged with the local Docker state.
+# This is what Mission Control renders.
+#
+# The event feed must be paginated: a single page covers only a few days, so the
+# project universe would be wrong. Results are cached on disk so the overlay
+# opens instantly and refreshes behind.
+gitlab_json() {
+    local host="${SF_GITLAB_HOST:-gitlab.sparkfabrik.com}"
+    local cache_dir="${XDG_CACHE_HOME:-${HOME}/.cache}/sparkfabrik-toolbox"
+    local cache="${cache_dir}/gitlab.json"
+    local ttl="${SF_GITLAB_CACHE_TTL:-120}"
+    local window="${SF_GITLAB_WINDOW_DAYS:-90}"
+
+    if [[ "${NO_CACHE}" -eq 0 && -s "${cache}" ]]; then
+        local age
+        age=$(( $(date +%s) - $(stat -c %Y "${cache}" 2>/dev/null || echo 0) ))
+        if [[ ${age} -lt ${ttl} ]]; then
+            cat "${cache}"
+            return 0
+        fi
+    fi
+
+    local empty='{"projects":[],"attention":[],"closed_recently":[],"activity":{"days":[]},"local":[],"totals":{}}'
+    if ! command -v glab >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
+        echo "${empty}"
+        return 0
+    fi
+
+    local me_json me_id me_name
+    me_json=$(GITLAB_HOST="${host}" timeout "${FETCH_TIMEOUT}" glab api user 2>/dev/null) || me_json=""
+    me_id=$(jq -r '.id // empty' <<<"${me_json}" 2>/dev/null)
+    me_name=$(jq -r '.username // empty' <<<"${me_json}" 2>/dev/null)
+    if [[ -z "${me_id}" ]]; then
+        echo "${empty}"
+        return 0
+    fi
+
+    # A GitLab call that always yields valid JSON: an error body (a project
+    # without pipeline permission answers 403) or unparsable output degrades
+    # to an empty array instead of poisoning the whole document.
+    gl() {
+        local body
+        body=$(GITLAB_HOST="${host}" timeout "${FETCH_TIMEOUT}" glab api "$1" 2>/dev/null) || body=""
+        if [[ -z "${body}" ]]; then
+            echo "[]"
+            return 0
+        fi
+        if ! jq -e "type == \"array\"" >/dev/null 2>&1 <<<"${body}"; then
+            if ! jq -e "type == \"object\" and (has(\"message\") | not) and (has(\"error\") | not)" >/dev/null 2>&1 <<<"${body}"; then
+                echo "[]"
+                return 0
+            fi
+        fi
+        printf "%s" "${body}"
+    }
+
+    # Payloads travel through files: a hundred todos blow past the argv limit.
+    local tmp
+    tmp=$(mktemp -d) || { echo "${empty}"; return 0; }
+    # shellcheck disable=SC2064 # expand tmp now so the trap cleans this dir
+    trap "rm -rf '${tmp}'" RETURN
+
+    local since
+    since=$(date -d "-${window} days" +%Y-%m-%d 2>/dev/null || echo "")
+
+    # Paginated event feed: the project universe and the activity chart.
+    local page
+    : >"${tmp}/events_raw.json"
+    for page in 1 2 3 4 5; do
+        gl "events?after=${since}&per_page=100&page=${page}" >>"${tmp}/events_raw.json"
+    done
+    jq -s 'add // []' "${tmp}/events_raw.json" >"${tmp}/events.json" 2>/dev/null || echo '[]' >"${tmp}/events.json"
+
+    gl "todos?per_page=100" >"${tmp}/todos.json"
+    gl "issues?scope=assigned_to_me&state=opened&per_page=100" >"${tmp}/issues_a.json"
+    gl "merge_requests?scope=created_by_me&state=opened&per_page=50" >"${tmp}/mrs_mine.json"
+    gl "merge_requests?scope=all&reviewer_id=${me_id}&state=opened&per_page=50" >"${tmp}/mrs_review.json"
+    projects_json 2>/dev/null >"${tmp}/local.json" || echo '{"projects":[]}' >"${tmp}/local.json"
+
+    # Fold everything into per-project rows plus the two attention lists.
+    local base
+    base=$(jq -cn \
+        --slurpfile ev_f "${tmp}/events.json" \
+        --slurpfile todos_f "${tmp}/todos.json" \
+        --slurpfile ia_f "${tmp}/issues_a.json" \
+        --slurpfile mm_f "${tmp}/mrs_mine.json" \
+        --slurpfile mr_f "${tmp}/mrs_review.json" \
+        --slurpfile lp_f "${tmp}/local.json" '
+        ($ev_f[0] // []) as $ev
+        | ($todos_f[0] // []) as $todos
+        | ($ia_f[0] // []) as $ia
+        | ($mm_f[0] // []) as $mm
+        | ($mr_f[0] // []) as $mr
+        | ($lp_f[0] // {projects: []}) as $lp
+
+        # A project is named after who the work is for, not the repo slug:
+        # customers/<client>/<repo> -> the client, otherwise the inner group.
+        | def titleize: gsub("[-_]"; " ") | split(" ")
+            | map(select(. != "") | (.[0:1] | ascii_upcase) + .[1:]) | join(" ");
+          def client_of(path):
+            (path | split("/")) as $s
+            | if ($s | length) < 2 then (path | titleize)
+              elif $s[0] == "customers" or $s[0] == "sf-legacy" then ($s[1] | titleize)
+              elif ($s | length) > 2 then ($s[1] | titleize)
+              else ($s[0] | titleize) end;
+          def todo_row:
+            {
+              action: (.action_name // ""),
+              type: (.target_type // ""),
+              state: (.target.state // ""),
+              title: ((.target.title // .body // "")[0:120]),
+              ref: (.target.references.full // ""),
+              path: ((.project.path_with_namespace // "")),
+              client: client_of(.project.path_with_namespace // ""),
+              repo: ((.project.path_with_namespace // "") | split("/") | last),
+              project_id: (.project.id // null),
+              url: (.target_url // ""),
+              updated: (.updated_at // .created_at // ""),
+              notes: (.target.user_notes_count // 0)
+            };
+
+        # The project universe: only what the developer touched in the window.
+        # Week buckets, newest last: the sparkline and the chart share them.
+        ( [ range(0; 6) ] | map(now - (. * 604800)) | map(todate[0:10]) | reverse ) as $week_starts
+
+        # Projects the developer touched, ordered by how OFTEN they worked on
+        # them (frequency), not by the last timestamp.
+        | ( $ev
+          | map(select(.project_id != null))
+          | group_by(.project_id)
+          | map({
+              id: .[0].project_id,
+              events: length,
+              last_activity: ([ .[].created_at ] | max),
+              spark: ( . as $rows
+                       | $week_starts
+                       | to_entries
+                       | map(. as $w
+                             | ($week_starts[$w.key + 1] // "9999-12-31") as $next
+                             | [ $rows[] | select(.created_at[0:10] >= $w.value and .created_at[0:10] < $next) ] | length) )
+            })
+          | sort_by(.events) | reverse
+        ) as $touched
+
+        # Per-project counters, keyed by project id.
+        | ( [ $todos[] | select(.target.state == "opened") | {id: (.project.id // null), replies: 1} ]
+          + [ $ia[] | {id: .project_id, issues_open: 1} ]
+          + [ $mm[] | {id: .project_id, mrs_open: 1} ]
+          + [ $mr[] | {id: .project_id, mrs_to_review: 1} ]
+          + [ $todos[] | select(.target.state != "opened") | {id: (.project.id // null), closed_recent: 1} ]
+          | map(select(.id != null))
+          | group_by(.id)
+          | map({
+              id: .[0].id,
+              replies: ([ .[].replies // 0 ] | add),
+              issues_open: ([ .[].issues_open // 0 ] | add),
+              mrs_open: ([ .[].mrs_open // 0 ] | add),
+              mrs_to_review: ([ .[].mrs_to_review // 0 ] | add),
+              closed_recent: ([ .[].closed_recent // 0 ] | add)
+            })
+        ) as $counters
+
+        # Paths seen anywhere, so a project name never comes out empty.
+        | ( [ $todos[] | {id: (.project.id // null), path: (.project.path_with_namespace // "")} ]
+          + [ $ia[] | {id: .project_id, path: ((.references.full // "") | split("#")[0])} ]
+          + [ $mm[] | {id: .project_id, path: ((.references.full // "") | split("!")[0])} ]
+          + [ $mr[] | {id: .project_id, path: ((.references.full // "") | split("!")[0])} ]
+          | map(select(.id != null and .path != ""))
+          | group_by(.id) | map({id: .[0].id, path: .[0].path})
+        ) as $paths
+
+        | ( $todos | map(todo_row) ) as $all_todos
+
+        | ( $mm | map({
+              title: ((.title // "")[0:90]),
+              ref: (.references.full // ""),
+              url: (.web_url // ""),
+              branch: (.source_branch // ""),
+              draft: (.draft // false),
+              updated: (.updated_at // ""),
+              client: client_of(((.references.full // "") | split("!")[0])),
+              repo: (((.references.full // "") | split("!")[0]) | split("/") | last)
+            }) | sort_by(.updated) | reverse ) as $my_mrs
+
+        | {
+            my_mrs: $my_mrs,
+            projects: ( $touched | map(
+                . as $t
+                | ($counters[] | select(.id == $t.id)) // {} as $c
+                | ($paths[] | select(.id == $t.id)) // {} as $p
+                | {
+                    id: $t.id,
+                    events: $t.events,
+                    last_activity: $t.last_activity,
+                    spark: $t.spark,
+                    recent: [],
+                    path: ($p.path // ""),
+                    client: (if ($p.path // "") != "" then client_of($p.path) else "" end),
+                    repo: (if ($p.path // "") != "" then ($p.path | split("/") | last) else "" end),
+                    replies: ($c.replies // 0),
+                    issues_open: ($c.issues_open // 0),
+                    mrs_open: ($c.mrs_open // 0),
+                    mrs_to_review: ($c.mrs_to_review // 0),
+                    closed_recent: ($c.closed_recent // 0),
+                    url: "",
+                    pipeline: null
+                  }
+              ) ),
+            attention: ( $all_todos | map(select(.state == "opened"))
+                         | sort_by(.updated) | reverse | .[0:30] ),
+            closed_recently: ( $all_todos | map(select(.state != "opened"))
+                               | sort_by(.updated) | reverse | .[0:20] ),
+            activity: {
+                days: ( $ev | map(.created_at[0:10]) | group_by(.)
+                        | map({d: .[0], n: length}) | sort_by(.d) | .[-14:] ),
+                weeks: ( $week_starts | to_entries | map(. as $w
+                    | ($week_starts[$w.key + 1] // "9999-12-31") as $next
+                    | { start: $w.value,
+                        label: ($w.value[8:10] + "/" + $w.value[5:7]),
+                        n: ([ $ev[] | select(.created_at[0:10] >= $w.value and .created_at[0:10] < $next) ] | length) } ) )
+            },
+            local: $lp.projects,
+            coverage: {
+                oldest: ([ $ev[].created_at ] | min // ""),
+                newest: ([ $ev[].created_at ] | max // ""),
+                days: (if ($ev | length) == 0 then 0
+                       else ((((([ $ev[].created_at[0:10] ] | max) + "T00:00:00Z") | fromdateiso8601)
+                            - ((([ $ev[].created_at[0:10] ] | min) + "T00:00:00Z") | fromdateiso8601))
+                            / 86400 | floor) + 1 end),
+                truncated: (($ev | length) >= 500)
+            },
+            totals: {
+                todos_open: ($all_todos | map(select(.state == "opened")) | length),
+                todos_closed: ($all_todos | map(select(.state != "opened")) | length),
+                issues: ($ia | length),
+                mrs: (($mm | length) + ($mr | length)),
+                events: ($ev | length),
+                window_days: 0
+            }
+          }') || base=""
+
+    if [[ -z "${base}" ]]; then
+        echo "${empty}"
+        return 0
+    fi
+
+    # Enrich the projects in the window with name, url and latest pipeline.
+    local ids enriched="[]" row pid pmeta ppipe
+    ids=$(jq -r '.projects[0:6][].id' <<<"${base}" 2>/dev/null)
+    for pid in ${ids}; do
+        row=$(jq -c --argjson id "${pid}" '.projects[] | select(.id == $id)' <<<"${base}")
+        pmeta=$(gl "projects/${pid}")
+        ppipe=$(gl "projects/${pid}/pipelines?username=${me_name}&per_page=6")
+        pissues=$(gl "projects/${pid}/issues?state=opened&order_by=updated_at&per_page=5")
+        pmrs=$(gl "projects/${pid}/merge_requests?state=opened&order_by=updated_at&per_page=3")
+        enriched=$(jq -c \
+            --argjson r "${row}" \
+            --argjson meta "${pmeta}" \
+            --argjson pipe "${ppipe}" \
+            --argjson issues "${pissues}" \
+            --argjson mrs "${pmrs}" '
+            def titleize: gsub("[-_]"; " ") | split(" ")
+                | map(select(. != "") | (.[0:1] | ascii_upcase) + .[1:]) | join(" ");
+            def client_of(path):
+              (path | split("/")) as $s
+              | if ($s | length) < 2 then (path | titleize)
+                elif $s[0] == "customers" or $s[0] == "sf-legacy" then ($s[1] | titleize)
+                elif ($s | length) > 2 then ($s[1] | titleize)
+                else ($s[0] | titleize) end;
+            ($meta.path_with_namespace // $r.path // "") as $path
+            | . + [ $r + {
+                path: $path,
+                name: ($meta.name // ""),
+                client: (if $path != "" then client_of($path) else ($r.client // "") end),
+                repo: (if $path != "" then ($path | split("/") | last) else ($r.repo // "") end),
+                url: ($meta.web_url // ""),
+                pipeline: (if ($pipe | type) == "array" and ($pipe | length) > 0
+                           then {status: ($pipe[0].status // ""), ref: ($pipe[0].ref // ""), url: ($pipe[0].web_url // "")}
+                           else null end),
+                pipelines: (if ($pipe | type) == "array"
+                            then ($pipe | map({status: (.status // ""), ref: (.ref // ""),
+                                               url: (.web_url // ""), updated: (.updated_at // .created_at // "")}))
+                            else [] end),
+                recent: (
+                    ( (if ($issues | type) == "array" then $issues else [] end)
+                      | map({kind: "issue", iid: .iid, title: ((.title // "")[0:70]),
+                             state: (.state // ""), url: (.web_url // ""), updated: (.updated_at // "")}) )
+                  + ( (if ($mrs | type) == "array" then $mrs else [] end)
+                      | map({kind: "mr", iid: .iid, title: ((.title // "")[0:70]),
+                             state: (.state // ""), url: (.web_url // ""), updated: (.updated_at // "")}) )
+                  | sort_by(.updated) | reverse | .[0:5]
+                )
+              } ]' <<<"${enriched}")
+    done
+
+    local out
+    out=$(jq -c --argjson top "${enriched}" --arg window "${window}" '
+        ($top | map(.id)) as $ids
+        | .projects = (($top + [ .projects[] | select(.id as $i | ($ids | index($i)) | not) ])
+                       | sort_by(.events) | reverse)
+        | .projects |= map(
+            (.path // "") as $path
+            | ($path | split("/")) as $seg
+            | (($seg | length) > 1 and ($seg[0] == "customers" or $seg[0] == "sf-legacy")) as $is_customer
+            | . + { is_customer: $is_customer }
+            | . + {
+                display_title: (
+                  if $is_customer then (if (.client // "") != "" then .client else (.repo // "") end)
+                  else (if (.name // "") != "" then .name else (.repo // "") end) end),
+                display_sub: (
+                  # Never repeat the title in the subtitle.
+                  (if (.name // "") != "" then .name else (.repo // "") end) as $title
+                  | if $is_customer then (if (.repo // "") != $title then (.repo // "") else "" end)
+                    else ((if (.client // "") != "" then .client else "" end)
+                          + (if (.repo // "") != "" and (.repo // "") != $title then " · " + .repo else "" end)) end)
+              }
+            | . + { client: (if (.display_title // "") != "" then .display_title
+                             else ("Project " + (.id | tostring)) end) }
+          )
+        | .pipelines = (
+            [ .projects[]
+              | . as $p
+              | ($p.pipelines // [])[]
+              | { client: ($p.client // ""), repo: ($p.repo // ""),
+                  title_key: ($p.display_title // $p.repo // ""),
+                  sub_key: ($p.display_sub // ""),
+                  status, ref, url, updated }
+            ] as $all
+            | ((now - 604800 | todate)[0:10]) as $fresh
+            | { live: ( $all | map(select(.status == "running" or .status == "pending"))
+                        | sort_by(.updated) | reverse ),
+                # Every failure stays in the list; the stale flag lets the UI
+                # dim the old ones instead of hiding them.
+                broken: ( $all | map(select(.status == "failed"))
+                          | map(. + {stale: (.updated[0:10] <= $fresh)})
+                          | sort_by(.stale, .updated) | reverse | .[0:5] ),
+                broken_recent: ( $all | map(select(.status == "failed" and .updated[0:10] > $fresh)) | length ),
+                broken_old: ( $all | map(select(.status == "failed" and .updated[0:10] <= $fresh)) | length ),
+                green: ( $all | map(select(.status == "success")) | length ),
+                by_project: ( $all
+                    | group_by(.title_key)
+                    | map({ title: .[0].title_key,
+                            sub: .[0].sub_key,
+                            failed: ([ .[] | select(.status == "failed") ] | length),
+                            runs: ( . | sort_by(.updated) | reverse | .[0:4] ) })
+                    # Most recently active project first: a green run from ten
+                    # minutes ago matters more than a red one from three weeks.
+                    | map(. + {last: ([ .runs[].updated ] | max)})
+                    | sort_by(.last) | reverse | map(del(.last)) ) } )
+        | .projects |= map(del(.pipelines))
+        | .totals.window_days = ($window | tonumber)
+        | .generated = (now | todate)
+    ' <<<"${base}") || out="${base}"
+
+    mkdir -p "${cache_dir}"
+    printf '%s\n' "${out}" >"${cache}"
+    printf '%s\n' "${out}"
+}
+
+
+# Pipelines the developer started recently, across the projects they are
+# active in: project ids come from the user's own GitLab event feed (so it
+# covers projects that are not checked out on this machine) plus the local
+# checkouts. Output: {"pipelines":[{project,ref,status,url,updated}]}
+pipelines_json() {
+    local host="${SF_GITLAB_HOST:-gitlab.sparkfabrik.com}"
+    if ! command -v glab >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
+        echo '{"pipelines":[]}'
+        return 0
+    fi
+
+    local me
+    me=$(GITLAB_HOST="${host}" timeout "${FETCH_TIMEOUT}" glab api user 2>/dev/null | jq -r '.username // empty') || me=""
+    [[ -n "${me}" ]] || { echo '{"pipelines":[]}'; return 0; }
+
+    local events pids
+    events=$(GITLAB_HOST="${host}" timeout "${FETCH_TIMEOUT}" \
+        glab api "events?per_page=50" 2>/dev/null) || events="[]"
+    pids=$(jq -r '[ .[].project_id ] | unique | .[]' <<<"${events}" 2>/dev/null | head -6)
+
+    local out="[]" pid rows
+    for pid in ${pids}; do
+        rows=$(GITLAB_HOST="${host}" timeout "${FETCH_TIMEOUT}" \
+            glab api "projects/${pid}/pipelines?username=${me}&per_page=3" 2>/dev/null) || continue
+        [[ -n "${rows}" ]] || continue
+        local pname
+        pname=$(GITLAB_HOST="${host}" timeout "${FETCH_TIMEOUT}" \
+            glab api "projects/${pid}" 2>/dev/null | jq -r '.path_with_namespace // ""') || pname=""
+        out=$(jq -c --argjson rows "${rows}" --arg pname "${pname}" '
+            . + [ $rows[] | {
+                project: $pname,
+                ref: (.ref // ""),
+                status: (.status // ""),
+                url: (.web_url // ""),
+                updated: (.updated_at // "")
+            } ]' <<<"${out}" 2>/dev/null) || true
+    done
+
+    # Running work first, then most recently updated.
+    jq -c '{pipelines: (
+        [ .[] | select(.status == "running" or .status == "pending") | . + {rank: 0} ]
+        + [ .[] | select(.status != "running" and .status != "pending") | . + {rank: 1} ]
+        | sort_by(.rank, (.updated | . * -1? // 0))
+        | map(del(.rank))
+        | .[0:8]
+    )}' <<<"${out}" 2>/dev/null || echo '{"pipelines":[]}'
 }
 
 http_proxy_running() {
@@ -200,6 +725,10 @@ json_output() {
     local sparkdock_state
     sparkdock_state=$(state_from_rc "${rc}")
 
+    rc=0; check_agents || rc=$?
+    local agents_state
+    agents_state=$(state_from_rc "${rc}")
+
     local pkg_counts="0 0" pkg_state
     rc=0; pkg_counts=$(count_package_updates) || rc=$?
     pkg_state=$(state_from_rc "${rc}")
@@ -223,6 +752,7 @@ json_output() {
     printf '{'
     printf '"toolbox":{"state":"%s"},' "${toolbox_state}"
     printf '"sparkdock":{"state":"%s"},' "${sparkdock_state}"
+    printf '"agents":{"state":"%s"},' "${agents_state}"
     printf '"packages":{"state":"%s","repo":%d,"aur":%d},' "${pkg_state}" "${repo_count}" "${aur_count}"
     printf '"http_proxy":{"state":"%s","running":%s},' "${proxy_state}" "${proxy_running}"
     printf '"docker":{"state":"%s"},' "${docker_st}"
@@ -240,8 +770,16 @@ Check for updates in a SparkFabrik toolbox subsystem.
 Subsystems:
   toolbox      The archlinux-ansible-provisioner clone (sf-toolbox itself)
   sparkdock    The sparkdock clone (AI agent resources)
+  agents       The AI agent skills cache (synced by sparkdock-agents-sync)
   packages     Pending pacman/AUR package updates
   http-proxy   The spark-http-proxy clone
+  projects     Local Docker/compose projects as JSON (name, dir, branch,
+               container counts, spark-http-proxy vhosts)
+  mrs          The developer's open merge requests on the company GitLab
+               as JSON, with head pipeline status (host: SF_GITLAB_HOST)
+  gitlab       Aggregated GitLab work per project (todos, issues, merge
+               requests, pipelines, activity) merged with the local Docker
+               state; cached, pass --no-cache to force a refresh
 
 Modes:
   --json       Aggregated JSON for all subsystems (plus docker and auth)
@@ -262,6 +800,9 @@ main() {
         case "$1" in
             --offline)
                 OFFLINE=1
+                ;;
+            --no-cache)
+                NO_CACHE=1
                 ;;
             --json)
                 want_json=1
@@ -299,6 +840,21 @@ main() {
             ;;
         sparkdock)
             check_sparkdock || rc=$?
+            ;;
+        agents)
+            check_agents || rc=$?
+            ;;
+        projects)
+            projects_json
+            ;;
+        mrs)
+            mrs_json
+            ;;
+        pipelines)
+            pipelines_json
+            ;;
+        gitlab)
+            gitlab_json
             ;;
         packages)
             count_package_updates >/dev/null || rc=$?

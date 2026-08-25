@@ -87,6 +87,10 @@
         mode: "0644"
       when: user_bashrc.stat.exists
 
+    # Homebrew sometimes clones the tap successfully and then exits with
+    # "Error: Broken pipe", failing the task even though the tap is in
+    # place. That flake has broken CI on main more than once, so retry and
+    # accept that specific message as success.
     - name: Add Homebrew taps
       become: true
       become_user: "{{ system.username | default(current_user) }}"
@@ -95,3 +99,10 @@
         path: /home/linuxbrew/.linuxbrew/bin
         state: present
       loop: "{{ toolbox.debian.homebrew_taps | default([]) }}"
+      register: homebrew_taps
+      retries: 3
+      delay: 5
+      until: homebrew_taps is success or 'Broken pipe' in (homebrew_taps.msg | default(''))
+      failed_when:
+        - homebrew_taps is failed
+        - "'Broken pipe' not in (homebrew_taps.msg | default(''))"
