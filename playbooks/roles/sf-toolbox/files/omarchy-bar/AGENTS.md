@@ -13,6 +13,7 @@ The Linux counterpart of the macOS sparkdock menu bar (`src/menubar-app` in the 
 | `plugin/Toolbox.qml`          | The widget: bar icon plus popup                                  |
 | `plugin/menu.json`            | Declarative Tools/Company entries (same schema as macOS)         |
 | `plugin/sparkfabrik-logo.png` | Bar and hero icon (180x180 source)                               |
+| `plugin/MissionControl.qml`   | Fullscreen overlay: project cards, system grid, merge requests   |
 | `sparkfabrik-toolbox.hook`    | Pacman post-transaction hook, installed to `/etc/pacman.d/hooks` |
 
 The Ansible side lives in `../../tasks/omarchy-bar.yml` (install, tag `omarchy-bar`, gated on `/usr/share/omarchy`) and `../../tasks/omarchy-detect.yml` (ownership facts, tag `always`).
@@ -28,12 +29,24 @@ The Ansible side lives in `../../tasks/omarchy-bar.yml` (install, tag `omarchy-b
 
 Subsystems: `toolbox`, `sparkdock`, `agents`, `packages`, `http-proxy`. `--json` aggregates those plus `docker` and `auth` (gcloud, glab, gh) in one process, which is what the widget calls. `--offline` skips `git fetch` and is used for the periodic timer refresh; the popup-open refresh does a full fetch.
 
+The `gitlab` data mode is what Mission Control renders. Rules worth keeping:
+
+- **Naming.** A project is named after who the work is for. Under `customers/` or `sf-legacy/` the group IS the client, so the client leads and the repository is the subtitle. Everywhere else the group is just a container: GitLab's own project name leads (`Signals`, not `spark-content-factory-ai`) and the group goes underneath. The subtitle never repeats the title.
+- **Honest window.** The GitLab event feed truncates (about 500 events), so the requested 90 days is a ceiling, not a promise. `coverage` reports what the data really covers and the UI prints that ("last 3 weeks"), never the requested figure.
+- **Order by frequency.** Projects are sorted by how many of the developer's own events they carry, not by the last timestamp.
+- **Split open and closed.** `attention` holds todos whose target is still open, `closed_recently` the closed and merged ones. Mixing them makes the list lie.
+- **Pipelines.** `pipelines.by_project` carries the recent history per project, green runs included, ordered by the most recent run: a green pipeline from ten minutes ago matters more than a red one from three weeks ago. Failures are flagged (`failed` count, `stale` on old ones) so the UI can highlight without reordering. Do not filter the block down to failures only, and do not hide it when everything is green: an empty, silent block reads as a bug.
+- **Contrast.** Saturated red text on the navy surface is unreadable. Red stays on dots, badges and borders; urgent LABELS use the Spark orange. The bar mark is the white logo variant, so only the attention badge carries color.
+
+Data modes (JSON to stdout, no exit-code contract): `projects` (local Docker/compose projects: name, dir, git branch, container counts, and the spark-http-proxy vhosts read from the containers' `VIRTUAL_HOST` env) and `mrs` (the developer's open merge requests on the company GitLab via `glab api`; override the host with `SF_GITLAB_HOST`).
+
 Env overrides for tests and non-standard layouts: `SF_TOOLBOX_DIR`, `SF_SPARKDOCK_DIR`, `SF_HTTP_PROXY_DIR`, `SF_AGENTS_DIR`, `SF_STATUS_FETCH_TIMEOUT`.
 
 Two traps already hit once, do not reintroduce them:
 
 - **glab exit code lies.** `glab auth status` exits non-zero when ANY configured host has a stale token, even with a valid company login. Capture the output and grep for `Logged in to`. Capture before grepping: under `set -o pipefail` a failing command poisons the pipeline even when `grep -q` matches.
 - **`checkupdates` exit codes.** 2 means "no updates" (not an error), 1 means error. Do not treat them alike.
+- **Phantom pending packages.** The Omarchy RC mirror can be rolled back; checkupdates then keeps a NEWER db in its sandbox (`/tmp/checkup-db-<uid>`) and reports an update pacman cannot install. Cure: remove the sandbox directory.
 
 ## QML: how to work on the widget
 
@@ -51,6 +64,10 @@ Runtime facts:
 - Refresh points: shell start, popup open (full fetch), a 30-minute offline timer, the manual Refresh button, a click on any status row (cheap offline pass), the post-action IPC ping, and the pacman stamp file (`/var/lib/sparkfabrik-toolbox/pacman-stamp`, touched by the root-side hook and watched with `FileView watchChanges`; a file watch avoids any cross-user IPC).
 - The Tools and Company entries come from `plugin/menu.json`, same schema as the macOS `Resources/menu.json` (`type: command|url`, optional `requires_binary` hides entries for absent tools; availability is resolved with one batched `command -v` pass).
 - The attention badge and the urgent hero color come from `hasAttention` in `Toolbox.qml`; auth states deliberately do not raise attention.
+- A long-running `docker events` Process pushes a debounced refresh the moment any container starts or dies (no polling); a retry timer restarts the stream if Docker goes away.
+- Actions run in `omarchy-launch-floating-terminal-with-presentation` (Omarchy's branded floating terminal), never a bare terminal spawn.
+- **Keybinding.** Plugins cannot register Hyprland binds, so the `omarchy-bar` task writes a marked block into the user's `~/.config/hypr/bindings.lua` binding `CTRL + SUPER + ALT + S` (override with `sf_toolbox_mission_control_key`). The block is idempotent, so a user who changes the combination keeps it.
+- **Mission Control** (`MissionControl.qml`, manifest kind `overlay`, `keepLoaded: true`) is summoned with `omarchy-shell shell summon sparkfabrik.toolbox '{}'`; the popup's Mission Control button does exactly that. It follows the built-in picker pattern: `PanelWindow` with `WlrLayer.Overlay` and exclusive keyboard focus, scrim, centered `BorderSurface` card capped at a fixed maximum size (an ultrawide must get a window, not a full-bleed sheet). Type to filter, arrows to move, Enter opens the project's site, Ctrl+T opens a floating terminal in the project directory (`--app-id=org.omarchy.terminal` is float-ruled by Omarchy itself), Escape closes.
 
 ## Local test loop
 

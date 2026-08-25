@@ -23,6 +23,9 @@ Panel {
   property var menuSections: []
   property var availableBins: ({})
   property bool stampSeen: false
+  // Branding follows the active Omarchy theme: the theme accent when it is
+  // set, the Spark red as the fallback.
+  readonly property color brandColor: Color.accent
 
   readonly property string pluginDir:
     Quickshell.env("HOME") + "/.config/omarchy/plugins/sparkfabrik.toolbox"
@@ -67,13 +70,18 @@ Panel {
     statusProc.running = true
   }
 
-  // Actions ping the widget over IPC when they finish, so the dots update the
-  // moment an upgrade completes (the Linux equivalent of the notifyutil
-  // mechanism the macOS menu bar uses).
+  // Actions run in Omarchy's own floating presentation terminal (logo, themed
+  // gum, centered float window) and ping the widget over IPC when they finish,
+  // so the dots update the moment an upgrade completes (the Linux equivalent
+  // of the notifyutil mechanism the macOS menu bar uses).
   function runInTerminal(cmd) {
-    Quickshell.execDetached(["xdg-terminal-exec", "bash", "-lc",
-      cmd + "; omarchy-shell -q sparkfabrik.toolbox refresh"
-          + "; echo; read -n1 -s -p 'Done — press any key to close'"])
+    Quickshell.execDetached(["omarchy-launch-floating-terminal-with-presentation",
+      cmd + "; omarchy-shell -q sparkfabrik.toolbox refresh"])
+  }
+
+  function openMissionControl() {
+    root.close()
+    Quickshell.execDetached(["omarchy-shell", "-q", "shell", "summon", "sparkfabrik.toolbox", "{}"])
   }
 
   function runMenuItem(item) {
@@ -185,6 +193,33 @@ Panel {
   Component.onCompleted: refresh(false)
   onOpenedChanged: if (opened) refresh(true)
 
+  // Live container state: the Docker events stream pushes a refresh the
+  // moment any container starts or dies, with no polling. A macOS menu bar
+  // has no equivalent. Debounced so a compose up/down burst refreshes once;
+  // if the stream dies (docker down), a retry timer brings it back.
+  Process {
+    id: dockerEvents
+    command: ["docker", "events",
+      "--filter", "type=container", "--format", "{{.Action}}"]
+    running: true
+    stdout: SplitParser {
+      onRead: function(line) {
+        if (line === "start" || line === "die" || line === "stop") eventDebounce.restart()
+      }
+    }
+    onExited: dockerEventsRetry.restart()
+  }
+  Timer {
+    id: eventDebounce
+    interval: 1500
+    onTriggered: root.refresh(false)
+  }
+  Timer {
+    id: dockerEventsRetry
+    interval: 60 * 1000
+    onTriggered: if (!dockerEvents.running) dockerEvents.running = true
+  }
+
   // Periodic cheap refresh so the icon reflects reality without the popup
   // ever being opened. Offline mode: no git fetch, no network cost.
   Timer {
@@ -195,6 +230,7 @@ Panel {
   }
 
   readonly property url logoSource: Qt.resolvedUrl("sparkfabrik-logo.png")
+  readonly property url logoBarSource: Qt.resolvedUrl("sparkfabrik-logo-white.png")
 
   BarIconButton {
     id: button
@@ -212,7 +248,7 @@ Panel {
           anchors.centerIn: parent
           width: Style.space(15)
           height: Style.space(15)
-          source: root.logoSource
+          source: root.logoBarSource
           fillMode: Image.PreserveAspectFit
           smooth: true
           mipmap: true
@@ -281,6 +317,7 @@ Panel {
 
             Text {
               text: "SparkFabrik Toolbox"
+              // brandColor follows the active theme accent
               color: root.bar.foreground
               font.family: root.bar.fontFamily
               font.pixelSize: Style.font.heading
@@ -298,12 +335,10 @@ Panel {
         PanelSeparator { width: parent.width }
 
         // ---------- Updates ----------
-        PanelSectionHeader {
-          text: "UPDATES"
-          foreground: root.bar.foreground
-        }
+        SectionHeader { glyph: "9"; text: "UPDATES" }
 
         StatusRow {
+          glyph: ""
           label: "Toolbox"
           state: root.status.toolbox ? root.status.toolbox.state : ""
           actionLabel: "Upgrade"
@@ -311,6 +346,7 @@ Panel {
           onActionTriggered: root.runInTerminal("sf-toolbox")
         }
         StatusRow {
+          glyph: ""
           label: "Sparkdock"
           state: root.status.sparkdock ? root.status.sparkdock.state : ""
           actionLabel: "Upgrade"
@@ -318,6 +354,7 @@ Panel {
           onActionTriggered: root.runInTerminal("ajust sparkdock-fetch-updates")
         }
         StatusRow {
+          glyph: "󰚩"
           label: "Agent skills"
           state: root.status.agents ? root.status.agents.state : ""
           actionLabel: "Sync"
@@ -325,6 +362,7 @@ Panel {
           onActionTriggered: root.runInTerminal("ajust sf-harness-sync")
         }
         StatusRow {
+          glyph: "󰏖"
           label: "System packages"
           state: root.status.packages ? root.status.packages.state : ""
           detail: {
@@ -341,12 +379,10 @@ Panel {
         PanelSeparator { width: parent.width }
 
         // ---------- Services ----------
-        PanelSectionHeader {
-          text: "SERVICES"
-          foreground: root.bar.foreground
-        }
+        SectionHeader { glyph: "3"; text: "SERVICES" }
 
         StatusRow {
+          glyph: "󰖟"
           label: "HTTP proxy"
           state: {
             var p = root.status.http_proxy
@@ -373,6 +409,7 @@ Panel {
           }
         }
         StatusRow {
+          glyph: "󰡨"
           label: "Docker"
           state: root.status.docker ? root.status.docker.state : ""
         }
@@ -380,10 +417,7 @@ Panel {
         PanelSeparator { width: parent.width }
 
         // ---------- Auth ----------
-        PanelSectionHeader {
-          text: "AUTH"
-          foreground: root.bar.foreground
-        }
+        SectionHeader { glyph: "e"; text: "AUTH" }
 
         Row {
           width: parent.width
@@ -405,9 +439,9 @@ Panel {
 
             PanelSeparator { width: menuSection.width }
 
-            PanelSectionHeader {
+            SectionHeader {
+              glyph: (menuSection.modelData.name || "") === "Tools" ? "b" : "9"
               text: (menuSection.modelData.name || "").toUpperCase()
-              foreground: root.bar.foreground
             }
 
             Repeater {
@@ -428,6 +462,10 @@ Panel {
           spacing: Style.space(10)
 
           ActionButton {
+            label: "Mission Control"
+            onTriggered: root.openMissionControl()
+          }
+          ActionButton {
             label: "Refresh"
             onTriggered: root.refresh(true)
           }
@@ -438,9 +476,34 @@ Panel {
 
   // --- inline components -----------------------------------------------------
 
+  component SectionHeader: Row {
+    id: sh
+    property string glyph: ""
+    property string text: ""
+    spacing: Style.space(8)
+
+    Text {
+      text: sh.glyph
+      color: Qt.alpha(root.bar.foreground, 0.85)
+      font.family: root.bar.fontFamily
+      font.pixelSize: Style.font.caption
+      anchors.verticalCenter: parent.verticalCenter
+    }
+    Text {
+      text: sh.text
+      color: Qt.alpha(root.bar.foreground, 0.85)
+      font.family: root.bar.fontFamily
+      font.pixelSize: Style.font.caption
+      font.bold: true
+      font.letterSpacing: 2
+      anchors.verticalCenter: parent.verticalCenter
+    }
+  }
+
   component StatusRow: Item {
     id: row
     property string label: ""
+    property string glyph: ""
     property string state: ""
     property string detail: ""
     property string actionLabel: ""
@@ -473,9 +536,22 @@ Panel {
     }
 
     Text {
-      id: rowLabel
+      id: rowGlyph
+      width: Style.space(20)
       anchors.left: dot.right
       anchors.leftMargin: Style.space(10)
+      anchors.verticalCenter: parent.verticalCenter
+      text: row.glyph
+      color: Qt.alpha(root.bar.foreground, 0.8)
+      font.family: root.bar.fontFamily
+      font.pixelSize: Style.font.body
+      horizontalAlignment: Text.AlignHCenter
+    }
+
+    Text {
+      id: rowLabel
+      anchors.left: rowGlyph.right
+      anchors.leftMargin: Style.space(6)
       anchors.verticalCenter: parent.verticalCenter
       text: row.label
       color: root.bar.foreground

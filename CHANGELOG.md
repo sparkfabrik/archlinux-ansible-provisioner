@@ -8,9 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-
+- Mission Control now reads the developer's GitLab work: one card per project they actually worked on recently (named after the client for customer groups and after the project itself for internal ones), with open issues, merge requests, review requests and replies, an activity sparkline, the latest issues and merge requests as clickable rows, and quick actions for GitLab, issues, a terminal in the project and its local site. Alongside: recent pipeline history grouped per project (green runs included, most recently active first), the items waiting on the developer grouped per project and split between open and closed, their own open merge requests, and a weekly activity chart. Backed by a single cached `sf-toolbox-status gitlab` call, and reachable with `CTRL + SUPER + ALT + S` (configurable through `sf_toolbox_mission_control_key`)
+- Added SparkFabrik Mission Control, a fullscreen overlay for the Omarchy widget (summon it from the popup button or `omarchy-shell shell summon sparkfabrik.toolbox`): branded project cards built from Docker compose labels (name, git branch, running/total container bar, spark-http-proxy vhosts with per-service icons, click or Enter opens the site, Ctrl+T opens a floating terminal in the project), a compact system status grid, and the developer's open merge requests on the company GitLab (click opens the MR). Backed by two new `sf-toolbox-status` data modes: `projects` and `mrs`
+- The Omarchy widget now reacts to Docker in real time: a long-running `docker events` stream refreshes the status the moment any container starts or dies, with no polling. Upgrade actions run in Omarchy's branded floating presentation terminal instead of a bare terminal window, and every status row and section header carries a themed icon
 - Extended the Omarchy bar widget for macOS menu bar parity and instant refreshes: a new `agents` subsystem in `sf-toolbox-status` (AI agent skills cache freshness, with an `ajust sf-harness-sync` action row), declarative Tools and Company entries from a `menu.json` shipped with the plugin (same schema as the macOS menu bar, `requires_binary` gating included), a post-action IPC refresh so status dots update the moment an upgrade terminal finishes, a pacman post-transaction hook (`/etc/pacman.d/hooks/sparkfabrik-toolbox.hook`) that refreshes the packages row instantly via a watched stamp file, and click-to-refresh on every status row
-
 - Added a SparkFabrik Omarchy bar widget (`sparkfabrik.toolbox`, omarchy-shell bar-widget plugin) mirroring the macOS sparkdock menu bar: at-a-glance status for toolbox/sparkdock freshness, pending pacman/AUR package updates, the HTTP proxy, Docker, and gcloud/glab/gh auth, with one-click upgrade actions run in a terminal. Backed by the new `sf-toolbox-status` checker (`/usr/local/bin`), which mirrors sparkdock's `sparkdock-check-updates` exit-code contract (0=updates, 1=fresh, 2=error, 3=not configured) and adds an aggregated `--json` mode. Installed by the `sf-toolbox` role only when Omarchy is detected (tag `omarchy-bar`)
 - On Omarchy, `sf-toolbox` now delegates tools that Omarchy already manages through mise (claude, gh, opencode, copilot) instead of installing a second copy: a new detection task inventories the Omarchy mise wrappers in `~/.local/bin` and the Claude Code installer, `github-cli`/`opencode` pacman packages, and the `@github/copilot` npm global are skipped when the corresponding wrapper exists. One tool, one owner: `omarchy update` keeps those tools current and its migrations would revert competing installs anyway
 - Added `herdr` (terminal multiplexer for coding agents, https://herdr.dev) to `sf-toolbox`: GitHub-releases binary install on Arch (no AUR), Homebrew on Debian/Ubuntu, with automatic version management like `rtk`
@@ -36,7 +37,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added clean arch/debian separation in toolbox package definitions with dotted-path support in the parser
 
 ### Changed
-
 - `sf-toolbox` now runs `gcloud components update` on every provisioning pass, so an existing Google Cloud SDK in `/opt/google-cloud-sdk` is kept current instead of staying pinned at the version installed on first provision
 - Delegated `*.loc` systemd-resolved configuration to the `spark-http-proxy` CLI and removed the bespoke `docker` role drop-in (`docker-dev-dns.conf`, `172.17.0.1:19322`); the CLI now writes `http-proxy.conf` (`127.0.0.1:19322`). Legacy `~docker`/dnsdock routing is no longer configured
 - Replaced the obsolete Python `yq` package (pacman) with `go-yq`, the mikefarah Go yq v4 (`extra` repo); the old `yq` is now removed first since the two packages conflict
@@ -60,7 +60,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `system.yml` to import sf-toolbox role (alongside existing roles)
 
 ### Fixed
-
 - Fixed the `sf-toolbox` conflict detector reporting Omarchy's mise-managed tools (claude, gh) as conflicts to remove and misclassifying `/usr/bin/glab`: mise wrappers, shims, and install directories are now recognized as a delegated provider and skipped, and the wrapper detection reads only the first 512 bytes of a file, because large compiled binaries can contain the same byte sequence by coincidence (glab does)
 - Fixed `sf-toolbox-status` reporting "updates available" for a clone with local commits ahead of upstream: freshness now counts only commits behind (`git rev-list HEAD..upstream`), so a feature branch in progress reads as up to date
 - Fixed `sf-toolbox` shadowing Omarchy's packaged herdr: on systems where herdr is installed via pacman (Omarchy ships it), the GitHub-release copy in `/usr/local/bin/herdr` took PATH precedence over `/usr/bin/herdr` and drifted from the packaged version. The role now removes the `/usr/local/bin` copy and skips the GitHub-release install when the pacman package is present
@@ -75,12 +74,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `sf-toolbox` symlink breaking `SCRIPT_DIR` resolution by resolving symlinks with `readlink -f` before computing the directory
 
 ### Removed
-
 - Removed `playbooks/roles/packages/tasks/ai.yml`, `glab.yml`, `gcloud.yml`, `homebrew.yml` (merged into sf-toolbox)
 - Removed `playbooks/roles/docker/tasks/sparkfabrik-http-proxy.yml` (merged into sf-toolbox)
 - Removed `playbooks/roles/sparkdock/tasks/packages-arch.yml` and `packages-debian.yml` (merged into sf-toolbox)
 - Removed sparkdock zshrc sourcing (replaced by ajust shell integration)
-
 - Added GitHub Actions CI workflow testing the toolbox playbook on Ubuntu 24.04, Ubuntu 26.04, and Arch Linux
 - Added `bin/install.linux` single-command installer/updater (`sf-toolbox`) with detect→plan→confirm→execute flow, gum integration, and conflict removal on Debian
 - Added `playbooks/toolbox.yml` lightweight playbook for company tooling only (sparkdock, AI, glab, gcloud, http-proxy) without full system provisioning
