@@ -36,6 +36,7 @@
           loop:
             - manifest.json
             - Toolbox.qml
+            - MissionControl.qml
             - menu.json
             - sparkfabrik-logo.png
           register: plugin_files
