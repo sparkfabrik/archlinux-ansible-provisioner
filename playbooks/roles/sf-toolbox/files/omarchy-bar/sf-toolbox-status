@@ -56,11 +56,12 @@ git_freshness() (
         timeout "${FETCH_TIMEOUT}" git fetch --quiet "${upstream%%/*}" 2>/dev/null || return 2
     fi
 
-    local local_rev remote_rev
-    local_rev=$(git rev-parse HEAD 2>/dev/null) || return 2
-    remote_rev=$(git rev-parse "${upstream}" 2>/dev/null) || return 2
+    # Stale only when BEHIND upstream. Local commits ahead of upstream (a
+    # feature branch in progress) are not "updates available".
+    local behind
+    behind=$(git rev-list --count "HEAD..${upstream}" 2>/dev/null) || return 2
 
-    if [[ "${local_rev}" != "${remote_rev}" ]]; then
+    if [[ "${behind}" -gt 0 ]]; then
         return 0
     fi
     return 1
