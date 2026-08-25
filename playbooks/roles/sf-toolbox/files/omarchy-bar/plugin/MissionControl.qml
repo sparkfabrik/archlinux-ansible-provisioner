@@ -840,16 +840,20 @@ Item {
 
           // ===== Right: pipelines, attention, activity =====
           Column {
+            id: rightCol
             width: root.rightWidth
             height: parent.height
             spacing: Style.space(9)
 
-            // Pipelines only when there is something live or broken. A project
-            // can have several at once (develop, a branch, an MR).
+            // Recent pipeline runs per project. Capped and clipped: with four
+            // groups this block would otherwise push the lists off the card.
             Column {
+              id: pipeSection
               width: parent.width
               spacing: Style.space(4)
               visible: true
+              height: Math.min(implicitHeight, Math.floor(rightCol.height * 0.34))
+              clip: true
 
               Row {
                 spacing: Style.space(10)
@@ -994,6 +998,7 @@ Item {
 
             // Needs you, with the counts up front and mentions dimmed
             Row {
+              id: needsHeader
               spacing: Style.space(12)
               SectionTitle { text: "NEEDS YOU" }
               Text {
@@ -1015,9 +1020,16 @@ Item {
             }
 
             ListView {
+              id: attentionList
               width: parent.width
-              height: parent.height - Style.space(230)
-                - (root.showClosed ? Style.space(160) : 0)
+              height: Math.max(Style.space(80),
+                rightCol.height
+                  - pipeSection.height
+                  - needsHeader.height
+                  - closedHeader.height
+                  - closedList.height
+                  - chartSection.height
+                  - Style.space(9) * 5)
               model: root.attentionGroups
               clip: true
               spacing: Style.space(6)
@@ -1075,6 +1087,7 @@ Item {
             }
 
             Row {
+              id: closedHeader
               spacing: Style.space(10)
               SectionTitle { text: "CLOSED RECENTLY" }
               Text {
@@ -1101,6 +1114,7 @@ Item {
             }
 
             ListView {
+              id: closedList
               visible: root.showClosed
               width: parent.width
               height: root.showClosed ? Style.space(150) : 0
@@ -1118,7 +1132,12 @@ Item {
 
             Rectangle { width: parent.width; height: 1; color: Qt.alpha(root.foreground, 0.15) }
 
-            // Weekly activity: 12 bars, labels every other bar, no crowding
+            // Weekly activity, one labelled bar per week
+            Column {
+              id: chartSection
+              width: parent.width
+              spacing: Style.space(6)
+
             Row {
               spacing: Style.space(10)
               SectionTitle { text: "YOUR ACTIVITY · 6 WEEKS" }
@@ -1178,6 +1197,7 @@ Item {
                   }
                 }
               }
+            }
             }
           }
         }
