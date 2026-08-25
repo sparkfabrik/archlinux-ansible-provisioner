@@ -88,6 +88,88 @@ check_agents() {
     git_freshness "${AGENTS_DIR}" "origin/main"
 }
 
+# Inventory the developer's local projects from Docker: compose project labels
+# give the grouping and the working directory (hence the git branch), VIRTUAL_HOST
+# env vars give the spark-http-proxy vhosts. The http-proxy stack itself is
+# excluded. Output: {"projects":[{name,dir,branch,running,total,hosts:[..]}]}
+projects_json() {
+    if ! command -v docker >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
+        echo '{"projects":[]}'
+        return 0
+    fi
+
+    local ids
+    ids=$(docker ps -a -q 2>/dev/null) || { echo '{"projects":[]}'; return 0; }
+    if [[ -z "${ids}" ]]; then
+        echo '{"projects":[]}'
+        return 0
+    fi
+
+    local inspected
+    # shellcheck disable=SC2086 # ids is a list of container ids by design
+    inspected=$(docker inspect ${ids} 2>/dev/null) || { echo '{"projects":[]}'; return 0; }
+
+    local grouped
+    grouped=$(jq -c '
+        [ .[]
+          | {
+              project: (.Config.Labels["com.docker.compose.project"] // empty),
+              dir: (.Config.Labels["com.docker.compose.project.working_dir"] // ""),
+              running: .State.Running,
+              hosts: ([ .Config.Env[]? | select(startswith("VIRTUAL_HOST=")) | sub("^VIRTUAL_HOST="; "") | split(",")[] ] // [])
+            }
+          | select(.project != null and .project != "" and .project != "http-proxy")
+        ]
+        | group_by(.project)
+        | map({
+            name: .[0].project,
+            dir: ([ .[].dir | select(. != "") ] | first // ""),
+            running: ([ .[] | select(.running) ] | length),
+            total: length,
+            hosts: ([ .[].hosts[] ] | unique)
+          })
+    ' <<<"${inspected}" 2>/dev/null) || grouped="[]"
+
+    # Enrich each project with its git branch (cheap, local only).
+    local enriched="[]"
+    local row dir branch
+    while IFS= read -r row; do
+        [[ -n "${row}" ]] || continue
+        dir=$(jq -r '.dir' <<<"${row}")
+        branch=""
+        if [[ -n "${dir}" && -d "${dir}/.git" ]]; then
+            branch=$(git -C "${dir}" branch --show-current 2>/dev/null || echo "")
+        fi
+        enriched=$(jq -c --argjson r "${row}" --arg b "${branch}" '. + [ $r + {branch: $b} ]' <<<"${enriched}")
+    done < <(jq -c '.[]' <<<"${grouped}")
+
+    jq -c '{projects: .}' <<<"${enriched}"
+}
+
+# The developer's open merge requests on the company GitLab, newest first.
+# Output: {"mrs":[{title,ref,url,branch,draft,updated}]}
+mrs_json() {
+    local host="${SF_GITLAB_HOST:-gitlab.sparkfabrik.com}"
+    if ! command -v glab >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
+        echo '{"mrs":[]}'
+        return 0
+    fi
+    local out
+    out=$(GITLAB_HOST="${host}" timeout "${FETCH_TIMEOUT}" \
+        glab api "merge_requests?scope=created_by_me&state=opened&order_by=updated_at&per_page=10" 2>/dev/null) || {
+        echo '{"mrs":[]}'
+        return 0
+    }
+    jq -c '{mrs: [ .[] | {
+        title,
+        ref: (.references.full // ""),
+        url: .web_url,
+        branch: (.source_branch // ""),
+        draft: (.draft // false),
+        updated: (.updated_at // "")
+    } ]}' <<<"${out}" 2>/dev/null || echo '{"mrs":[]}'
+}
+
 http_proxy_running() {
     command -v docker >/dev/null 2>&1 || return 1
     docker ps --format '{{.Names}}' 2>/dev/null | grep -qiE 'traefik|http-proxy'
@@ -256,6 +338,10 @@ Subsystems:
   agents       The AI agent skills cache (synced by sparkdock-agents-sync)
   packages     Pending pacman/AUR package updates
   http-proxy   The spark-http-proxy clone
+  projects     Local Docker/compose projects as JSON (name, dir, branch,
+               container counts, spark-http-proxy vhosts)
+  mrs          The developer's open merge requests on the company GitLab
+               as JSON (override the host with SF_GITLAB_HOST)
 
 Modes:
   --json       Aggregated JSON for all subsystems (plus docker and auth)
@@ -316,6 +402,12 @@ main() {
             ;;
         agents)
             check_agents || rc=$?
+            ;;
+        projects)
+            projects_json
+            ;;
+        mrs)
+            mrs_json
             ;;
         packages)
             count_package_updates >/dev/null || rc=$?
