@@ -1,0 +1,55 @@
+{
+  "version": "1.0",
+  "menu": {
+    "sections": [
+      {
+        "name": "Tools",
+        "items": [
+          {
+            "title": "Open ajust",
+            "type": "command",
+            "command": "ajust",
+            "requires_binary": "ajust"
+          },
+          {
+            "title": "Open HTTP proxy dashboard",
+            "type": "command",
+            "command": "spark-http-proxy dashboard",
+            "requires_binary": "spark-http-proxy"
+          },
+          {
+            "title": "Open timetracker",
+            "type": "command",
+            "command": "timetracker tui",
+            "requires_binary": "timetracker"
+          }
+        ]
+      },
+      {
+        "name": "Company",
+        "items": [
+          {
+            "title": "Company Playbook",
+            "type": "url",
+            "url": "https://playbook.sparkfabrik.com/"
+          },
+          {
+            "title": "Core Skills",
+            "type": "url",
+            "url": "https://playbook.sparkfabrik.com/working-at-sparkfabrik/core-skills"
+          },
+          {
+            "title": "Universal Definition of Done",
+            "type": "url",
+            "url": "https://playbook.sparkfabrik.com/tools-and-policies/universal-dod"
+          },
+          {
+            "title": "AI Development: Where We Are",
+            "type": "url",
+            "url": "https://playbook.sparkfabrik.com/ai-development/where-we-are"
+          }
+        ]
+      }
+    ]
+  }
+}

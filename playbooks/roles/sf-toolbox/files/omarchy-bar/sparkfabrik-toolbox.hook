@@ -1,0 +1,16 @@
+# Pacman post-transaction hook for the SparkFabrik Omarchy bar widget.
+# Touches a state file that the widget watches, so the packages row refreshes
+# the moment anything installs, upgrades, or is removed, with no polling.
+# The hook runs as root; the widget watches the file, so no cross-user IPC.
+
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Type = Package
+Target = *
+
+[Action]
+Description = Notifying the SparkFabrik Omarchy bar widget
+When = PostTransaction
+Exec = /bin/sh -c 'date +%%s > /var/lib/sparkfabrik-toolbox/pacman-stamp 2>/dev/null || true'
