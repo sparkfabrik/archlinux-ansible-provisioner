@@ -5,18 +5,27 @@ import qs.Ui
 import qs.Commons
 
 // SparkFabrik Toolbox bar widget: at-a-glance freshness of the Spark dev stack
-// (toolbox, sparkdock, packages, HTTP proxy, Docker, CLI auth) with one-click
-// upgrade actions. All logic lives in the sf-toolbox-status backend; this
-// widget only renders its JSON and shells out for actions, mirroring the macOS
-// sparkdock menu bar design.
+// (toolbox, sparkdock, agent skills, packages, HTTP proxy, Docker, CLI auth)
+// with one-click upgrade actions. All logic lives in the sf-toolbox-status
+// backend; this widget only renders its JSON and shells out for actions,
+// mirroring the macOS sparkdock menu bar design.
 Panel {
   id: root
   moduleName: "sparkfabrik.toolbox"
   ipcTarget: "sparkfabrik.toolbox"
+  // The Panel base would register open/close/toggle only; we own the handler
+  // to add the refresh method used for post-action and pacman-hook updates.
+  manageIpc: false
 
   property var status: ({})
   property bool checking: false
   property bool fullCheck: false
+  property var menuSections: []
+  property var availableBins: ({})
+  property bool stampSeen: false
+
+  readonly property string pluginDir:
+    Quickshell.env("HOME") + "/.config/omarchy/plugins/sparkfabrik.toolbox"
 
   // The bar sizes each widget from its implicit size; without this the slot
   // collapses to zero width and the icon is invisible.
@@ -27,6 +36,7 @@ Panel {
     var s = root.status
     if (!s || !s.toolbox) return false
     return s.toolbox.state === "stale" || s.sparkdock.state === "stale"
+      || (s.agents && s.agents.state === "stale")
       || s.packages.state === "stale" || s.http_proxy.state === "stale"
       || s.http_proxy.running === false || s.docker.state === "stopped"
   }
@@ -39,6 +49,7 @@ Panel {
     var parts = []
     if (s.toolbox.state === "stale") parts.push("toolbox")
     if (s.sparkdock.state === "stale") parts.push("sparkdock")
+    if (s.agents && s.agents.state === "stale") parts.push("agent skills")
     if (s.packages.state === "stale") parts.push(s.packages.repo + s.packages.aur + " packages")
     if (s.http_proxy.state === "stale") parts.push("http-proxy")
     if (s.http_proxy.running === false) parts.push("proxy stopped")
@@ -56,9 +67,21 @@ Panel {
     statusProc.running = true
   }
 
+  // Actions ping the widget over IPC when they finish, so the dots update the
+  // moment an upgrade completes (the Linux equivalent of the notifyutil
+  // mechanism the macOS menu bar uses).
   function runInTerminal(cmd) {
     Quickshell.execDetached(["xdg-terminal-exec", "bash", "-lc",
-      cmd + "; echo; read -n1 -s -p 'Done — press any key to close'"])
+      cmd + "; omarchy-shell -q sparkfabrik.toolbox refresh"
+          + "; echo; read -n1 -s -p 'Done — press any key to close'"])
+  }
+
+  function runMenuItem(item) {
+    if (item.type === "url") {
+      Quickshell.execDetached(["xdg-open", item.url])
+    } else if (item.type === "command") {
+      root.runInTerminal(item.command)
+    }
   }
 
   function stateColor(state) {
@@ -79,6 +102,44 @@ Panel {
     return "not installed"
   }
 
+  function parseMenu(text) {
+    var sections = []
+    var bins = []
+    try {
+      var data = JSON.parse(text || "{}")
+      sections = (data.menu && data.menu.sections) ? data.menu.sections : []
+      for (var i = 0; i < sections.length; i++) {
+        var items = sections[i].items || []
+        for (var j = 0; j < items.length; j++) {
+          if (items[j].requires_binary) bins.push(items[j].requires_binary)
+        }
+      }
+    } catch (e) {
+      sections = []
+    }
+    root.menuSections = sections
+    if (bins.length > 0 && !binProc.running) {
+      binProc.command = ["bash", "-lc",
+        "for b in " + bins.join(" ") + "; do command -v \"$b\" >/dev/null 2>&1 && echo \"$b\"; done"]
+      binProc.running = true
+    }
+  }
+
+  function menuItemVisible(item) {
+    if (!item.requires_binary) return true
+    return root.availableBins[item.requires_binary] === true
+  }
+
+  IpcHandler {
+    target: "sparkfabrik.toolbox"
+    function open(): void { root.open() }
+    function close(): void { root.close() }
+    function show(): void { root.open() }
+    function hide(): void { root.close() }
+    function toggle(): void { root.toggle() }
+    function refresh(): void { root.refresh(false) }
+  }
+
   Process {
     id: statusProc
     stdout: StdioCollector { id: statusOut }
@@ -86,6 +147,38 @@ Panel {
       root.checking = false
       try { root.status = JSON.parse(statusOut.text || "{}") }
       catch (e) { root.status = {} }
+    }
+  }
+
+  Process {
+    id: binProc
+    stdout: StdioCollector { id: binOut }
+    onExited: {
+      var found = {}
+      var lines = (binOut.text || "").split("\n")
+      for (var i = 0; i < lines.length; i++) {
+        if (lines[i].trim() !== "") found[lines[i].trim()] = true
+      }
+      root.availableBins = found
+    }
+  }
+
+  // Declarative Tools/Company entries, same schema as the macOS menu.json.
+  FileView {
+    path: root.pluginDir + "/menu.json"
+    printErrors: false
+    onLoaded: root.parseMenu(text())
+  }
+
+  // Touched by the pacman post-transaction hook (root side); watching the
+  // file gives instant package-state refreshes with no cross-user IPC.
+  FileView {
+    path: "/var/lib/sparkfabrik-toolbox/pacman-stamp"
+    watchChanges: true
+    printErrors: false
+    onLoaded: {
+      if (root.stampSeen) root.refresh(false)
+      root.stampSeen = true
     }
   }
 
@@ -225,6 +318,13 @@ Panel {
           onActionTriggered: root.runInTerminal("ajust sparkdock-fetch-updates")
         }
         StatusRow {
+          label: "Agent skills"
+          state: root.status.agents ? root.status.agents.state : ""
+          actionLabel: "Sync"
+          actionVisible: state === "stale"
+          onActionTriggered: root.runInTerminal("ajust sf-harness-sync")
+        }
+        StatusRow {
           label: "System packages"
           state: root.status.packages ? root.status.packages.state : ""
           detail: {
@@ -294,17 +394,39 @@ Panel {
           AuthBadge { name: "gh"; state: root.status.auth ? root.status.auth.gh : "" }
         }
 
+        // ---------- Declarative sections from menu.json ----------
+        Repeater {
+          model: root.menuSections
+          delegate: Column {
+            id: menuSection
+            required property var modelData
+            width: column.width
+            spacing: Style.space(6)
+
+            PanelSeparator { width: menuSection.width }
+
+            PanelSectionHeader {
+              text: (menuSection.modelData.name || "").toUpperCase()
+              foreground: root.bar.foreground
+            }
+
+            Repeater {
+              model: menuSection.modelData.items || []
+              delegate: MenuRow {
+                required property var modelData
+                width: menuSection.width
+                item: modelData
+              }
+            }
+          }
+        }
+
         PanelSeparator { width: parent.width }
 
-        // ---------- Links ----------
         Row {
           width: parent.width
           spacing: Style.space(10)
 
-          ActionButton {
-            label: "Playbook"
-            onTriggered: Quickshell.execDetached(["xdg-open", "https://playbook.sparkfabrik.com/"])
-          }
           ActionButton {
             label: "Refresh"
             onTriggered: root.refresh(true)
@@ -328,6 +450,17 @@ Panel {
     width: column.width
     implicitHeight: Math.max(Style.spacing.controlHeight, rowLabel.implicitHeight)
     visible: state !== ""
+
+    // Clicking the row itself re-checks the status (cheap offline pass),
+    // mirroring the clickable status rows of the macOS menu bar.
+    MouseArea {
+      anchors.left: parent.left
+      anchors.right: rowAction.visible ? rowAction.left : parent.right
+      anchors.top: parent.top
+      anchors.bottom: parent.bottom
+      cursorShape: Qt.PointingHandCursor
+      onClicked: root.refresh(false)
+    }
 
     Rectangle {
       id: dot
@@ -361,11 +494,45 @@ Panel {
     }
 
     ActionButton {
+      id: rowAction
       anchors.right: parent.right
       anchors.verticalCenter: parent.verticalCenter
       label: row.actionLabel
       visible: row.actionVisible
       onTriggered: row.actionTriggered()
+    }
+  }
+
+  component MenuRow: Item {
+    id: mrow
+    property var item: ({})
+    implicitHeight: Math.round(Style.spacing.controlHeight * 0.8)
+    visible: root.menuItemVisible(item)
+
+    Text {
+      id: mrowIcon
+      anchors.left: parent.left
+      anchors.verticalCenter: parent.verticalCenter
+      text: mrow.item.type === "url" ? "󰏌" : "󰆍"
+      color: Qt.alpha(root.bar.foreground, 0.7)
+      font.family: root.bar.fontFamily
+      font.pixelSize: Style.font.caption
+    }
+    Text {
+      anchors.left: mrowIcon.right
+      anchors.leftMargin: Style.space(10)
+      anchors.verticalCenter: parent.verticalCenter
+      text: mrow.item.title || ""
+      color: mrowMouse.containsMouse ? root.bar.foreground : Qt.alpha(root.bar.foreground, 0.85)
+      font.family: root.bar.fontFamily
+      font.pixelSize: Style.font.body
+    }
+    MouseArea {
+      id: mrowMouse
+      anchors.fill: parent
+      hoverEnabled: true
+      cursorShape: Qt.PointingHandCursor
+      onClicked: root.runMenuItem(mrow.item)
     }
   }
 
