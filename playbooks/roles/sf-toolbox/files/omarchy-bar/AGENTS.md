@@ -6,12 +6,14 @@ Maintenance guide for the SparkFabrik Omarchy bar widget (`sparkfabrik.toolbox`)
 
 The Linux counterpart of the macOS sparkdock menu bar (`src/menubar-app` in the sparkdock repo). A native omarchy-shell bar-widget shows the freshness of the Spark dev stack and offers one-click upgrade actions. The design rule is inherited from macOS: **the UI owns no logic**. It renders JSON from `sf-toolbox-status` and shells out for actions.
 
-| File                          | Role                                                    |
-| ----------------------------- | ------------------------------------------------------- |
-| `sf-toolbox-status`           | Status backend, installed to `/usr/local/bin`           |
-| `plugin/manifest.json`        | omarchy-shell plugin manifest (`kinds: ["bar-widget"]`) |
-| `plugin/Toolbox.qml`          | The widget: bar icon plus popup                         |
-| `plugin/sparkfabrik-logo.png` | Bar and hero icon (180x180 source)                      |
+| File                          | Role                                                             |
+| ----------------------------- | ---------------------------------------------------------------- |
+| `sf-toolbox-status`           | Status backend, installed to `/usr/local/bin`                    |
+| `plugin/manifest.json`        | omarchy-shell plugin manifest (`kinds: ["bar-widget"]`)          |
+| `plugin/Toolbox.qml`          | The widget: bar icon plus popup                                  |
+| `plugin/menu.json`            | Declarative Tools/Company entries (same schema as macOS)         |
+| `plugin/sparkfabrik-logo.png` | Bar and hero icon (180x180 source)                               |
+| `sparkfabrik-toolbox.hook`    | Pacman post-transaction hook, installed to `/etc/pacman.d/hooks` |
 
 The Ansible side lives in `../../tasks/omarchy-bar.yml` (install, tag `omarchy-bar`, gated on `/usr/share/omarchy`) and `../../tasks/omarchy-detect.yml` (ownership facts, tag `always`).
 
@@ -24,9 +26,9 @@ The Ansible side lives in `../../tasks/omarchy-bar.yml` (install, tag `omarchy-b
 - **2**: usage or check error
 - **3**: not configured (subsystem not installed yet)
 
-Subsystems: `toolbox`, `sparkdock`, `packages`, `http-proxy`. `--json` aggregates those plus `docker` and `auth` (gcloud, glab, gh) in one process, which is what the widget calls. `--offline` skips `git fetch` and is used for the periodic timer refresh; the popup-open refresh does a full fetch.
+Subsystems: `toolbox`, `sparkdock`, `agents`, `packages`, `http-proxy`. `--json` aggregates those plus `docker` and `auth` (gcloud, glab, gh) in one process, which is what the widget calls. `--offline` skips `git fetch` and is used for the periodic timer refresh; the popup-open refresh does a full fetch.
 
-Env overrides for tests and non-standard layouts: `SF_TOOLBOX_DIR`, `SF_SPARKDOCK_DIR`, `SF_HTTP_PROXY_DIR`, `SF_STATUS_FETCH_TIMEOUT`.
+Env overrides for tests and non-standard layouts: `SF_TOOLBOX_DIR`, `SF_SPARKDOCK_DIR`, `SF_HTTP_PROXY_DIR`, `SF_AGENTS_DIR`, `SF_STATUS_FETCH_TIMEOUT`.
 
 Two traps already hit once, do not reintroduce them:
 
@@ -45,8 +47,9 @@ Hard-won layout rules:
 
 Runtime facts:
 
-- Actions run in a visible terminal via `xdg-terminal-exec bash -lc '<cmd>; read ...'` through `Quickshell.execDetached`.
-- Refresh points: shell start, popup open (full fetch), a 30-minute offline timer, and the manual Refresh button. There is no notification when a terminal action finishes; the next popup open re-checks.
+- Actions run in a visible terminal via `xdg-terminal-exec bash -lc '<cmd>; ...'` through `Quickshell.execDetached`. Each launched command appends `omarchy-shell -q sparkfabrik.toolbox refresh`, so the dots update the moment an action finishes (the Linux equivalent of the macOS `notifyutil` mechanism). The widget owns its `IpcHandler` (`manageIpc: false` on the Panel base) to expose that `refresh` method.
+- Refresh points: shell start, popup open (full fetch), a 30-minute offline timer, the manual Refresh button, a click on any status row (cheap offline pass), the post-action IPC ping, and the pacman stamp file (`/var/lib/sparkfabrik-toolbox/pacman-stamp`, touched by the root-side hook and watched with `FileView watchChanges`; a file watch avoids any cross-user IPC).
+- The Tools and Company entries come from `plugin/menu.json`, same schema as the macOS `Resources/menu.json` (`type: command|url`, optional `requires_binary` hides entries for absent tools; availability is resolved with one batched `command -v` pass).
 - The attention badge and the urgent hero color come from `hasAttention` in `Toolbox.qml`; auth states deliberately do not raise attention.
 
 ## Local test loop
@@ -59,9 +62,11 @@ omarchy-restart-shell
 ```
 
 - **Never run `omarchy-refresh-shell`.** It resets the user's `shell.json` to defaults and silently drops the widget from the bar. `omarchy-restart-shell` is the correct reload.
-- QML errors only appear at runtime. Read them from the newest quickshell log: `ls -t /run/user/1000/quickshell/by-id/*/log.qslog | head -1`, then grep for `cannot`, `is not a type`, `ReferenceError`, `TypeError`.
+- **Lint before loading**: `qmllint -I "$OMARCHY_PATH/shell" plugin/Toolbox.qml` catches QML mistakes statically. Runtime errors land in the newest quickshell log: `ls -t /run/user/1000/quickshell/by-id/*/log.qslog | head -1`, grep for `cannot`, `is not a type`, `ReferenceError`, `TypeError`.
 - The warning `IpcHandler ... will not be used because another handler is registered` appears for every panel on restart and is harmless.
 - First install of a new plugin id needs `omarchy-shell shell rescanPlugins` before `omarchy-plugin-enable <id> --section right`.
+- IPC smoke test: `omarchy-shell -q sparkfabrik.toolbox open|close|toggle|refresh`.
+- Full lifecycle checklist (from the Omarchy develop guide): click, Escape, `omarchy-shell shell summon/hide`, disable and re-enable, shell restart, removal.
 - Test the full Ansible path with: `sudo ansible-playbook playbooks/sf-toolbox.yml -i localhost, -c local --tags omarchy-bar`, twice (the second run must be idempotent).
 
 Shell script changes must pass `shellcheck` (`docker run --rm -v "$(pwd):/src" koalaman/shellcheck:stable /src/sf-toolbox-status`).
