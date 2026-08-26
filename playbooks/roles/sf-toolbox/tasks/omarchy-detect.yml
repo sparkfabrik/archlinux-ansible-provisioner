@@ -8,14 +8,34 @@
 - name: Detect Omarchy-managed tooling
   tags: [always]
   block:
-    - name: Check for an Omarchy installation
+    # Omarchy is not a distribution Ansible knows: it reads /etc/arch-release
+    # and reports Archlinux, so ansible_distribution cannot single it out the
+    # way it singles out Ubuntu or Arch. Two signals do, and either is enough.
+    # os-release carries ID=omarchy on a machine installed from an Omarchy
+    # image, and the installation directory is present both there and on an
+    # Omarchy installed over an existing Arch, where os-release keeps saying
+    # arch.
+    #
+    # omarchy_detected is the one control every Omarchy task gates on. Do not
+    # add another stat elsewhere: this block carries the always tag, so the
+    # fact is set even when a single tag is requested.
+    - name: Look for the Omarchy installation directory
       ansible.builtin.stat:
         path: /usr/share/omarchy
       register: omarchy_install_stat
 
+    - name: Read the distribution identity
+      ansible.builtin.slurp:
+        src: /etc/os-release
+      register: omarchy_os_release
+      failed_when: false
+
     - name: Default the Omarchy ownership facts
       ansible.builtin.set_fact:
-        omarchy_detected: "{{ omarchy_install_stat.stat.exists }}"
+        omarchy_detected: >-
+          {{ omarchy_install_stat.stat.exists
+             or ((omarchy_os_release.content | default('') | b64decode)
+                 is search('(?m)^ID="?omarchy"?$')) }}
         omarchy_mise_tools: []
         omarchy_shadowed_pacman: []
         omarchy_shadowed_npm: []

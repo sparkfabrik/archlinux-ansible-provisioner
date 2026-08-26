@@ -16,7 +16,9 @@ The Linux counterpart of the macOS sparkdock menu bar (`src/menubar-app` in the 
 | `plugin/MissionControl.qml`   | Fullscreen overlay: project cards, system grid, merge requests   |
 | `sparkfabrik-toolbox.hook`    | Pacman post-transaction hook, installed to `/etc/pacman.d/hooks` |
 
-The Ansible side lives in `../../tasks/omarchy-bar.yml` (install, tag `omarchy-bar`, gated on `/usr/share/omarchy`) and `../../tasks/omarchy-detect.yml` (ownership facts, tag `always`).
+The Ansible side lives in `../../tasks/omarchy-bar.yml` (install, tag `omarchy-bar`) and `../../tasks/omarchy-detect.yml` (tag `always`), which sets `omarchy_detected` and the ownership facts.
+
+**Gate every Omarchy task on `omarchy_detected`.** Ansible reports Omarchy as Archlinux, so `ansible_distribution` cannot single it out; the fact combines `ID=omarchy` in `/etc/os-release` with the presence of `/usr/share/omarchy`, which covers both an Omarchy image and an Omarchy installed over an existing Arch. Do not add another `stat` in a task file: the detection block runs under the `always` tag, so the fact is there even when a single tag is requested. The provisioner also runs on Arch, Debian and Ubuntu machines that have no Omarchy, and in CI containers.
 
 ## The status contract
 
@@ -41,6 +43,8 @@ The `gitlab` data mode is what Mission Control renders. Rules worth keeping:
 Data modes (JSON to stdout, no exit-code contract): `projects` (local Docker/compose projects: name, dir, git branch, container counts, and the spark-http-proxy vhosts read from the containers' `VIRTUAL_HOST` env) and `mrs` (the developer's open merge requests on the company GitLab via `glab api`; override the host with `SF_GITLAB_HOST`).
 
 Env overrides for tests and non-standard layouts: `SF_TOOLBOX_DIR`, `SF_SPARKDOCK_DIR`, `SF_HTTP_PROXY_DIR`, `SF_AGENTS_DIR`, `SF_STATUS_FETCH_TIMEOUT`, `SF_GITLAB_CLIENT_GROUPS`.
+
+The provisioner writes that line only when `sf_toolbox_gitlab_client_groups` is defined. Undefined leaves a hand-written config untouched, which matters because sf-toolbox has no mechanism for machine-local variables: a task that always owned the line would delete the only configuration a developer can set today. Defined and empty removes it.
 
 `SF_GITLAB_CLIENT_GROUPS` wins whenever it is set at all, so exporting it empty is how a test says "no client groups" without touching the config file. The file itself is hand-editable, so the assignment is read with or without an `export` prefix, quoted or bare, and a trailing comment is dropped. Emptying `sf_toolbox_gitlab_client_groups` removes the line rather than leaving a stale one behind.
 
