@@ -103,5 +103,6 @@
               - "{{ theme_name }}"
           when:
             - sf_toolbox_omarchy_theme_set | default(false) | bool
-            - (current_theme.stdout | default('') | trim | lower | replace(' ', '-')) != theme_name
+            - (current_theme.stdout | default('') | trim | lower | replace(' ', '-'))
+              != (theme_name | trim | lower | replace(' ', '-'))
           changed_when: true
