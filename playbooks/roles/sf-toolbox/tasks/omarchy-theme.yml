@@ -1,0 +1,96 @@
+---
+- name: Install the SparkFabrik Omarchy theme
+  tags: [sf-toolbox, omarchy-theme]
+  vars:
+    theme_repo: "{{ sf_toolbox_omarchy_theme_repo | default('https://github.com/stefanomainardi/spark-omarchy.git') }}"
+    theme_name: "{{ sf_toolbox_omarchy_theme_name | default('spark-omarchy') }}"
+    theme_dir: "{{ system.home | default(current_home) }}/.config/omarchy/themes/{{ sf_toolbox_omarchy_theme_name | default('spark-omarchy') }}"
+  block:
+    - name: Check for an Omarchy installation
+      ansible.builtin.stat:
+        path: /usr/share/omarchy
+      register: omarchy_theme_install
+
+    # Omarchy installs extra themes as plain git clones under
+    # ~/.config/omarchy/themes and `omarchy theme update` pulls them, so the
+    # clone is the whole installation. The theme stays available in the theme
+    # switcher; applying it is the user's choice, not the provisioner's.
+    - name: Install the theme and its screensaver hook
+      when: omarchy_theme_install.stat.exists
+      block:
+        - name: Look for an existing theme directory
+          become: true
+          become_user: "{{ system.username | default(current_user) }}"
+          ansible.builtin.stat:
+            path: "{{ theme_dir }}/.git"
+          register: theme_git
+
+        - name: Look for a hand-installed copy of the theme
+          become: true
+          become_user: "{{ system.username | default(current_user) }}"
+          ansible.builtin.stat:
+            path: "{{ theme_dir }}"
+          register: theme_present
+
+        # A copy installed by hand is a plain directory, and the git module
+        # refuses to clone over one. Keep it: it may carry local edits the user
+        # wants to port, and Omarchy ignores a directory it does not know.
+        - name: Move a hand-installed copy aside
+          become: true
+          become_user: "{{ system.username | default(current_user) }}"
+          ansible.builtin.command: "mv {{ theme_dir }} {{ theme_dir }}.before-provisioner"
+          when:
+            - theme_present.stat.exists
+            - not theme_git.stat.exists
+          changed_when: true
+
+        - name: Clone or update the theme
+          become: true
+          become_user: "{{ system.username | default(current_user) }}"
+          ansible.builtin.git:
+            repo: "{{ theme_repo }}"
+            dest: "{{ theme_dir }}"
+            version: "{{ sf_toolbox_omarchy_theme_version | default('master') }}"
+            update: true
+          register: theme_clone
+
+        - name: Create the theme hook directory
+          become: true
+          become_user: "{{ system.username | default(current_user) }}"
+          ansible.builtin.file:
+            path: "{{ system.home | default(current_home) }}/.config/omarchy/hooks/theme-set.d"
+            state: directory
+            mode: "0755"
+
+        # Omarchy does not read a theme's screensaver art by itself, so the
+        # theme ships a theme-set hook that copies it in and restores the
+        # Omarchy logo for every other theme. It lives outside the theme
+        # directory, which Omarchy rewrites on every theme change.
+        - name: Install the screensaver branding hook
+          become: true
+          become_user: "{{ system.username | default(current_user) }}"
+          ansible.builtin.copy:
+            src: "{{ theme_dir }}/hooks/theme-set.d/screensaver-branding"
+            dest: "{{ system.home | default(current_home) }}/.config/omarchy/hooks/theme-set.d/screensaver-branding"
+            mode: "0755"
+            remote_src: true
+
+        - name: Check which theme is active
+          become: true
+          become_user: "{{ system.username | default(current_user) }}"
+          ansible.builtin.command: omarchy-theme-current
+          register: current_theme
+          changed_when: false
+          failed_when: false
+
+        # Opt in with sf_toolbox_omarchy_theme_set. Applying a theme rewrites
+        # the user's terminal, editor and shell colors, so it never happens
+        # unasked, and it is skipped when the theme is already active.
+        - name: Apply the theme
+          become: true
+          become_user: "{{ system.username | default(current_user) }}"
+          ansible.builtin.command: "omarchy-theme-set {{ theme_name }}"
+          when:
+            - sf_toolbox_omarchy_theme_set | default(false) | bool
+            - theme_name not in (current_theme.stdout | default(''))
+          changed_when: true

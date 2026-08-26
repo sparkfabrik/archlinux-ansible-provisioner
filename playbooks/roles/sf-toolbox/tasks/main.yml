@@ -37,3 +37,6 @@
 
 - name: Install the Omarchy bar widget
   import_tasks: omarchy-bar.yml
+
+- name: Install the Omarchy theme
+  import_tasks: omarchy-theme.yml
