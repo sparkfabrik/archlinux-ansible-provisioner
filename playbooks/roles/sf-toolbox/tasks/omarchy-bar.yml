@@ -4,13 +4,8 @@
   vars:
     plugin_dir: "{{ system.home | default(current_home) }}/.config/omarchy/plugins/sparkfabrik.toolbox"
   block:
-    - name: Check for an Omarchy installation
-      ansible.builtin.stat:
-        path: /usr/share/omarchy
-      register: omarchy_install
-
     - name: Install the Omarchy bar widget and its status backend
-      when: omarchy_install.stat.exists
+      when: omarchy_detected | default(false) | bool
       block:
         - name: Install the sf-toolbox-status update checker
           ansible.builtin.copy:

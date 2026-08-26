@@ -16,7 +16,9 @@ The Linux counterpart of the macOS sparkdock menu bar (`src/menubar-app` in the 
 | `plugin/MissionControl.qml`   | Fullscreen overlay: project cards, system grid, merge requests   |
 | `sparkfabrik-toolbox.hook`    | Pacman post-transaction hook, installed to `/etc/pacman.d/hooks` |
 
-The Ansible side lives in `../../tasks/omarchy-bar.yml` (install, tag `omarchy-bar`, gated on `/usr/share/omarchy`) and `../../tasks/omarchy-detect.yml` (ownership facts, tag `always`).
+The Ansible side lives in `../../tasks/omarchy-bar.yml` (install, tag `omarchy-bar`) and `../../tasks/omarchy-detect.yml` (tag `always`), which sets `omarchy_detected` and the ownership facts.
+
+**Gate every Omarchy task on `omarchy_detected`.** Ansible reports Omarchy as Archlinux, so `ansible_distribution` cannot single it out; the fact combines `ID=omarchy` in `/etc/os-release` with the presence of `/usr/share/omarchy`, which covers both an Omarchy image and an Omarchy installed over an existing Arch. Do not add another `stat` in a task file: the detection block runs under the `always` tag, so the fact is there even when a single tag is requested. The provisioner also runs on Arch, Debian and Ubuntu machines that have no Omarchy, and in CI containers.
 
 ## The status contract
 
