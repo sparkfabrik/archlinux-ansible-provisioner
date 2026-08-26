@@ -522,6 +522,9 @@ gitlab_json() {
     # timestamp on the item itself, so the inference goes away with the calls.
     local ids gids enriched="[]" max_projects
     max_projects="${SF_GITLAB_MAX_PROJECTS:-6}"
+    # A non-numeric value would make jq reject --argjson and leave the ids
+    # empty, which disables the enrichment without saying so.
+    [[ "${max_projects}" =~ ^[0-9]+$ ]] || max_projects=6
     ids=$(jq -r --argjson n "${max_projects}" '.projects[0:$n][].id' <<<"${base}" 2>/dev/null)
     gids=$(for pid in ${ids}; do printf '"gid://gitlab/Project/%s", ' "${pid}"; done)
     gids="${gids%, }"
@@ -539,7 +542,7 @@ gitlab_json() {
                   mergeRequests(first: 6, sort: UPDATED_DESC, state: opened) {
                     nodes { iid title updatedAt webUrl notes(last: 1) { nodes { createdAt } } }
                   }
-                  pipelines(first: 20) {
+                  pipelines(first: 100) {
                     nodes { status ref updatedAt path user { username } }
                   }
                 }
@@ -568,8 +571,12 @@ gitlab_json() {
                   title: ((.title // "")[0:70]), state: "opened",
                   url: (.webUrl // ""), updated: (.updatedAt // ""),
                   commented: last_note };
+            # An inner join would drop a project GraphQL omits (no permission,
+            # a partial error, a project deleted since the event was recorded).
+            # The row survives with empty enrichment instead, and its URL falls
+            # back to the path the event feed already carries.
             [ .projects[] as $r
-              | ($nodes[] | select((.id // "") | endswith("/" + ($r.id | tostring)))) as $n
+              | (($nodes | map(select((.id // "") | endswith("/" + ($r.id | tostring)))) | first) // {}) as $n
               | ($n.fullPath // $r.path // "") as $path
               | ($n.pipelines.nodes // []
                  | map(select(($me == "") or ((.user.username // "") == $me)))
@@ -583,7 +590,8 @@ gitlab_json() {
                   name: ($n.name // ""),
                   client: (if $path != "" then client_of($path) else ($r.client // "") end),
                   repo: (if $path != "" then ($path | split("/") | last) else ($r.repo // "") end),
-                  url: ($n.webUrl // ""),
+                  url: ($n.webUrl
+                        // (if $path != "" then "https://" + $host + "/" + $path else "" end)),
                   pipeline: (if ($pipes | length) > 0
                              then { status: $pipes[0].status, ref: $pipes[0].ref, url: $pipes[0].url }
                              else null end),
