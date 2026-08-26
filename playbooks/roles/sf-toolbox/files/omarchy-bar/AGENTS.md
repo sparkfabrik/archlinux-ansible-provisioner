@@ -44,6 +44,8 @@ Data modes (JSON to stdout, no exit-code contract): `projects` (local Docker/com
 
 Env overrides for tests and non-standard layouts: `SF_TOOLBOX_DIR`, `SF_SPARKDOCK_DIR`, `SF_HTTP_PROXY_DIR`, `SF_AGENTS_DIR`, `SF_STATUS_FETCH_TIMEOUT`, `SF_GITLAB_CLIENT_GROUPS`.
 
+The provisioner writes that line only when `sf_toolbox_gitlab_client_groups` is defined. Undefined leaves a hand-written config untouched, which matters because sf-toolbox has no mechanism for machine-local variables: a task that always owned the line would delete the only configuration a developer can set today. Defined and empty removes it.
+
 `SF_GITLAB_CLIENT_GROUPS` wins whenever it is set at all, so exporting it empty is how a test says "no client groups" without touching the config file. The file itself is hand-editable, so the assignment is read with or without an `export` prefix, quoted or bare, and a trailing comment is dropped. Emptying `sf_toolbox_gitlab_client_groups` removes the line rather than leaving a stale one behind.
 
 Keep the code free of any one installation's GitLab layout. Group paths, project names and client names belong in the user's configuration and in the live API responses, never in the code, the comments, the tests or the documentation. Write examples with placeholders.
