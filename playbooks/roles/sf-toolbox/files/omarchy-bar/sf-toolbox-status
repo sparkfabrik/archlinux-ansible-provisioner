@@ -287,6 +287,23 @@ gitlab_json() {
         printf "%s" "${body}"
     }
 
+    # One GraphQL query replaces the whole per-project REST fan-out: metadata,
+    # issues, merge requests, pipelines and the last note timestamp per item,
+    # in a single round trip. Errors degrade to an empty document the same way
+    # gl() does, so a field the instance refuses never empties the payload.
+    gql() {
+        local body
+        body=$(GITLAB_HOST="${host}" timeout "${FETCH_TIMEOUT}" \
+               glab api graphql -f "query=$1" 2>/dev/null) || body=""
+        if [[ -z "${body}" ]] \
+            || ! jq -e 'type == "object" and has("data") and (.data != null)' \
+                 >/dev/null 2>&1 <<<"${body}"; then
+            echo '{"data":{"projects":{"nodes":[]}}}'
+            return 0
+        fi
+        printf "%s" "${body}"
+    }
+
     # Payloads travel through files: a hundred todos blow past the argv limit.
     local tmp
     tmp=$(mktemp -d) || { echo "${empty}"; return 0; }
@@ -314,6 +331,7 @@ gitlab_json() {
     local base
     base=$(jq -cn \
         --arg cgroups "${cgroups}" \
+        --arg me_name "${me_name}" \
         --slurpfile ev_f "${tmp}/events.json" \
         --slurpfile todos_f "${tmp}/todos.json" \
         --slurpfile ia_f "${tmp}/issues_a.json" \
@@ -343,6 +361,7 @@ gitlab_json() {
           def todo_row:
             {
               action: (.action_name // ""),
+              author: (.author.username // ""),
               type: (.target_type // ""),
               state: (.target.state // ""),
               title: ((.target.title // .body // "")[0:120]),
@@ -406,7 +425,21 @@ gitlab_json() {
           | group_by(.id) | map({id: .[0].id, path: .[0].path})
         ) as $paths
 
-        | ( $todos | map(todo_row) ) as $all_todos
+        # Every issue and merge request an agent writes for the developer
+        # carries an "on behalf of @user" header, which GitLab reads as a
+        # mention and turns into a todo addressed back at them. On a real
+        # account that was 76 of 79 mentions, so the attention list was mostly
+        # its own echo. Only mention-shaped actions are dropped: a self
+        # assignment is deliberate work, and a failed build on a pipeline the
+        # developer started is real signal. The drop is counted, never hidden.
+        | ( $todos | map(todo_row) ) as $raw_todos
+        | ( ["mentioned", "directly_addressed"] ) as $mention_actions
+        | ( $raw_todos
+            | map(select(. as $t
+                         | ($me_name == "")
+                           or ($t.author != $me_name)
+                           or (($mention_actions | index($t.action)) == null))) ) as $all_todos
+        | ( ($raw_todos | length) - ($all_todos | length) ) as $self_noise
 
         | ( $mm | map({
               title: ((.title // "")[0:90]),
@@ -467,6 +500,7 @@ gitlab_json() {
                 truncated: (($ev | length) >= 500)
             },
             totals: {
+                self_mentions_dropped: $self_noise,
                 todos_open: ($all_todos | map(select(.state == "opened")) | length),
                 todos_closed: ($all_todos | map(select(.state != "opened")) | length),
                 issues: ($ia | length),
@@ -481,77 +515,97 @@ gitlab_json() {
         return 0
     fi
 
-    # Enrich the projects in the window with name, url and latest pipeline.
-    local ids enriched="[]" row pid pmeta ppipe
-    ids=$(jq -r '.projects[0:6][].id' <<<"${base}" 2>/dev/null)
-    for pid in ${ids}; do
-        row=$(jq -c --argjson id "${pid}" '.projects[] | select(.id == $id)' <<<"${base}")
-        pmeta=$(gl "projects/${pid}")
-        ppipe=$(gl "projects/${pid}/pipelines?username=${me_name}&per_page=6")
-        gl "projects/${pid}/issues?state=opened&order_by=updated_at&per_page=12" >"${tmp}/p_issues.json"
-        gl "projects/${pid}/merge_requests?state=opened&order_by=updated_at&per_page=6" >"${tmp}/p_mrs.json"
-        # A comment does not move updated_at on the issue, so the project
-        # comment feed supplies the missing timestamp. One call covers every
-        # issue and merge request in the project, whoever wrote the comment.
-        # These three go through files: a hundred events blow the argv limit.
-        gl "projects/${pid}/events?action=commented&per_page=100" >"${tmp}/p_notes.json"
+    # Enrich the projects in the window: one GraphQL query for all of them.
+    # The REST path cost five calls per project (metadata, issues, merge
+    # requests, pipelines, and a project-wide comment feed to recover the
+    # timestamps that updated_at does not carry). GraphQL returns the note
+    # timestamp on the item itself, so the inference goes away with the calls.
+    local ids gids enriched="[]" max_projects
+    max_projects="${SF_GITLAB_MAX_PROJECTS:-6}"
+    # A non-numeric value would make jq reject --argjson and leave the ids
+    # empty, which disables the enrichment without saying so.
+    [[ "${max_projects}" =~ ^[0-9]+$ ]] || max_projects=6
+    ids=$(jq -r --argjson n "${max_projects}" '.projects[0:$n][].id' <<<"${base}" 2>/dev/null)
+    gids=$(for pid in ${ids}; do printf '"gid://gitlab/Project/%s", ' "${pid}"; done)
+    gids="${gids%, }"
+
+    if [[ -n "${gids}" ]]; then
+        # Pipelines are fetched wide and filtered to the developer's own runs
+        # in jq: the GraphQL connection takes no author argument.
+        gql "query {
+              projects(ids: [${gids}]) {
+                nodes {
+                  id name fullPath webUrl
+                  issues(first: 12, sort: UPDATED_DESC, state: opened) {
+                    nodes { iid title updatedAt webUrl notes(last: 1) { nodes { createdAt } } }
+                  }
+                  mergeRequests(first: 6, sort: UPDATED_DESC, state: opened) {
+                    nodes { iid title updatedAt webUrl notes(last: 1) { nodes { createdAt } } }
+                  }
+                  pipelines(first: 100) {
+                    nodes { status ref updatedAt path user { username } }
+                  }
+                }
+              }
+            }" >"${tmp}/gql.json"
+
         enriched=$(jq -c \
             --arg cgroups "${cgroups}" \
-            --argjson r "${row}" \
-            --argjson meta "${pmeta}" \
-            --argjson pipe "${ppipe}" \
-            --slurpfile issues_f "${tmp}/p_issues.json" \
-            --slurpfile mrs_f "${tmp}/p_mrs.json" \
-            --slurpfile notes_f "${tmp}/p_notes.json" '
-            ($issues_f[0] // []) as $issues
-            | ($mrs_f[0] // []) as $mrs
-            | ($notes_f[0] // []) as $notes
-            |
-            def titleize: gsub("[-_]"; " ") | split(" ")
+            --arg me "${me_name}" \
+            --arg host "${host}" \
+            --slurpfile gql_f "${tmp}/gql.json" '
+            ($gql_f[0].data.projects.nodes // []) as $nodes
+            | def titleize: gsub("[-_]"; " ") | split(" ")
                 | map(select(. != "") | (.[0:1] | ascii_upcase) + .[1:]) | join(" ");
-            def client_of(path):
-              (path | split("/")) as $s
-              | ($cgroups | split(",") | map(sub("^ +";"") | sub(" +$";""))
-                 | map(select(. != ""))) as $client_groups
-              | if ($s | length) < 2 then (path | titleize)
-                elif ($client_groups | index($s[0])) then ($s[1] | titleize)
-                elif ($s | length) > 2 then ($s[1] | titleize)
-                else ($s[0] | titleize) end;
-            ($meta.path_with_namespace // $r.path // "") as $path
-            | . + [ $r + {
-                path: $path,
-                name: ($meta.name // ""),
-                client: (if $path != "" then client_of($path) else ($r.client // "") end),
-                repo: (if $path != "" then ($path | split("/") | last) else ($r.repo // "") end),
-                url: ($meta.web_url // ""),
-                pipeline: (if ($pipe | type) == "array" and ($pipe | length) > 0
-                           then {status: ($pipe[0].status // ""), ref: ($pipe[0].ref // ""), url: ($pipe[0].web_url // "")}
-                           else null end),
-                pipelines: (if ($pipe | type) == "array"
-                            then ($pipe | map({status: (.status // ""), ref: (.ref // ""),
-                                               url: (.web_url // ""), updated: (.updated_at // .created_at // "")}))
-                            else [] end),
-                recent: (
-                    ( (if ($notes | type) == "array" then $notes else [] end)
-                      | map(select(.note != null)
-                            | {k: ((.note.noteable_type // "") + "#" + ((.note.noteable_iid // 0) | tostring)),
-                               at: (.created_at // "")})
-                      | group_by(.k)
-                      | map({key: .[0].k, value: ([ .[].at ] | max)})
-                      | from_entries ) as $commented
-                  | ( (if ($issues | type) == "array" then $issues else [] end)
-                      | map({kind: "issue", iid: .iid, title: ((.title // "")[0:70]),
-                             state: (.state // ""), url: (.web_url // ""), updated: (.updated_at // ""),
-                             commented: ($commented["Issue#" + ((.iid // 0) | tostring)] // "")}) )
-                  + ( (if ($mrs | type) == "array" then $mrs else [] end)
-                      | map({kind: "mr", iid: .iid, title: ((.title // "")[0:70]),
-                             state: (.state // ""), url: (.web_url // ""), updated: (.updated_at // ""),
-                             commented: ($commented["MergeRequest#" + ((.iid // 0) | tostring)] // "")}) )
-                  | map(. + {active: ([ .updated, .commented ] | map(select(. != "")) | max // "")})
-                  | sort_by(.active) | reverse | .[0:5]
-                )
-              } ]' <<<"${enriched}")
-    done
+              def client_of(path):
+                (path | split("/")) as $s
+                | ($cgroups | split(",") | map(sub("^ +";"") | sub(" +$";""))
+                   | map(select(. != ""))) as $client_groups
+                | if ($s | length) < 2 then (path | titleize)
+                  elif ($client_groups | index($s[0])) then ($s[1] | titleize)
+                  elif ($s | length) > 2 then ($s[1] | titleize)
+                  else ($s[0] | titleize) end;
+              def last_note: (.notes.nodes // []) | (.[0].createdAt // "");
+              def item(kind):
+                { kind: kind, iid: ((.iid // "0") | tonumber? // 0),
+                  title: ((.title // "")[0:70]), state: "opened",
+                  url: (.webUrl // ""), updated: (.updatedAt // ""),
+                  commented: last_note };
+            # An inner join would drop a project GraphQL omits (no permission,
+            # a partial error, a project deleted since the event was recorded).
+            # The row survives with empty enrichment instead, and its URL falls
+            # back to the path the event feed already carries.
+            [ .projects[] as $r
+              | (($nodes | map(select((.id // "") | endswith("/" + ($r.id | tostring)))) | first) // {}) as $n
+              | ($n.fullPath // $r.path // "") as $path
+              | ($n.pipelines.nodes // []
+                 | map(select(($me == "") or ((.user.username // "") == $me)))
+                 | map({ status: ((.status // "") | ascii_downcase),
+                         ref: (.ref // ""),
+                         url: (if (.path // "") != "" then "https://" + $host + .path else "" end),
+                         updated: (.updatedAt // "") })
+                 | .[0:6]) as $pipes
+              | $r + {
+                  path: $path,
+                  name: ($n.name // ""),
+                  client: (if $path != "" then client_of($path) else ($r.client // "") end),
+                  repo: (if $path != "" then ($path | split("/") | last) else ($r.repo // "") end),
+                  url: ($n.webUrl
+                        // (if $path != "" then "https://" + $host + "/" + $path else "" end)),
+                  pipeline: (if ($pipes | length) > 0
+                             then { status: $pipes[0].status, ref: $pipes[0].ref, url: $pipes[0].url }
+                             else null end),
+                  pipelines: $pipes,
+                  recent: (
+                    (($n.issues.nodes // []) | map(item("issue")))
+                    + (($n.mergeRequests.nodes // []) | map(item("mr")))
+                    | map(. + {active: ([ .updated, .commented ] | map(select(. != "")) | max // "")})
+                    | sort_by(.active) | reverse | .[0:5]
+                  )
+                }
+            ]' <<<"${base}")
+        [[ -n "${enriched}" ]] || enriched="[]"
+    fi
 
     local out
     out=$(jq -c --argjson top "${enriched}" --arg window "${window}" \
