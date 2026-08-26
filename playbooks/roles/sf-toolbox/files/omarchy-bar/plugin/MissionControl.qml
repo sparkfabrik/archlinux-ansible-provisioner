@@ -264,6 +264,13 @@ Item {
     return Math.floor(days / 30) + "mo ago"
   }
 
+  // The same age without the word, for the card rows: the column is narrow and
+  // the rows are ordered by it, so the number is what has to read at a glance.
+  function agoShort(iso) {
+    var full = ago(iso)
+    return full === "now" ? full : full.replace(" ago", "")
+  }
+
   Process {
     id: gitlabProc
     stdout: StdioCollector { id: gitlabOut }
@@ -648,9 +655,23 @@ Item {
                           width: parent.width
                           height: Style.space(20)
 
+                          // The age carries the ordering of the list, so it sits
+                          // at the right edge of every row and the title elides
+                          // against it.
+                          Text {
+                            id: itemAge
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.agoShort(modelData.active || modelData.updated)
+                            color: Qt.alpha(root.foreground, 0.4)
+                            font.family: root.fontFamily
+                            font.pixelSize: Style.font.caption
+                          }
+
                           Row {
                             anchors.left: parent.left
-                            anchors.right: parent.right
+                            anchors.right: itemAge.left
+                            anchors.rightMargin: Style.space(8)
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Style.space(7)
 
@@ -669,7 +690,7 @@ Item {
                               anchors.verticalCenter: parent.verticalCenter
                             }
                             Text {
-                              width: parent.width - Style.space(70)
+                              width: parent.width - Style.space(52)
                               text: modelData.title || ""
                               color: itemMouse.containsMouse ? root.foreground : Qt.alpha(root.foreground, 0.75)
                               font.family: root.fontFamily
