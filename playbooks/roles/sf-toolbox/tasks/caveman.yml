@@ -12,7 +12,10 @@
     - name: Run caveman setup script
       become: true
       become_user: "{{ system.username | default(current_user) }}"
-      ansible.builtin.command: "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/caveman/setup.sh"
+      # argv form so a sparkdock.path containing spaces stays one argument.
+      ansible.builtin.command:
+        argv:
+          - "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/caveman/setup.sh"
       when:
         - caveman_setup_script.stat.exists
         - caveman_setup_script.stat.executable | default(false)

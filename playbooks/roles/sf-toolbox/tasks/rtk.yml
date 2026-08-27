@@ -146,7 +146,10 @@
     - name: Run rtk setup script
       become: true
       become_user: "{{ system.username | default(current_user) }}"
-      ansible.builtin.command: "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/rtk/setup.sh"
+      # argv form so a sparkdock.path containing spaces stays one argument.
+      ansible.builtin.command:
+        argv:
+          - "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/rtk/setup.sh"
       when:
         - rtk_setup_script.stat.exists
         - rtk_setup_script.stat.executable | default(false)

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added a `claude-output-style` task that defaults Claude Code's output style to `Concise`. Output styles modify the system prompt, so the guidance is prompt-cached and survives context compaction, unlike a CLAUDE.md entry. The task calls sparkdock's `claude-output-style.py`, which writes the key only when no style is set, so a developer who picks another one keeps it across provisioning runs; `/config` still wins per project and `ajust claude-output-style-reset` removes it. Skipped with a warning when the sparkdock checkout is absent, matching the gh-gate task ([sparkfabrik/sparkdock#600](https://github.com/sparkfabrik/sparkdock/pull/600))
 - The `sf-toolbox` role now installs the SparkFabrik Omarchy theme on Omarchy machines (tag `omarchy-theme`): the theme is cloned the way Omarchy installs extra themes, as a git checkout under `~/.config/omarchy/themes`, so `omarchy theme update` keeps it current, and the theme's screensaver hook is installed into `~/.config/omarchy/hooks/theme-set.d`, which Omarchy does not rewrite. The theme stays available in the theme switcher without being applied: set `sf_toolbox_omarchy_theme_set` to apply it. Override the source with `sf_toolbox_omarchy_theme_repo`, `sf_toolbox_omarchy_theme_name` and `sf_toolbox_omarchy_theme_version`
 - Mission Control now reads the developer's GitLab work: one card per project they actually worked on recently (named after the client for customer groups and after the project itself for internal ones), with open issues, merge requests, review requests and replies, an activity sparkline, the latest issues and merge requests as clickable rows, and quick actions for GitLab, issues, a terminal in the project and its local site. Alongside: recent pipeline history grouped per project (green runs included, most recently active first), the items waiting on the developer grouped per project and split between open and closed, their own open merge requests, and a weekly activity chart. Backed by a single cached `sf-toolbox-status gitlab` call, and reachable with `CTRL + SUPER + ALT + S` (configurable through `sf_toolbox_mission_control_key`)
 - Added SparkFabrik Mission Control, a fullscreen overlay for the Omarchy widget (summon it from the popup button or `omarchy-shell shell summon sparkfabrik.toolbox`): branded project cards built from Docker compose labels (name, git branch, running/total container bar, spark-http-proxy vhosts with per-service icons, click or Enter opens the site, Ctrl+T opens a floating terminal in the project), a compact system status grid, and the developer's open merge requests on the company GitLab (click opens the MR). Backed by two new `sf-toolbox-status` data modes: `projects` and `mrs`
@@ -38,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added clean arch/debian separation in toolbox package definitions with dotted-path support in the parser
 
 ### Changed
+
 - `sf-toolbox` now runs `gcloud components update` on every provisioning pass, so an existing Google Cloud SDK in `/opt/google-cloud-sdk` is kept current instead of staying pinned at the version installed on first provision
 - Delegated `*.loc` systemd-resolved configuration to the `spark-http-proxy` CLI and removed the bespoke `docker` role drop-in (`docker-dev-dns.conf`, `172.17.0.1:19322`); the CLI now writes `http-proxy.conf` (`127.0.0.1:19322`). Legacy `~docker`/dnsdock routing is no longer configured
 - Replaced the obsolete Python `yq` package (pacman) with `go-yq`, the mikefarah Go yq v4 (`extra` repo); the old `yq` is now removed first since the two packages conflict
@@ -61,6 +63,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `system.yml` to import sf-toolbox role (alongside existing roles)
 
 ### Fixed
+
+- Fixed the `sf-toolbox` tasks that invoke sparkdock scripts passing the interpolated path as a free-form command string, which is tokenized on whitespace, so a `sparkdock.path` containing a space resolved to the wrong script and failed the run. The caveman, herdr, rtk and Claude gh-gate tasks now use the `argv` form.
 - Fixed Mission Control costing 40 GitLab API calls and 13.5 seconds per cold refresh. The per-project fan-out (metadata, issues, merge requests, pipelines and a comment feed, times every project) is now a single GraphQL query: 11 calls and about 7 seconds. The query also returns the last note timestamp per item, so ordering by real activity no longer infers it from a project-wide event feed. `SF_GITLAB_MAX_PROJECTS` caps how many projects are enriched, default 6
 - Fixed the Mission Control attention list being mostly its own echo: every issue or merge request an agent writes for the developer carries an "on behalf of @user" header, which GitLab turns into a todo addressed back at them, 76 of 79 mentions on a real account. Self-authored todos are dropped for mentions only, since a self assignment or a failed build on a pipeline the developer started is real signal, and the count is reported as `totals.self_mentions_dropped`
 - Fixed provisioning deleting the Mission Control client group configuration on every run. The task owned the `SF_GITLAB_CLIENT_GROUPS` line unconditionally, and sf-toolbox has no mechanism for machine-local variables, so with `sf_toolbox_gitlab_client_groups` undefined the only configuration a developer can set was removed and every project fell back to generic naming. The line is managed when the variable is defined; undefined leaves a hand-written config alone, defined and empty still removes it
@@ -85,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `sf-toolbox` symlink breaking `SCRIPT_DIR` resolution by resolving symlinks with `readlink -f` before computing the directory
 
 ### Removed
+
 - Removed `playbooks/roles/packages/tasks/ai.yml`, `glab.yml`, `gcloud.yml`, `homebrew.yml` (merged into sf-toolbox)
 - Removed `playbooks/roles/docker/tasks/sparkfabrik-http-proxy.yml` (merged into sf-toolbox)
 - Removed `playbooks/roles/sparkdock/tasks/packages-arch.yml` and `packages-debian.yml` (merged into sf-toolbox)
