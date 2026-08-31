@@ -38,6 +38,7 @@ toolbox:
       - npm
     homebrew_taps:
       - anomalyco/tap
+      - owenthereal/upterm
     homebrew:
       - just
       - gum
@@ -84,11 +85,23 @@ toolbox:
     - rg
     - rtk
     - herdr
+    - upterm
     - spark-http-proxy
     - intelephense
     - typescript-language-server
     - pyright-langserver
     - gopls
+
+  # ─── Upterm release (Arch Linux and Omarchy) ────────────────────────────
+  upterm:
+    version: "0.24.0"
+    architectures:
+      x86_64:
+        asset: upterm_linux_amd64.tar.gz
+        sha256: a6324d76c6d962236c22e4a27a2c4ffd17aef11dfa3da33d14dfcff4f4de60b3
+      aarch64:
+        asset: upterm_linux_arm64.tar.gz
+        sha256: 9015aabeeb837ef4c503db56a54a90139b5965a9f16f162b098b1c5acf8d1584
 
   # ─── Prerequisites ──────────────────────────────────────────────────────
   # Must be available as commands before sf-toolbox runs.
