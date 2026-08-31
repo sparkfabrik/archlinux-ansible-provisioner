@@ -100,6 +100,19 @@
           - upterm
       when: upterm_legacy_formula.rc == 0
 
+    - name: Trust upstream Upterm tap
+      ansible.builtin.shell: |
+        set -uo pipefail
+        if ! /home/linuxbrew/.linuxbrew/bin/brew commands | tr ' ' '\n' | grep -qx trust; then
+          echo "skip: brew trust unavailable"
+          exit 0
+        fi
+        /home/linuxbrew/.linuxbrew/bin/brew trust --tap owenthereal/upterm
+      args:
+        executable: /bin/bash
+      register: upterm_tap_trust
+      changed_when: "'Trusted tap' in upterm_tap_trust.stdout"
+
     - name: Install upstream Upterm cask
       community.general.homebrew_cask:
         name: upterm
