@@ -1,0 +1,113 @@
+---
+- name: Install Upterm from upstream releases (Archlinux)
+  tags: [sf-toolbox, packages, upterm]
+  when: ansible_facts['os_family'] == "Archlinux"
+  block:
+    - name: Remove legacy and third-party terminal-sharing packages
+      community.general.pacman:
+        name:
+          - tmate
+          - upterm
+          - upterm-bin
+        state: absent
+
+    - name: Fail on unsupported architecture for Upterm
+      ansible.builtin.fail:
+        msg: "Upterm does not provide a managed binary for architecture: {{ ansible_facts['architecture'] }}"
+      when: ansible_facts['architecture'] not in toolbox.upterm.architectures
+
+    - name: Set Upterm release facts
+      ansible.builtin.set_fact:
+        upterm_release: "{{ toolbox.upterm.architectures[ansible_facts['architecture']] }}"
+
+    - name: Check installed Upterm version
+      ansible.builtin.command: /usr/local/bin/upterm version
+      register: upterm_installed
+      changed_when: false
+      failed_when: false
+
+    - name: Set installed Upterm version
+      ansible.builtin.set_fact:
+        upterm_current_version: >-
+          {{ upterm_installed.stdout_lines | default([]) | first | default('') |
+          regex_replace('^Upterm version\s+', '') }}
+
+    - name: Install configured Upterm release
+      when: upterm_installed.rc != 0 or upterm_current_version != toolbox.upterm.version
+      block:
+        - name: Create temporary Upterm directory
+          ansible.builtin.tempfile:
+            state: directory
+            prefix: sf-toolbox-upterm-
+          register: upterm_temp_dir
+
+        - name: Download verified Upterm release
+          ansible.builtin.get_url:
+            url: "https://github.com/owenthereal/upterm/releases/download/v{{ toolbox.upterm.version }}/{{ upterm_release.asset }}"
+            dest: "{{ upterm_temp_dir.path }}/{{ upterm_release.asset }}"
+            checksum: "sha256:{{ upterm_release.sha256 }}"
+            mode: "0644"
+
+        - name: Extract Upterm release
+          ansible.builtin.unarchive:
+            src: "{{ upterm_temp_dir.path }}/{{ upterm_release.asset }}"
+            dest: "{{ upterm_temp_dir.path }}"
+            remote_src: true
+
+        - name: Install Upterm binary
+          ansible.builtin.copy:
+            src: "{{ upterm_temp_dir.path }}/upterm"
+            dest: /usr/local/bin/upterm
+            mode: "0755"
+            remote_src: true
+
+        - name: Verify Upterm installation
+          ansible.builtin.command: /usr/local/bin/upterm version
+          register: upterm_verified
+          changed_when: false
+          failed_when: "('Upterm version ' ~ toolbox.upterm.version) not in upterm_verified.stdout"
+
+      always:
+        - name: Clean up Upterm temporary directory
+          ansible.builtin.file:
+            path: "{{ upterm_temp_dir.path }}"
+            state: absent
+          when: upterm_temp_dir is defined and upterm_temp_dir.path is defined
+
+- name: Install Upterm with Homebrew (Debian/Ubuntu)
+  tags: [sf-toolbox, packages, upterm]
+  when: ansible_facts['os_family'] == "Debian"
+  become: true
+  become_user: "{{ system.username | default(current_user) }}"
+  block:
+    - name: Check for legacy Upterm formula
+      ansible.builtin.command:
+        argv:
+          - /home/linuxbrew/.linuxbrew/bin/brew
+          - list
+          - --formula
+          - upterm
+      register: upterm_legacy_formula
+      changed_when: false
+      failed_when: false
+
+    - name: Remove legacy Upterm formula
+      ansible.builtin.command:
+        argv:
+          - /home/linuxbrew/.linuxbrew/bin/brew
+          - uninstall
+          - --formula
+          - upterm
+      when: upterm_legacy_formula.rc == 0
+
+    - name: Install upstream Upterm cask
+      community.general.homebrew_cask:
+        name: upterm
+        state: latest
+        path: /home/linuxbrew/.linuxbrew/bin
+      environment:
+        HOMEBREW_NO_SANDBOX_LINUX: "1"
+
+    - name: Verify Upterm installation
+      ansible.builtin.command: /home/linuxbrew/.linuxbrew/bin/upterm version
+      changed_when: false

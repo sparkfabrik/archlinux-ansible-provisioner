@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+- Added Upterm to `sf-toolbox`: Arch Linux and Omarchy install pinned checksum-verified upstream release binaries, while Debian/Ubuntu install the upstream Homebrew cask; the shared Sparkdock recipes provide the same workflows through Linux `ajust`
 - Added a `claude-output-style` task that defaults Claude Code's output style to `Concise`. Output styles modify the system prompt, so the guidance is prompt-cached and survives context compaction, unlike a CLAUDE.md entry. The task calls sparkdock's `claude-output-style.py`, which writes the key only when no style is set, so a developer who picks another one keeps it across provisioning runs; `/config` still wins per project and `ajust claude-output-style-reset` removes it. Skipped with a warning when the sparkdock checkout is absent, matching the gh-gate task ([sparkfabrik/sparkdock#600](https://github.com/sparkfabrik/sparkdock/pull/600))
 - The `sf-toolbox` role now installs the SparkFabrik Omarchy theme on Omarchy machines (tag `omarchy-theme`): the theme is cloned the way Omarchy installs extra themes, as a git checkout under `~/.config/omarchy/themes`, so `omarchy theme update` keeps it current, and the theme's screensaver hook is installed into `~/.config/omarchy/hooks/theme-set.d`, which Omarchy does not rewrite. The theme stays available in the theme switcher without being applied: set `sf_toolbox_omarchy_theme_set` to apply it. Override the source with `sf_toolbox_omarchy_theme_repo`, `sf_toolbox_omarchy_theme_name` and `sf_toolbox_omarchy_theme_version`
 - Mission Control now reads the developer's GitLab work: one card per project they actually worked on recently (named after the client for customer groups and after the project itself for internal ones), with open issues, merge requests, review requests and replies, an activity sparkline, the latest issues and merge requests as clickable rows, and quick actions for GitLab, issues, a terminal in the project and its local site. Alongside: recent pipeline history grouped per project (green runs included, most recently active first), the items waiting on the developer grouped per project and split between open and closed, their own open merge requests, and a weekly activity chart. Backed by a single cached `sf-toolbox-status gitlab` call, and reachable with `CTRL + SUPER + ALT + S` (configurable through `sf_toolbox_mission_control_key`)
@@ -90,6 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Removed the legacy `tmate` AUR package from full Arch Linux provisioning; `sf-toolbox` also removes existing `tmate` and third-party Upterm packages before installing the upstream binary
 - Removed `playbooks/roles/packages/tasks/ai.yml`, `glab.yml`, `gcloud.yml`, `homebrew.yml` (merged into sf-toolbox)
 - Removed `playbooks/roles/docker/tasks/sparkfabrik-http-proxy.yml` (merged into sf-toolbox)
 - Removed `playbooks/roles/sparkdock/tasks/packages-arch.yml` and `packages-debian.yml` (merged into sf-toolbox)

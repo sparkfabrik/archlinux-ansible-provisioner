@@ -1,7 +1,7 @@
 ---
 # ─── Homebrew bootstrap (Debian/Ubuntu only) ───────────────────────────────
 - name: Bootstrap Homebrew on Debian/Ubuntu
-  tags: [sf-toolbox, packages, homebrew]
+  tags: [sf-toolbox, packages, homebrew, upterm]
   when: ansible_facts['os_family'] == "Debian"
   block:
     - name: Check if Homebrew is already installed
