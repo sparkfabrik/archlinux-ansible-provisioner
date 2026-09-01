@@ -19,6 +19,14 @@
         state: absent
       when: herdr_pacman.rc == 0
 
+    # The generated completion would likewise shadow the one shipped by the
+    # pacman package.
+    - name: Remove the generated herdr completion shadowing the packaged one
+      ansible.builtin.file:
+        path: "{{ system.home | default(current_home) }}/.local/share/zsh/site-functions/_herdr"
+        state: absent
+      when: herdr_pacman.rc == 0
+
     - name: Install herdr from GitHub releases
       when: herdr_pacman.rc != 0
       block:
@@ -117,7 +125,6 @@
       ansible.builtin.command: /usr/local/bin/herdr completion zsh
       register: herdr_completion_output
       changed_when: false
-      failed_when: false
 
     - name: Write herdr completions to file
       ansible.builtin.copy:
@@ -126,9 +133,6 @@
         mode: "0644"
         owner: "{{ system.username | default(current_user) }}"
         group: "{{ system.username | default(current_user) }}"
-      when:
-        - herdr_completion_output is not skipped
-        - herdr_completion_output.rc == 0
 
 - name: Configure the herdr agent skill
   tags: [sf-toolbox, packages, herdr, ai-harness]
