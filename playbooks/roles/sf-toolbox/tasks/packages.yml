@@ -17,6 +17,24 @@
         state: absent
       loop: "{{ toolbox.common.remove.npm }}"
       ignore_errors: true
+      when: not (omarchy_detected | default(false))
+
+    # On Omarchy, npm only exists as a mise shim under the user's home
+    # (see omarchy-detect.yml), which sudo's secure_path never includes.
+    # Run as the real user with that shim directory on PATH instead of
+    # trying to resolve npm as root.
+    - name: Remove obsolete npm packages (Omarchy)
+      community.general.npm:
+        name: "{{ item }}"
+        global: true
+        state: absent
+      loop: "{{ toolbox.common.remove.npm }}"
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      environment:
+        PATH: "{{ omarchy_mise_shims_dir }}:{{ (system.home | default(current_home)) }}/.local/bin:{{ ansible_facts['env']['PATH'] }}"
+      ignore_errors: true
+      when: (omarchy_detected | default(false)) and (omarchy_mise_npm_available | default(false))
 
 # ─── Package installation ──────────────────────────────────────────────────
 - name: Install toolbox packages
@@ -37,7 +55,25 @@
         global: true
         state: latest
       loop: "{{ toolbox.arch.npm | difference(omarchy_shadowed_npm | default([])) }}"
-      when: ansible_facts['os_family'] == "Archlinux"
+      when: ansible_facts['os_family'] == "Archlinux" and not (omarchy_detected | default(false))
+
+    # See "Remove obsolete npm packages (Omarchy)" above: npm only exists as
+    # a mise shim in the user's home on Omarchy, so this runs as the real
+    # user with that shim directory on PATH instead of as root.
+    - name: Install npm packages (Omarchy)
+      community.general.npm:
+        name: "{{ item }}"
+        global: true
+        state: latest
+      loop: "{{ toolbox.arch.npm | difference(omarchy_shadowed_npm | default([])) }}"
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      environment:
+        PATH: "{{ omarchy_mise_shims_dir }}:{{ (system.home | default(current_home)) }}/.local/bin:{{ ansible_facts['env']['PATH'] }}"
+      when: >-
+        ansible_facts['os_family'] == "Archlinux"
+        and (omarchy_detected | default(false))
+        and (omarchy_mise_npm_available | default(false))
 
     - name: Install apt system packages (Debian/Ubuntu)
       ansible.builtin.apt:

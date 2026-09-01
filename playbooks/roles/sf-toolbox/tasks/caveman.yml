@@ -12,6 +12,15 @@
     - name: Run caveman setup script
       become: true
       become_user: "{{ system.username | default(current_user) }}"
+      # On Omarchy, node (which this script requires) only exists as a mise
+      # shim under the user's home (see omarchy-detect.yml), which sudo's
+      # secure_path never includes. Prepend it here; off Omarchy this
+      # reproduces the same PATH the task already ran with.
+      environment:
+        PATH: >-
+          {{ (omarchy_mise_shims_dir ~ ':' ~ ansible_facts['env']['PATH'])
+             if (omarchy_detected | default(false))
+             else ansible_facts['env']['PATH'] }}
       # argv form so a sparkdock.path containing spaces stays one argument.
       ansible.builtin.command:
         argv:
