@@ -39,6 +39,8 @@
         omarchy_mise_tools: []
         omarchy_shadowed_pacman: []
         omarchy_shadowed_npm: []
+        omarchy_mise_shims_dir: ''
+        omarchy_mise_npm_available: false
 
     - name: Detect Omarchy mise-managed tools
       when: omarchy_detected
@@ -64,3 +66,22 @@
               {{ (['github-cli'] if 'gh' in omarchy_mise_tools else [])
                + (['opencode'] if 'opencode' in omarchy_mise_tools else []) }}
             omarchy_shadowed_npm: "{{ ['@github/copilot'] if 'copilot' in omarchy_mise_tools else [] }}"
+
+        # Node/npm themselves are never a ~/.local/bin wrapper (mise only
+        # generates those for CLI tools), so they never show up in
+        # omarchy_mise_tools above. They live as mise shims instead, which
+        # sudo's secure_path never includes: the npm tasks in packages.yml
+        # need this to run as the real user with the shims dir on PATH,
+        # rather than trying (and failing) to find npm as root.
+        - name: Record the Omarchy mise shims directory
+          ansible.builtin.set_fact:
+            omarchy_mise_shims_dir: "{{ (system.home | default(current_home)) }}/.local/share/mise/shims"
+
+        - name: Check whether Omarchy's mise-managed npm is available
+          ansible.builtin.stat:
+            path: "{{ omarchy_mise_shims_dir }}/npm"
+          register: omarchy_mise_npm_stat
+
+        - name: Record npm availability via Omarchy's mise
+          ansible.builtin.set_fact:
+            omarchy_mise_npm_available: "{{ omarchy_mise_npm_stat.stat.exists }}"

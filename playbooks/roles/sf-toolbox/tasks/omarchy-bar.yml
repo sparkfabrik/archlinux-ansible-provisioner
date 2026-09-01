@@ -125,15 +125,22 @@
 
         # omarchy-plugin-enable writes the user's shell.json, so it runs only
         # when the widget is not already placed, keeping repeat runs idempotent.
+        # It (via omarchy-plugin-catalog and omarchy-shell) requires
+        # OMARCHY_PATH, which Omarchy's shell rc normally exports; Ansible's
+        # become here doesn't run a login shell, so it's unset without this.
         - name: Enable the widget in the Omarchy bar
           become: true
           become_user: "{{ system.username | default(current_user) }}"
+          environment:
+            OMARCHY_PATH: /usr/share/omarchy
           ansible.builtin.command: omarchy-plugin-enable sparkfabrik.toolbox --section right
           when: widget_enabled.rc != 0
 
         - name: Restart the Omarchy shell to load the widget
           become: true
           become_user: "{{ system.username | default(current_user) }}"
+          environment:
+            OMARCHY_PATH: /usr/share/omarchy
           ansible.builtin.command: omarchy-restart-shell
           when: widget_enabled.rc != 0 or plugin_files is changed
           failed_when: false
