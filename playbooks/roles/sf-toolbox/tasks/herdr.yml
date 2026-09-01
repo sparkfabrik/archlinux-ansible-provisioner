@@ -92,8 +92,16 @@
         state: latest
         path: /home/linuxbrew/.linuxbrew/bin
 
+# Only the GitHub-release binary needs a generated completion: the Homebrew
+# formula ships _herdr in its own share/zsh/site-functions (already on the
+# fpath via `brew shellenv` in ~/.zshrc), and the Omarchy pacman package is
+# expected to ship its own as well. A generated copy would shadow those and
+# drift.
 - name: Install the herdr zsh completion
   tags: [sf-toolbox, packages, herdr]
+  when:
+    - ansible_facts['os_family'] == "Archlinux"
+    - herdr_pacman.rc != 0
   block:
     - name: Ensure zsh site-functions directory exists
       ansible.builtin.file:
@@ -106,11 +114,7 @@
     - name: Generate herdr zsh completion
       become: true
       become_user: "{{ system.username | default(current_user) }}"
-      # On Debian/Ubuntu herdr is installed via Homebrew, whose bin directory
-      # is not in the PATH of a non-login become shell.
-      environment:
-        PATH: "/home/linuxbrew/.linuxbrew/bin:{{ ansible_env.PATH }}"
-      ansible.builtin.command: herdr completion zsh
+      ansible.builtin.command: /usr/local/bin/herdr completion zsh
       register: herdr_completion_output
       changed_when: false
       failed_when: false
