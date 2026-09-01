@@ -19,14 +19,6 @@
         state: absent
       when: herdr_pacman.rc == 0
 
-    # The generated completion would likewise shadow the one shipped by the
-    # pacman package.
-    - name: Remove the generated herdr completion shadowing the packaged one
-      ansible.builtin.file:
-        path: "{{ system.home | default(current_home) }}/.local/share/zsh/site-functions/_herdr"
-        state: absent
-      when: herdr_pacman.rc == 0
-
     - name: Install herdr from GitHub releases
       when: herdr_pacman.rc != 0
       block:
@@ -100,16 +92,15 @@
         state: latest
         path: /home/linuxbrew/.linuxbrew/bin
 
-# Only the GitHub-release binary needs a generated completion: the Homebrew
+# Arch Linux needs a generated completion for both providers: the Omarchy
+# pacman package installs only the binary and its license, and the
+# GitHub-release install is a bare binary. On Debian/Ubuntu the Homebrew
 # formula ships _herdr in its own share/zsh/site-functions (already on the
-# fpath via `brew shellenv` in ~/.zshrc), and the Omarchy pacman package is
-# expected to ship its own as well. A generated copy would shadow those and
-# drift.
+# fpath via `brew shellenv` in ~/.zshrc), so a generated copy would shadow
+# it and drift.
 - name: Install the herdr zsh completion
   tags: [sf-toolbox, packages, herdr]
-  when:
-    - ansible_facts['os_family'] == "Archlinux"
-    - herdr_pacman.rc != 0
+  when: ansible_facts['os_family'] == "Archlinux"
   block:
     - name: Ensure zsh site-functions directory exists
       ansible.builtin.file:
@@ -122,7 +113,7 @@
     - name: Generate herdr zsh completion
       become: true
       become_user: "{{ system.username | default(current_user) }}"
-      ansible.builtin.command: /usr/local/bin/herdr completion zsh
+      ansible.builtin.command: "{{ '/usr/bin/herdr' if herdr_pacman.rc == 0 else '/usr/local/bin/herdr' }} completion zsh"
       register: herdr_completion_output
       changed_when: false
 
