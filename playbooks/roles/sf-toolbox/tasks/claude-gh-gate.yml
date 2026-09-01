@@ -12,7 +12,12 @@
     - name: Enable the Claude gh skill gate
       become: true
       become_user: "{{ system.username | default(current_user) }}"
-      ansible.builtin.command: "python3 {{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/claude-gh-gate.py enable"
+      # argv form so a sparkdock.path containing spaces stays one argument.
+      ansible.builtin.command:
+        argv:
+          - python3
+          - "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/claude-gh-gate.py"
+          - enable
       environment:
         HOME: "{{ system.home | default(current_home) }}"
       register: claude_gh_gate_output

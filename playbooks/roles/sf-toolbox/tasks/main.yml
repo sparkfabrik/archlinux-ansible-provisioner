@@ -29,11 +29,17 @@
 - name: Install herdr
   import_tasks: herdr.yml
 
+- name: Install Upterm
+  import_tasks: upterm.yml
+
 - name: Configure caveman
   import_tasks: caveman.yml
 
 - name: Configure Claude gh skill gate
   import_tasks: claude-gh-gate.yml
+
+- name: Configure the default Claude Code output style
+  import_tasks: claude-output-style.yml
 
 - name: Install the Omarchy bar widget
   import_tasks: omarchy-bar.yml

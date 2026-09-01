@@ -1,0 +1,35 @@
+---
+- name: Configure the default Claude Code output style
+  tags: [sf-toolbox, ai, claude-output-style]
+  block:
+    - name: Check if the Claude output-style script exists
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.stat:
+        path: "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/claude-output-style.py"
+      register: claude_output_style_script
+
+    # Writes outputStyle only when no style is set, so a developer who picks a
+    # different one keeps it across provisioning runs.
+    - name: Default the Claude Code output style to Concise
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      # argv form so a sparkdock.path containing spaces stays one argument.
+      ansible.builtin.command:
+        argv:
+          - python3
+          - "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/claude-output-style.py"
+          - set
+      environment:
+        HOME: "{{ system.home | default(current_home) }}"
+      register: claude_output_style_output
+      changed_when: "'already set' not in claude_output_style_output.stdout"
+      when:
+        - claude_output_style_script.stat.exists
+
+    - name: Warn user to manually set the Claude output style
+      ansible.builtin.debug:
+        msg: >-
+          WARNING: Automatic Claude output style configuration was not possible.
+          Please run `ajust claude-output-style-set` manually to complete the setup.
+      when: not claude_output_style_script.stat.exists

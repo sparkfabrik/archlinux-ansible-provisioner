@@ -48,7 +48,14 @@ jobs:
           opencode version || opencode --version
           copilot --version
           claude --version
+          upterm version
           /opt/google-cloud-sdk/bin/gcloud --version
+
+      - name: Verify Upterm idempotency
+        run: |
+          output=$(TAGS=upterm bin/install.linux)
+          echo "${output}"
+          echo "${output}" | grep -q "changed=0"
 
   toolbox-ubuntu-2604:
     name: Ubuntu 26.04
@@ -82,6 +89,7 @@ jobs:
           opencode version || opencode --version
           copilot --version
           claude --version
+          upterm version
           /opt/google-cloud-sdk/bin/gcloud --version
 
   toolbox-arch:
@@ -115,7 +123,16 @@ jobs:
           just --version
           gum --version
           glab --version
+          upterm version
           /opt/google-cloud-sdk/bin/gcloud --version
+
+      - name: Verify Upterm idempotency
+        env:
+          SUDO_USER: testuser
+        run: |
+          output=$(TAGS=upterm bin/install.linux)
+          echo "${output}"
+          echo "${output}" | grep -q "changed=0"
 
   conflict-detection-arch:
     name: Arch conflict detection
@@ -196,6 +213,7 @@ jobs:
           just --version
           gum --version
           glab --version
+          upterm version
           /opt/google-cloud-sdk/bin/gcloud --version
 
   toolbox-conflict-detection:
@@ -270,4 +288,5 @@ jobs:
           just --version
           gum --version
           glab --version
+          upterm version
           /opt/google-cloud-sdk/bin/gcloud --version

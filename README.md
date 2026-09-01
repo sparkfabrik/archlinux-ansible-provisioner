@@ -36,7 +36,7 @@ SKIP_TAGS=gcloud sf-toolbox             # Skip specific tags
 - **AI Coding**: opencode, openspec
 - **Cloud/DevOps**: gcloud, glab, mkcert, docker (must be pre-installed)
 - **Task Runner**: just, ajust (SparkFabrik wrapper)
-- **Utilities**: gum
+- **Utilities**: gum, Upterm
 - **HTTP Proxy**: spark-http-proxy (local .loc domains)
 
 ### Requirements
