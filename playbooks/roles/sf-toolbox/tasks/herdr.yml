@@ -106,6 +106,10 @@
     - name: Generate herdr zsh completion
       become: true
       become_user: "{{ system.username | default(current_user) }}"
+      # On Debian/Ubuntu herdr is installed via Homebrew, whose bin directory
+      # is not in the PATH of a non-login become shell.
+      environment:
+        PATH: "/home/linuxbrew/.linuxbrew/bin:{{ ansible_env.PATH }}"
       ansible.builtin.command: herdr completion zsh
       register: herdr_completion_output
       changed_when: false
