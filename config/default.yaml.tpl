@@ -59,4 +59,5 @@ desktop:
 debug: false
 sparkdock: {}
 sparkfabrik: true
+sparkfabrik_arch_repo: false
 qemu_for_buildx: true

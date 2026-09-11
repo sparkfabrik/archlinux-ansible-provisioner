@@ -1,0 +1,86 @@
+---
+- name: Configure the signed SparkFabrik pacman repository
+  tags: [sparkfabrik-repository]
+  when:
+    - sparkfabrik_arch_repo | default(false)
+    - ansible_os_family == "Archlinux"
+  block:
+    - name: Require a supported architecture
+      ansible.builtin.assert:
+        that: ansible_architecture == "x86_64"
+        fail_msg: The SparkFabrik package repository currently supports only x86_64
+
+    - name: Install GnuPG
+      community.general.pacman:
+        name: gnupg
+        state: present
+
+    - name: Initialize the pacman keyring
+      ansible.builtin.command: pacman-key --init
+      args:
+        creates: /etc/pacman.d/gnupg/private-keys-v1.d
+
+    - name: Install the SparkFabrik public key
+      ansible.builtin.copy:
+        src: sparkfabrik.asc
+        dest: /usr/share/pacman/keyrings/sparkfabrik.asc
+        owner: root
+        group: root
+        mode: "0644"
+      register: sparkfabrik_repository_key
+
+    - name: Inspect the public key fingerprint
+      ansible.builtin.command:
+        argv:
+          - gpg
+          - --homedir
+          - /etc/pacman.d/gnupg
+          - --batch
+          - --with-colons
+          - --show-keys
+          - /usr/share/pacman/keyrings/sparkfabrik.asc
+      changed_when: false
+      register: sparkfabrik_repository_fingerprint
+
+    - name: Verify the pinned public key
+      ansible.builtin.assert:
+        that:
+          - "sparkfabrik_repository_fingerprint.stdout_lines | select('match', '^pub:') | list | length == 1"
+          - "'fpr:::::::::CC54D2480F42AB0EE8E63DF91BE396C8C99CB4BE:' in sparkfabrik_repository_fingerprint.stdout_lines"
+        fail_msg: The SparkFabrik signing key does not match the pinned fingerprint
+
+    - name: Check whether the key is imported
+      ansible.builtin.command: pacman-key --list-keys CC54D2480F42AB0EE8E63DF91BE396C8C99CB4BE
+      changed_when: false
+      failed_when: false
+      register: sparkfabrik_repository_imported
+
+    - name: Import the verified key
+      ansible.builtin.command: pacman-key --add /usr/share/pacman/keyrings/sparkfabrik.asc
+      when: sparkfabrik_repository_key.changed or sparkfabrik_repository_imported.rc != 0
+
+    - name: Inspect key validity
+      ansible.builtin.command:
+        argv:
+          - gpg
+          - --homedir
+          - /etc/pacman.d/gnupg
+          - --batch
+          - --with-colons
+          - --list-keys
+          - CC54D2480F42AB0EE8E63DF91BE396C8C99CB4BE
+      changed_when: false
+      register: sparkfabrik_repository_validity
+
+    - name: Locally trust the verified key
+      ansible.builtin.command: pacman-key --lsign-key CC54D2480F42AB0EE8E63DF91BE396C8C99CB4BE
+      when: sparkfabrik_repository_validity.stdout is not search('(?m)^pub:[fu]:')
+
+    - name: Add the signed repository after distribution repositories
+      ansible.builtin.blockinfile:
+        path: /etc/pacman.conf
+        marker: "# {mark} SPARKFABRIK REPOSITORY"
+        block: |
+          [sparkfabrik]
+          SigLevel = Required TrustedOnly
+          Server = https://github.com/sparkfabrik/arch-packages/releases/download/repo

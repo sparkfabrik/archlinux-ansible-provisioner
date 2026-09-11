@@ -32,6 +32,10 @@ examples:
     timeshift:
       maxSnapshots: 10
 properties:
+  sparkfabrik_arch_repo:
+    type: boolean
+    default: false
+    description: Enable the signed SparkFabrik pacman repository on Arch x86_64
   debug:
     $id: "#/properties/debug"
     default: false

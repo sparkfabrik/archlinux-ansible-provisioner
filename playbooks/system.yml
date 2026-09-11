@@ -3,6 +3,11 @@
     sparkdock_default_path: "{{ current_home }}/.local/spark/sparkdock"
 
   pre_tasks:
+    - name: Configure the optional SparkFabrik package repository
+      ansible.builtin.import_role:
+        name: sparkfabrik-repository
+      tags: [always]
+
     - name: Auto-detect current user (like sparkdock uses ansible_facts['user_id'])
       tags: [always]
       ansible.builtin.set_fact:
