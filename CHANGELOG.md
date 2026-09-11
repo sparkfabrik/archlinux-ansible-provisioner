@@ -70,6 +70,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Migrate recognized user npm Codex installations, including custom npm prefixes, only after verifying the packaged version, and explain how to recover from stale Arch package databases.
+
 - Keep the `claude-gh-gate` provisioning tag limited to Claude; use `codex-writing-guard` for Codex or `writing-guard` for both.
 
 - Fixed the `sf-toolbox` tasks that invoke sparkdock scripts passing the interpolated path as a free-form command string, which is tokenized on whitespace, so a `sparkdock.path` containing a space resolved to the wrong script and failed the run. The caveman, herdr, rtk and Claude gh-gate tasks now use the `argv` form.
