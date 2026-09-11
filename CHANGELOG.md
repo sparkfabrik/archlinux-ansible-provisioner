@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added opt-in ChatGPT desktop installation to sf-toolbox: our reviewed recipe on Arch/CachyOS x86_64, Omarchy's own desktop package, and the official OpenAI `.deb` with signed apt updates on Ubuntu 24.04/26.04 and Debian 13; existing conflicting Arch packages are preserved
 - Added SparkFabrik recipe-source configuration for paru, plus opt-in signed binary repository configuration with fingerprint verification and an availability check on activation
+- sf-toolbox now registers writing guards for Claude and Codex; Codex hooks require review and trust through `/hooks`.
 
 - Added Codex CLI to `sf-toolbox`: the `openai-codex` package from `extra` on Arch Linux and the `codex` Homebrew cask on Debian/Ubuntu, both of which ship the zsh completion; a conflicting npm `@openai/codex` is removed first, and Omarchy keeps owning codex through its own mise wrapper
 - Added a zsh completion for `herdr` on Arch Linux: generated with `herdr completion zsh` during provisioning and installed into `~/.local/share/zsh/site-functions/_herdr`, for both the GitHub-release binary and the Omarchy pacman package (which ships no completion). Skipped on Debian/Ubuntu, where the Homebrew formula ships its own completion
@@ -70,6 +71,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `system.yml` to import sf-toolbox role (alongside existing roles)
 
 ### Fixed
+
+- Migrate recognized user npm Codex installations, including custom npm prefixes, only after verifying the packaged version, and explain how to recover from stale Arch package databases.
+
+- Keep the `claude-gh-gate` provisioning tag limited to Claude; use `codex-writing-guard` for Codex or `writing-guard` for both.
 
 - Fixed the `sf-toolbox` tasks that invoke sparkdock scripts passing the interpolated path as a free-form command string, which is tokenized on whitespace, so a `sparkdock.path` containing a space resolved to the wrong script and failed the run. The caveman, herdr, rtk and Claude gh-gate tasks now use the `argv` form.
 - Fixed Mission Control costing 40 GitLab API calls and 13.5 seconds per cold refresh. The per-project fan-out (metadata, issues, merge requests, pipelines and a comment feed, times every project) is now a single GraphQL query: 11 calls and about 7 seconds. The query also returns the last note timestamp per item, so ordering by real activity no longer infers it from a project-wide event feed. `SF_GITLAB_MAX_PROJECTS` caps how many projects are enriched, default 6

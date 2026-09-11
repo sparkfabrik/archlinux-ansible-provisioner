@@ -1,18 +1,17 @@
 ---
-- name: Configure Claude gh skill gate
-  tags: [sf-toolbox, ai, claude-gh-gate]
+- name: Configure the Claude writing guard
+  tags: [sf-toolbox, ai, claude-gh-gate, writing-guard]
   block:
-    - name: Check if the Claude gh-gate script exists
+    - name: Check if the Claude writing guard installer exists
       become: true
       become_user: "{{ system.username | default(current_user) }}"
       ansible.builtin.stat:
         path: "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/claude-gh-gate.py"
-      register: claude_gh_gate_script
+      register: claude_guard_script
 
-    - name: Enable the Claude gh skill gate
+    - name: Register the Claude writing guard
       become: true
       become_user: "{{ system.username | default(current_user) }}"
-      # argv form so a sparkdock.path containing spaces stays one argument.
       ansible.builtin.command:
         argv:
           - python3
@@ -20,14 +19,45 @@
           - enable
       environment:
         HOME: "{{ system.home | default(current_home) }}"
-      register: claude_gh_gate_output
-      changed_when: "'already enabled' not in claude_gh_gate_output.stdout"
-      when:
-        - claude_gh_gate_script.stat.exists
+      register: claude_guard_output
+      changed_when: "'already enabled' not in claude_guard_output.stdout"
+      when: claude_guard_script.stat.exists
 
-    - name: Warn user to manually enable the Claude gh-gate
+    - name: Warn when the Claude writing guard installer is missing
       ansible.builtin.debug:
-        msg: >-
-          WARNING: Automatic Claude gh-gate configuration was not possible.
-          Please run `ajust claude-gh-gate-enable` manually to complete the setup.
-      when: not claude_gh_gate_script.stat.exists
+        msg: "Update Sparkdock and run `ajust claude-gh-gate-enable` to install the Claude writing guard."
+      when: not claude_guard_script.stat.exists
+
+- name: Configure the Codex writing guard
+  tags: [sf-toolbox, ai, codex-writing-guard, writing-guard]
+  block:
+    - name: Check if the Codex writing guard installer exists
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.stat:
+        path: "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/codex-writing-guard.py"
+      register: codex_guard_script
+
+    - name: Register the Codex writing guard
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.command:
+        argv:
+          - python3
+          - "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/codex-writing-guard.py"
+          - enable
+      environment:
+        HOME: "{{ system.home | default(current_home) }}"
+      register: codex_guard_output
+      changed_when: "'already enabled' not in codex_guard_output.stdout"
+      when: codex_guard_script.stat.exists
+
+    - name: Warn when the Codex writing guard installer is missing
+      ansible.builtin.debug:
+        msg: "Update Sparkdock and run `ajust codex-writing-guard-enable` to install the Codex writing guard."
+      when: not codex_guard_script.stat.exists
+
+    - name: Explain the Codex hook trust step
+      ansible.builtin.debug:
+        msg: "Open /hooks in Codex and review/trust new hook definitions. Registration does not grant trust."
+      when: codex_guard_script.stat.exists

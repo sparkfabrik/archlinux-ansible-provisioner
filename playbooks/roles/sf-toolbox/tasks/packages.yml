@@ -1,4 +1,29 @@
 ---
+- name: Locate the user npm Codex installation
+  tags: [sf-toolbox, packages]
+  block:
+    - name: Find the current Codex executable
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.shell: command -v codex || true
+      environment:
+        HOME: "{{ system.home | default(current_home) }}"
+        PATH: "{{ sf_toolbox_user_path | default((system.home | default(current_home)) ~ '/.local/bin:' ~ lookup('env', 'PATH')) }}"
+      register: codex_existing_binary
+      changed_when: false
+      check_mode: false
+
+    - name: Identify a user npm Codex prefix
+      ansible.builtin.command:
+        argv:
+          - "{{ ansible_playbook_python }}"
+          - "{{ role_path }}/../../../bin/common/codex-npm-prefix.py"
+          - "{{ codex_existing_binary.stdout }}"
+          - "{{ system.home | default(current_home) }}"
+      register: codex_user_npm
+      changed_when: false
+      check_mode: false
+
 # ─── Package cleanup ───────────────────────────────────────────────────────
 - name: Remove conflicting packages
   tags: [sf-toolbox, packages]
@@ -26,10 +51,21 @@
     # excluded: installing them again would put a second copy on PATH with an
     # independent updater.
     - name: Install pacman packages (Archlinux)
-      community.general.pacman:
-        name: "{{ toolbox.arch.pacman | difference(omarchy_shadowed_pacman | default([])) }}"
-        state: present
       when: ansible_facts['os_family'] == "Archlinux"
+      block:
+        - name: Install Arch packages without refreshing the system database
+          community.general.pacman:
+            name: "{{ toolbox.arch.pacman | difference(omarchy_shadowed_pacman | default([])) }}"
+            state: present
+      rescue:
+        - name: Report the package installation failure
+          ansible.builtin.fail:
+            msg: >-
+              {{ 'Package mirrors returned 404. Run `sudo pacman -Syu` to refresh and fully upgrade Arch, then retry sf-toolbox. The user npm Codex has not been removed.'
+                 if '404' in (ansible_failed_result.stderr | default('')) and 'failed retrieving file' in (ansible_failed_result.stderr | default(''))
+                 else 'Pacman package installation failed.' }}
+              {{ ansible_failed_result.msg | default('') }}
+              {{ ansible_failed_result.stderr | default('') }}
 
     - name: Install npm packages (Archlinux)
       community.general.npm:
@@ -92,3 +128,35 @@
         state: latest
       loop: "{{ toolbox.debian.npm | default([]) }}"
       when: ansible_facts['os_family'] == "Debian"
+
+- name: Migrate the user npm Codex after package installation
+  tags: [sf-toolbox, packages]
+  when:
+    - codex_user_npm.stdout | length > 0
+    - "'codex' not in (omarchy_mise_tools | default([]))"
+    - not ansible_check_mode
+  block:
+    - name: Verify the packaged Codex before removing the npm copy
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.command:
+        argv:
+          - "{{ '/usr/bin/codex' if ansible_facts['os_family'] == 'Archlinux' else '/home/linuxbrew/.linuxbrew/bin/codex' }}"
+          - --version
+      changed_when: false
+
+    - name: Remove Codex from the detected user npm prefix
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.command:
+        argv:
+          - npm
+          - uninstall
+          - --global
+          - --prefix
+          - "{{ codex_user_npm.stdout }}"
+          - "@openai/codex"
+      environment:
+        HOME: "{{ system.home | default(current_home) }}"
+        PATH: "{{ sf_toolbox_user_path | default((system.home | default(current_home)) ~ '/.local/bin:' ~ lookup('env', 'PATH')) }}"
+      changed_when: true
