@@ -33,7 +33,7 @@ SKIP_TAGS=gcloud sf-toolbox             # Skip specific tags
 
 ### What Gets Installed
 
-- **AI Coding**: opencode, openspec
+- **AI Coding**: opencode, openspec, codex
 - **Cloud/DevOps**: gcloud, glab, mkcert, docker (must be pre-installed)
 - **Task Runner**: just, ajust (SparkFabrik wrapper)
 - **Utilities**: gum, Upterm
