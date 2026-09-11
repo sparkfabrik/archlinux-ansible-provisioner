@@ -62,5 +62,6 @@
           ansible.builtin.set_fact:
             omarchy_shadowed_pacman: >-
               {{ (['github-cli'] if 'gh' in omarchy_mise_tools else [])
-               + (['opencode'] if 'opencode' in omarchy_mise_tools else []) }}
+               + (['opencode'] if 'opencode' in omarchy_mise_tools else [])
+               + (['openai-codex'] if 'codex' in omarchy_mise_tools else []) }}
             omarchy_shadowed_npm: "{{ ['@github/copilot'] if 'copilot' in omarchy_mise_tools else [] }}"

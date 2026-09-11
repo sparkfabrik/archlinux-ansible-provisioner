@@ -47,6 +47,7 @@ jobs:
           glab --version
           opencode version || opencode --version
           copilot --version
+          codex --version
           claude --version
           upterm version
           /opt/google-cloud-sdk/bin/gcloud --version
@@ -88,6 +89,7 @@ jobs:
           glab --version
           opencode version || opencode --version
           copilot --version
+          codex --version
           claude --version
           upterm version
           /opt/google-cloud-sdk/bin/gcloud --version
@@ -119,6 +121,7 @@ jobs:
         run: |
           opencode version || opencode --version
           copilot --version
+          codex --version
           find /home/testuser -name claude -type f -executable 2>/dev/null | head -1 | xargs -I{} {} --version
           just --version
           gum --version
@@ -209,6 +212,7 @@ jobs:
         run: |
           opencode version || opencode --version
           copilot --version
+          codex --version
           find /home/testuser -name claude -type f -executable 2>/dev/null | head -1 | xargs -I{} {} --version
           just --version
           gum --version

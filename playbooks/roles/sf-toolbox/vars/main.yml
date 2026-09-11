@@ -52,8 +52,6 @@ toolbox:
       - ripgrep
     homebrew_casks:
       - claude-code@latest
-      # The codex cask uses generate_completions_from_executable too, but its
-      # install still succeeds: older Homebrew only skips the completion.
       - codex
     # copilot-cli is installed via npm instead of brew cask because the
     # cask definition uses generate_completions_from_executable which is
@@ -70,6 +68,7 @@ toolbox:
     remove:
       npm:
         - opencode-ai
+        - "@openai/codex"
 
   # ─── Detection ──────────────────────────────────────────────────────────
   # Binary names managed by sf-toolbox. Used by bin/install.linux to show
