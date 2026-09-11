@@ -4,42 +4,75 @@
   when:
     - sparkfabrik_arch_pkgbuilds | default(false) | bool
     - ansible_os_family == "Archlinux"
+  vars:
+    sparkfabrik_paru_home: "{{ system.home | default(current_home | default(ansible_facts['user_dir'])) }}"
+    sparkfabrik_paru_user: "{{ system.username | default(current_user | default(ansible_facts['user_id'])) }}"
+    sparkfabrik_paru_path: "{{ sparkfabrik_paru_home }}/.config/paru/paru.conf"
   block:
     - name: Require a supported recipe architecture
       ansible.builtin.assert:
         that: ansible_architecture == "x86_64"
         fail_msg: The SparkFabrik recipes currently support only x86_64
 
-    - name: Check for existing paru configuration
+    - name: Check existing paru configuration files
       ansible.builtin.stat:
-        path: /etc/paru.conf
-      register: sparkfabrik_paru_config_file
+        path: "{{ item }}"
+      loop: ["/etc/paru.conf", "{{ sparkfabrik_paru_path }}"]
+      register: sparkfabrik_paru_files
 
-    - name: Read existing paru configuration
+    - name: Read existing paru configuration files
       ansible.builtin.slurp:
-        src: /etc/paru.conf
-      register: sparkfabrik_paru_config
-      when: sparkfabrik_paru_config_file.stat.exists
+        src: "{{ item.item }}"
+      loop: "{{ sparkfabrik_paru_files.results }}"
+      when: item.stat.exists
+      register: sparkfabrik_paru_configs
+      loop_control:
+        label: "{{ item.item }}"
 
-    - name: Reject an unmanaged SparkFabrik recipe entry
+    - name: Reject unmanaged SparkFabrik recipe entries
       ansible.builtin.assert:
         that:
           - >-
-            (sparkfabrik_paru_config.content | default('') | b64decode |
+            (item.content | b64decode |
             regex_replace('(?ms)^# BEGIN SPARKFABRIK PKGBUILDS\n.*?^# END SPARKFABRIK PKGBUILDS(?:\n|$)', ''))
             is not search('(?m)^\s*\[sparkfabrik\]\s*(?:#.*)?$')
-        fail_msg: Remove the manually configured [sparkfabrik] stanza from paru.conf before enabling recipe provisioning
+        fail_msg: "Remove the manually configured [sparkfabrik] stanza from {{ item.source }} before enabling recipe provisioning"
+      loop: "{{ sparkfabrik_paru_configs.results }}"
+      when: not (item.skipped | default(false))
+      loop_control:
+        label: "{{ item.source | default('missing configuration') }}"
 
-    - name: Register the SparkFabrik PKGBUILD repository
-      ansible.builtin.blockinfile:
-        path: /etc/paru.conf
-        create: true
+    - name: Create the user paru configuration directory
+      ansible.builtin.file:
+        path: "{{ sparkfabrik_paru_home }}/.config/paru"
+        state: directory
+        owner: "{{ sparkfabrik_paru_user }}"
+        mode: "0755"
+
+    - name: Preserve system defaults in a new user configuration
+      ansible.builtin.copy:
+        dest: "{{ sparkfabrik_paru_path }}"
+        content: "{{ 'Include = /etc/paru.conf\n' if sparkfabrik_paru_files.results[0].stat.exists else '' }}"
+        owner: "{{ sparkfabrik_paru_user }}"
         mode: "0644"
+        force: false
+
+    - name: Register the SparkFabrik PKGBUILD repository for the user
+      ansible.builtin.blockinfile:
+        path: "{{ sparkfabrik_paru_path }}"
+        owner: "{{ sparkfabrik_paru_user }}"
         marker: "# {mark} SPARKFABRIK PKGBUILDS"
         block: |
           [sparkfabrik]
           Url = https://github.com/sparkfabrik/arch-packages.git
           Path = packages
+
+    - name: Remove the previous system-wide recipe registration
+      ansible.builtin.blockinfile:
+        path: /etc/paru.conf
+        marker: "# {mark} SPARKFABRIK PKGBUILDS"
+        state: absent
+      when: sparkfabrik_paru_files.results[0].stat.exists
 
 - name: Configure the signed SparkFabrik pacman repository
   tags: [sparkfabrik-repository]
