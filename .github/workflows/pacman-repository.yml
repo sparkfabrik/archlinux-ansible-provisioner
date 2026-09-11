@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - playbooks/roles/sparkfabrik-repository/**
+      - playbooks/system.yml
       - tests/sparkfabrik-repository.yml
       - config/default.yaml.tpl
       - config/schemas/configuration.schema.yaml
@@ -12,6 +13,7 @@ on:
     branches: [main]
     paths:
       - playbooks/roles/sparkfabrik-repository/**
+      - playbooks/system.yml
       - tests/sparkfabrik-repository.yml
       - config/default.yaml.tpl
       - config/schemas/configuration.schema.yaml
@@ -92,10 +94,13 @@ jobs:
           cmp /etc/paru.conf /tmp/paru-original.conf
           grep -Fx 'Include = /etc/paru.conf' /home/recipe-user/.config/paru/paru.conf
           grep -Fx 'Url = https://github.com/sparkfabrik/arch-packages.git' /home/recipe-user/.config/paru/paru.conf
-          test "$(stat -c %U /home/recipe-user/.config/paru/paru.conf)" = recipe-user
+          test "$(stat -c %U:%G /home/recipe-user/.config)" = recipe-user:recipe-user
+          test "$(stat -c %U:%G /home/recipe-user/.config/paru)" = recipe-user:recipe-user
+          test "$(stat -c %U:%G /home/recipe-user/.config/paru/paru.conf)" = recipe-user:recipe-user
           test ! -e /home/existing-user/.config/paru/paru.conf
           mkdir -p /home/existing-user/.config/paru
           printf '[options]\nBottomUp\n' > /home/existing-user/.config/paru/paru.conf
+          chown -R existing-user:existing-user /home/existing-user/.config
           ansible-playbook tests/sparkfabrik-repository.yml -e sparkfabrik_arch_pkgbuilds=true -e current_user=existing-user -e current_home=/home/existing-user
           grep -Fx BottomUp /home/existing-user/.config/paru/paru.conf
           if grep -q '^Include' /home/existing-user/.config/paru/paru.conf; then exit 1; fi
@@ -110,6 +115,22 @@ jobs:
           grep -F 'Remove the manually configured [sparkfabrik] stanza' /tmp/manual-recipes.log
           [[ "${user_before}" == "$(sha256sum /home/existing-user/.config/paru/paru.conf)" ]]
           cmp /etc/paru.conf /tmp/paru-original.conf
+      - name: Detect the invoking user before configuring recipes
+        shell: bash
+        run: |
+          set -euo pipefail
+          useradd --create-home detected-user
+          python - <<'PYTHON'
+          import yaml
+          play = yaml.safe_load(open('playbooks/system.yml'))[0]
+          fixture = [{'hosts': 'localhost', 'connection': 'local', 'gather_facts': True, 'pre_tasks': play['pre_tasks']}]
+          with open('/tmp/system-repository-preflight.yml', 'w') as stream:
+              yaml.safe_dump(fixture, stream)
+          PYTHON
+          test ! -e /root/.config/paru/paru.conf
+          SUDO_USER=detected-user ansible-playbook /tmp/system-repository-preflight.yml -e sparkfabrik_arch_pkgbuilds=true
+          test "$(stat -c %U:%G /home/detected-user/.config/paru/paru.conf)" = detected-user:detected-user
+          test ! -e /root/.config/paru/paru.conf
       - name: Reject an existing manual repository without changing configuration
         shell: bash
         run: |

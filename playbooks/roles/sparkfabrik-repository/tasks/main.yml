@@ -43,24 +43,27 @@
         label: "{{ item.source | default('missing configuration') }}"
 
     - name: Create the user paru configuration directory
+      become: true
+      become_user: "{{ sparkfabrik_paru_user }}"
       ansible.builtin.file:
         path: "{{ sparkfabrik_paru_home }}/.config/paru"
         state: directory
-        owner: "{{ sparkfabrik_paru_user }}"
         mode: "0755"
 
     - name: Preserve system defaults in a new user configuration
+      become: true
+      become_user: "{{ sparkfabrik_paru_user }}"
       ansible.builtin.copy:
         dest: "{{ sparkfabrik_paru_path }}"
         content: "{{ 'Include = /etc/paru.conf\n' if sparkfabrik_paru_files.results[0].stat.exists else '' }}"
-        owner: "{{ sparkfabrik_paru_user }}"
         mode: "0644"
         force: false
 
     - name: Register the SparkFabrik PKGBUILD repository for the user
+      become: true
+      become_user: "{{ sparkfabrik_paru_user }}"
       ansible.builtin.blockinfile:
         path: "{{ sparkfabrik_paru_path }}"
-        owner: "{{ sparkfabrik_paru_user }}"
         marker: "# {mark} SPARKFABRIK PKGBUILDS"
         block: |
           [sparkfabrik]
