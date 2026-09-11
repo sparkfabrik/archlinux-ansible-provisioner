@@ -70,7 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Migrate recognized user npm Codex installations only after verifying the packaged version, and explain how to recover from stale Arch package databases.
+- Migrate recognized user npm Codex installations, including custom npm prefixes, only after verifying the packaged version, and explain how to recover from stale Arch package databases.
 
 - Keep the `claude-gh-gate` provisioning tag limited to Claude; use `codex-writing-guard` for Codex or `writing-guard` for both.
 

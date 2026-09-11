@@ -8,6 +8,7 @@
       ansible.builtin.shell: command -v codex || true
       environment:
         HOME: "{{ system.home | default(current_home) }}"
+        PATH: "{{ sf_toolbox_user_path | default((system.home | default(current_home)) ~ '/.local/bin:' ~ lookup('env', 'PATH')) }}"
       register: codex_existing_binary
       changed_when: false
       check_mode: false
@@ -157,4 +158,5 @@
           - "@openai/codex"
       environment:
         HOME: "{{ system.home | default(current_home) }}"
+        PATH: "{{ sf_toolbox_user_path | default((system.home | default(current_home)) ~ '/.local/bin:' ~ lookup('env', 'PATH')) }}"
       changed_when: true

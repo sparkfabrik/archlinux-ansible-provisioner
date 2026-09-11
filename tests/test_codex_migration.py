@@ -101,6 +101,40 @@ NONINTERACTIVE=0
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Conflicting tools detected", result.stdout + result.stderr)
 
+    def test_wrapper_passes_user_path_as_json(self):
+        source = (REPO / "bin/install.linux").read_text()
+        function = source[
+            source.index("run_ansible() {") : source.index("create_symlink() {")
+        ]
+        sudo = self.bin / "sudo"
+        sudo.write_text(
+            f"#!{sys.executable}\nimport json,os,sys\nfrom pathlib import Path\nPath(os.environ['CAPTURE']).write_text(json.dumps(sys.argv[1:]))\n"
+        )
+        sudo.chmod(0o755)
+        galaxy = self.bin / "ansible-galaxy"
+        galaxy.write_text("#!/bin/sh\nexit 0\n")
+        galaxy.chmod(0o755)
+        capture = self.root / "ansible-args.json"
+        script = f"""set -eu
+log_info() {{ :; }}
+log_error() {{ :; }}
+yaml_python() {{ printf '%s' {shlex.quote(sys.executable)}; }}
+REPO_DIR={shlex.quote(str(REPO))}
+{function}
+run_ansible
+"""
+        result = subprocess.run(
+            ["bash", "-c", script],
+            env=self.env | {"CAPTURE": str(capture)},
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        args = json.loads(capture.read_text())
+        passed = json.loads(args[args.index("--extra-vars") + 1])
+        self.assertEqual(passed, {"sf_toolbox_user_path": self.env["PATH"]})
+
     def run_play(self, mode="success", omarchy=False):
         modules = (
             self.root
@@ -156,11 +190,12 @@ m.exit_json(changed=False)
                     "role_path": str(ROLE),
                     "current_user": getpass.getuser(),
                     "current_home": str(self.home),
+                    "sf_toolbox_user_path": self.env["PATH"],
                     "omarchy_mise_tools": ["codex"] if omarchy else [],
                     "omarchy_shadowed_pacman": ["openai-codex"] if omarchy else [],
                 },
                 "environment": {
-                    "PATH": self.env["PATH"],
+                    "PATH": "/usr/bin:/bin",
                     "HOME": str(self.home),
                     "FIXTURE_LOG": str(self.log),
                     "FIXTURE_MODE": mode,

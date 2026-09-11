@@ -460,7 +460,10 @@ run_ansible() {
     log_error "  ansible-galaxy collection install -r ${REPO_DIR}/requirements.yml --force-with-deps"
     exit 1
   fi
-  local cmd=(sudo ansible-playbook "${REPO_DIR}/playbooks/sf-toolbox.yml" -i "localhost," -c local)
+  local py user_path_vars
+  py="$(yaml_python)" || return 1
+  user_path_vars=$("${py}" -c 'import json, os; print(json.dumps({"sf_toolbox_user_path": os.environ["PATH"]}))')
+  local cmd=(sudo ansible-playbook "${REPO_DIR}/playbooks/sf-toolbox.yml" -i "localhost," -c local --extra-vars "${user_path_vars}")
   [[ -n "${TAGS:-}" ]] && cmd+=(--tags "${TAGS}")
   [[ -n "${SKIP_TAGS:-}" ]] && cmd+=(--skip-tags "${SKIP_TAGS}")
   "${cmd[@]}"
