@@ -34,10 +34,34 @@ SKIP_TAGS=gcloud sf-toolbox             # Skip specific tags
 ### What Gets Installed
 
 - **AI Coding**: opencode, openspec, codex
+- **Desktop AI (opt-in)**: ChatGPT/Codex desktop (`chatgpt`) on supported platforms
 - **Cloud/DevOps**: gcloud, glab, mkcert, docker (must be pre-installed)
 - **Task Runner**: just, ajust (SparkFabrik wrapper)
 - **Utilities**: gum, Upterm
 - **HTTP Proxy**: spark-http-proxy (local .loc domains)
+
+### ChatGPT desktop and package sources
+
+Recipe access is configured by default; desktop installation is opt-in. Use:
+
+```bash
+CHATGPT_DESKTOP=1 TAGS=chatgpt-desktop sf-toolbox
+```
+
+Set `CHATGPT_DESKTOP=1` on later runs to update the desktop app too. Selecting its tag alone does not enable installation. Direct Ansible callers can pass `-e sf_toolbox_chatgpt_desktop=true`.
+
+- **Arch Linux and CachyOS (x86_64):** sf-toolbox fetches reviewed recipes from `sparkfabrik/arch-packages`, builds `chatgpt-desktop` as a dedicated unprivileged user, and installs it through pacman. Later runs check the recipe version and update only when newer. No community AUR recipe or republished OpenAI binary is used.
+- **Omarchy (x86_64):** install its own `openai-codex-desktop` package through pacman. Omarchy/yay handles updates; sf-toolbox does not build our recipe or replace existing desktop packages there.
+- **Ubuntu 24.04/26.04 and Debian 13 (x86_64 and ARM64):** the first installation uses [OpenAI's official `.deb`](https://learn.chatgpt.com/docs/linux/linux-app). It configures OpenAI's signed apt repository, which handles subsequent updates.
+- **Other platforms:** the desktop app is skipped; the remaining toolbox continues normally.
+
+Launch it with `chatgpt`. The Codex CLI remains a separate tool. On Omarchy, its mise-managed CLI and existing desktop/web-app shortcuts are left alone. An existing Arch package named `chatgpt` is preserved rather than silently replaced.
+
+Sf-toolbox also registers the SparkFabrik Git recipe source in `/etc/paru.conf`. An active user-level paru configuration must include the system configuration or carry the same section. Paru users can update recipes with `paru -Syu --mode repo,pkgbuilds`. Yay consumes the Omarchy desktop package and any configured binary repositories normally. On other Arch systems, yay can build a checked-out recipe with `yay -Bi <directory>`, but sf-toolbox handles updates to our Git-hosted desktop recipe. Sf-toolbox does not require or install either helper.
+
+The binary pacman channel is separate and defaults to disabled. Enable `sparkfabrik_arch_repo: true` only after binary packages are published; initial activation verifies repository availability and the public-key fingerprint. Recipe access does not require that channel.
+
+For direct Ansible use, `sf_toolbox_chatgpt_desktop` defaults to `false` and `sf_toolbox_arch_pkgbuilds: false` disables paru configuration. `sf_toolbox_arch_packages_revision` defaults to reviewed `main`; tests or controlled rollouts may pin a commit. Cached downloads and builds remain under `/var/cache/sf-toolbox/`.
 
 ### Requirements
 

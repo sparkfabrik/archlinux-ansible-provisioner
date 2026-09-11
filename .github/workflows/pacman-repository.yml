@@ -1,0 +1,138 @@
+name: Test pacman repository
+
+on:
+  pull_request:
+    paths:
+      - playbooks/roles/sparkfabrik-repository/**
+      - tests/sparkfabrik-repository.yml
+      - config/default.yaml.tpl
+      - config/schemas/configuration.schema.yaml
+      - .github/workflows/pacman-repository.yml
+  push:
+    branches: [main]
+    paths:
+      - playbooks/roles/sparkfabrik-repository/**
+      - tests/sparkfabrik-repository.yml
+      - config/default.yaml.tpl
+      - config/schemas/configuration.schema.yaml
+      - .github/workflows/pacman-repository.yml
+
+permissions:
+  contents: read
+
+jobs:
+  repository:
+    runs-on: ubuntu-24.04
+    container:
+      image: archlinux:base-devel@sha256:61f7de2dd88cc4ba1fe36c24cfe1a503c3936984492d6405eeab013ce6ac68c5
+    env:
+      ANSIBLE_ROLES_PATH: ./playbooks/roles
+    steps:
+      - name: Install test tools
+        run: |
+          pacman-key --init
+          pacman -Syu --noconfirm --needed git ansible-core python-yaml python-jsonschema
+          ansible-galaxy collection install community.general
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Validate configuration schema
+        run: |
+          python - <<'PY'
+          import jsonschema, yaml
+          schema = yaml.safe_load(open('config/schemas/configuration.schema.yaml'))
+          config = yaml.safe_load(open('config/default.yaml.tpl'))
+          jsonschema.validate(config, schema)
+          for option in ('sparkfabrik_arch_repo', 'sparkfabrik_arch_pkgbuilds'):
+              for value in (False, True):
+                  jsonschema.validate({**config, option: value}, schema)
+          try:
+              jsonschema.validate({**config, 'sparkfabrik_arch_repo': 'true'}, schema)
+          except jsonschema.ValidationError:
+              pass
+          else:
+              raise AssertionError('Boolean setting accepted a string')
+          PY
+      - name: Verify disabled and non-Arch behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          before=$(sha256sum /etc/pacman.conf)
+          ansible-playbook tests/sparkfabrik-repository.yml
+          ansible-playbook tests/sparkfabrik-repository.yml -e sparkfabrik_arch_repo=false
+          ansible-playbook tests/sparkfabrik-repository.yml -e '{"sparkfabrik_arch_repo": true, "ansible_os_family": "Debian"}'
+          [[ "${before}" == "$(sha256sum /etc/pacman.conf)" ]]
+          if ansible-playbook tests/sparkfabrik-repository.yml -e '{"sparkfabrik_arch_repo": true, "ansible_architecture": "aarch64"}'; then
+            echo 'Unsupported architecture was accepted'
+            exit 1
+          fi
+          [[ "${before}" == "$(sha256sum /etc/pacman.conf)" ]]
+      - name: Verify recipe access without a binary repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          before=$(sha256sum /etc/pacman.conf)
+          printf '[options]\nMode = repo,aur\n' > /etc/paru.conf
+          ansible-playbook tests/sparkfabrik-repository.yml -e sparkfabrik_arch_pkgbuilds=false
+          if grep -q SPARKFABRIK /etc/paru.conf; then exit 1; fi
+          ansible-playbook tests/sparkfabrik-repository.yml -e sparkfabrik_arch_pkgbuilds=true
+          ansible-playbook tests/sparkfabrik-repository.yml -e sparkfabrik_arch_pkgbuilds=true | tee /tmp/paru-second-run.log
+          grep -Eq 'changed=0 .*failed=0' /tmp/paru-second-run.log
+          grep -Fx 'Mode = repo,aur' /etc/paru.conf
+          grep -Fx 'Url = https://github.com/sparkfabrik/arch-packages.git' /etc/paru.conf
+          [[ "${before}" == "$(sha256sum /etc/pacman.conf)" ]]
+      - name: Reject an existing manual repository without changing configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp /etc/pacman.conf /tmp/pacman-original.conf
+          printf '\n[sparkfabrik]\nServer = https://example.invalid/repo\n' >> /etc/pacman.conf
+          before=$(sha256sum /etc/pacman.conf)
+          if ansible-playbook tests/sparkfabrik-repository.yml -e '{"sparkfabrik_arch_repo": true}' > /tmp/manual-repository.log 2>&1; then
+            echo 'Manual repository was duplicated'
+            exit 1
+          fi
+          grep -F 'Remove the manually configured [sparkfabrik] stanza' /tmp/manual-repository.log
+          [[ "${before}" == "$(sha256sum /etc/pacman.conf)" ]]
+          cp /tmp/pacman-original.conf /etc/pacman.conf
+      - name: Start a local repository availability fixture
+        run: |
+          mkdir -p /tmp/repository-fixture
+          touch /tmp/repository-fixture/sparkfabrik.db
+          nohup python -m http.server 18765 --bind 127.0.0.1 --directory /tmp/repository-fixture > /tmp/repository-http.log 2>&1 &
+          python - <<'PYTHON'
+          import time, urllib.request
+          for attempt in range(50):
+              try:
+                  urllib.request.urlopen('http://127.0.0.1:18765/sparkfabrik.db').close()
+                  break
+              except OSError:
+                  time.sleep(0.1)
+          else:
+              raise RuntimeError('Repository fixture failed to start')
+          PYTHON
+      - name: Reject an unpublished repository without changing configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          before=$(sha256sum /etc/pacman.conf)
+          if ansible-playbook tests/sparkfabrik-repository.yml -e '{"sparkfabrik_arch_repo": true}' \
+            -e sparkfabrik_repository_server=http://127.0.0.1:18765/missing > /tmp/unpublished-repository.log 2>&1; then
+            echo 'Unpublished repository was enabled'
+            exit 1
+          fi
+          grep -F 'The binary repository is not published or reachable' /tmp/unpublished-repository.log
+          [[ "${before}" == "$(sha256sum /etc/pacman.conf)" ]]
+      - name: Verify activation and idempotency
+        shell: bash
+        run: |
+          set -euo pipefail
+          ansible-playbook tests/sparkfabrik-repository.yml -e '{"sparkfabrik_arch_repo": true}' -e sparkfabrik_repository_server=http://127.0.0.1:18765
+          ansible-playbook tests/sparkfabrik-repository.yml -e '{"sparkfabrik_arch_repo": true}' -e sparkfabrik_repository_server=http://127.0.0.1:18765 | tee /tmp/second-run.log
+          grep -Eq 'changed=0 .*failed=0' /tmp/second-run.log
+          grep -Fx 'SigLevel = Required TrustedOnly' /etc/pacman.conf
+          pacman-key --list-keys CC54D2480F42AB0EE8E63DF91BE396C8C99CB4BE
+          if pacman -Q chatgpt-desktop; then
+            echo 'Provisioning must not install ChatGPT'
+            exit 1
+          fi

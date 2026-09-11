@@ -1,0 +1,55 @@
+---
+- name: Check for the official ChatGPT package
+  ansible.builtin.command: dpkg-query -W -f=${Status} chatgpt
+  register: chatgpt_deb_installed
+  changed_when: false
+  failed_when: chatgpt_deb_installed.rc not in [0, 1]
+
+- name: Bootstrap the official OpenAI package and apt repository
+  when: chatgpt_deb_installed.stdout != 'install ok installed'
+  vars:
+    chatgpt_deb_arch: "{{ {'x86_64': 'amd64', 'aarch64': 'arm64'}[ansible_facts['architecture']] }}"
+    chatgpt_deb_path: "/var/cache/sf-toolbox/chatgpt_{{ chatgpt_deb_arch }}.deb"
+  block:
+    - name: Install Debian package tools
+      ansible.builtin.apt:
+        name: [ca-certificates, xz-utils, libasound2t64]
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Create the download cache
+      ansible.builtin.file:
+        path: /var/cache/sf-toolbox
+        state: directory
+        mode: "0755"
+
+    - name: Download the official desktop package
+      ansible.builtin.get_url:
+        url: "https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_{{ chatgpt_deb_arch }}.deb"
+        dest: "{{ chatgpt_deb_path }}"
+        mode: "0644"
+        force: true
+
+    - name: Check downloaded package identity
+      ansible.builtin.command:
+        argv: [dpkg-deb, --field, "{{ chatgpt_deb_path }}", Package, Architecture]
+      register: chatgpt_deb_identity
+      changed_when: false
+
+    - name: Require the expected OpenAI package
+      ansible.builtin.assert:
+        that:
+          - "'Package: chatgpt' in chatgpt_deb_identity.stdout_lines"
+          - "('Architecture: ' ~ chatgpt_deb_arch) in chatgpt_deb_identity.stdout_lines"
+
+    - name: Install the official desktop package
+      ansible.builtin.apt:
+        deb: "{{ chatgpt_deb_path }}"
+
+- name: Update ChatGPT through its signed apt repository
+  ansible.builtin.apt:
+    name: chatgpt
+    state: latest
+    update_cache: true
+    cache_valid_time: 3600

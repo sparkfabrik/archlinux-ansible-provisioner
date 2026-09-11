@@ -1,0 +1,160 @@
+---
+- name: Configure SparkFabrik recipes for paru
+  tags: [sparkfabrik-pkgbuilds]
+  when:
+    - sparkfabrik_arch_pkgbuilds | default(false) | bool
+    - ansible_os_family == "Archlinux"
+  block:
+    - name: Require a supported recipe architecture
+      ansible.builtin.assert:
+        that: ansible_architecture == "x86_64"
+        fail_msg: The SparkFabrik recipes currently support only x86_64
+
+    - name: Check for existing paru configuration
+      ansible.builtin.stat:
+        path: /etc/paru.conf
+      register: sparkfabrik_paru_config_file
+
+    - name: Read existing paru configuration
+      ansible.builtin.slurp:
+        src: /etc/paru.conf
+      register: sparkfabrik_paru_config
+      when: sparkfabrik_paru_config_file.stat.exists
+
+    - name: Reject an unmanaged SparkFabrik recipe entry
+      ansible.builtin.assert:
+        that:
+          - >-
+            (sparkfabrik_paru_config.content | default('') | b64decode |
+            regex_replace('(?ms)^# BEGIN SPARKFABRIK PKGBUILDS\n.*?^# END SPARKFABRIK PKGBUILDS(?:\n|$)', ''))
+            is not search('(?m)^\s*\[sparkfabrik\]\s*(?:#.*)?$')
+        fail_msg: Remove the manually configured [sparkfabrik] stanza from paru.conf before enabling recipe provisioning
+
+    - name: Register the SparkFabrik PKGBUILD repository
+      ansible.builtin.blockinfile:
+        path: /etc/paru.conf
+        create: true
+        mode: "0644"
+        marker: "# {mark} SPARKFABRIK PKGBUILDS"
+        block: |
+          [sparkfabrik]
+          Url = https://github.com/sparkfabrik/arch-packages.git
+          Path = packages
+
+- name: Configure the signed SparkFabrik pacman repository
+  tags: [sparkfabrik-repository]
+  when:
+    - sparkfabrik_arch_repo | default(false) | bool
+    - ansible_os_family == "Archlinux"
+  block:
+    - name: Require a supported architecture
+      ansible.builtin.assert:
+        that: ansible_architecture == "x86_64"
+        fail_msg: The SparkFabrik package repository currently supports only x86_64
+
+    - name: Read existing pacman configuration
+      ansible.builtin.slurp:
+        src: /etc/pacman.conf
+      register: sparkfabrik_repository_config
+
+    - name: Reject an unmanaged SparkFabrik repository entry
+      ansible.builtin.assert:
+        that:
+          - >-
+            (sparkfabrik_repository_config.content | b64decode |
+            regex_replace('(?ms)^# BEGIN SPARKFABRIK REPOSITORY\n.*?^# END SPARKFABRIK REPOSITORY(?:\n|$)', ''))
+            is not search('(?m)^\s*\[sparkfabrik\]\s*(?:#.*)?$')
+        fail_msg: Remove the manually configured [sparkfabrik] stanza before enabling repository provisioning
+
+    - name: Check that the binary repository has been published
+      when: >-
+        (sparkfabrik_repository_config.content | b64decode)
+        is not search('(?m)^Server = ' ~ (sparkfabrik_repository_server | regex_escape) ~ '$')
+      ansible.builtin.uri:
+        url: "{{ sparkfabrik_repository_server }}/sparkfabrik.db"
+        method: HEAD
+        status_code: 200
+      register: sparkfabrik_repository_available
+      failed_when: false
+      changed_when: false
+
+    - name: Require an available binary repository
+      when: not (sparkfabrik_repository_available.skipped | default(false))
+      ansible.builtin.assert:
+        that: sparkfabrik_repository_available.status | default(-1) == 200
+        fail_msg: The binary repository is not published or reachable. Paru recipes only require sparkfabrik_arch_pkgbuilds
+
+    - name: Install GnuPG
+      community.general.pacman:
+        name: gnupg
+        state: present
+
+    - name: Initialize the pacman keyring
+      ansible.builtin.command: pacman-key --init
+      args:
+        creates: /etc/pacman.d/gnupg/private-keys-v1.d
+
+    - name: Install the SparkFabrik public key
+      ansible.builtin.copy:
+        src: sparkfabrik.asc
+        dest: /usr/share/pacman/keyrings/sparkfabrik.asc
+        owner: root
+        group: root
+        mode: "0644"
+      register: sparkfabrik_repository_key
+
+    - name: Inspect the public key fingerprint
+      ansible.builtin.command:
+        argv:
+          - gpg
+          - --homedir
+          - /etc/pacman.d/gnupg
+          - --batch
+          - --with-colons
+          - --show-keys
+          - /usr/share/pacman/keyrings/sparkfabrik.asc
+      changed_when: false
+      register: sparkfabrik_repository_fingerprint
+
+    - name: Verify the pinned public key
+      ansible.builtin.assert:
+        that:
+          - "sparkfabrik_repository_fingerprint.stdout_lines | select('match', '^pub:') | list | length == 1"
+          - "'fpr:::::::::CC54D2480F42AB0EE8E63DF91BE396C8C99CB4BE:' in sparkfabrik_repository_fingerprint.stdout_lines"
+        fail_msg: The SparkFabrik signing key does not match the pinned fingerprint
+
+    - name: Check whether the key is imported
+      ansible.builtin.command: pacman-key --list-keys CC54D2480F42AB0EE8E63DF91BE396C8C99CB4BE
+      changed_when: false
+      failed_when: false
+      register: sparkfabrik_repository_imported
+
+    - name: Import the verified key
+      ansible.builtin.command: pacman-key --add /usr/share/pacman/keyrings/sparkfabrik.asc
+      when: sparkfabrik_repository_key.changed or sparkfabrik_repository_imported.rc != 0
+
+    - name: Inspect key validity
+      ansible.builtin.command:
+        argv:
+          - gpg
+          - --homedir
+          - /etc/pacman.d/gnupg
+          - --batch
+          - --with-colons
+          - --list-keys
+          - CC54D2480F42AB0EE8E63DF91BE396C8C99CB4BE
+      changed_when: false
+      register: sparkfabrik_repository_validity
+
+    - name: Locally trust the verified key
+      ansible.builtin.command: pacman-key --lsign-key CC54D2480F42AB0EE8E63DF91BE396C8C99CB4BE
+      when: sparkfabrik_repository_validity.stdout is not search('(?m)^pub:[fu]:')
+
+    - name: Add the signed repository after distribution repositories
+      ansible.builtin.blockinfile:
+        path: /etc/pacman.conf
+        marker: "# {mark} SPARKFABRIK REPOSITORY"
+        block: |
+          [sparkfabrik]
+          SigLevel = Required TrustedOnly
+          Server = {{ sparkfabrik_repository_server }}

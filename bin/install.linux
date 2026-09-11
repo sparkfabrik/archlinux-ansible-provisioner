@@ -30,6 +30,7 @@ show_help() {
   printf "    sf-toolbox                                     # Install or update\n"
   printf "    TAGS=sparkdock,ai sf-toolbox                   # Run specific tags only\n"
   printf "    SKIP_TAGS=gcloud,http-proxy sf-toolbox         # Skip specific tags\n"
+  printf "    CHATGPT_DESKTOP=1 TAGS=chatgpt-desktop sf-toolbox # Install/update desktop app\n"
   printf "    NONINTERACTIVE=1 sf-toolbox                    # Skip prompts (CI/scripts)\n"
   printf "\n"
   printf "  %sEnvironment variables:%s\n" "${BOLD}" "${NC}"
@@ -464,6 +465,7 @@ run_ansible() {
   py="$(yaml_python)" || return 1
   user_path_vars=$("${py}" -c 'import json, os; print(json.dumps({"sf_toolbox_user_path": os.environ["PATH"]}))')
   local cmd=(sudo ansible-playbook "${REPO_DIR}/playbooks/sf-toolbox.yml" -i "localhost," -c local --extra-vars "${user_path_vars}")
+  [[ "${CHATGPT_DESKTOP:-0}" == "1" ]] && cmd+=(--extra-vars sf_toolbox_chatgpt_desktop=true)
   [[ -n "${TAGS:-}" ]] && cmd+=(--tags "${TAGS}")
   [[ -n "${SKIP_TAGS:-}" ]] && cmd+=(--skip-tags "${SKIP_TAGS}")
   "${cmd[@]}"

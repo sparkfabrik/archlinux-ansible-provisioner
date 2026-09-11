@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added opt-in ChatGPT desktop installation to sf-toolbox: our reviewed recipe on Arch/CachyOS x86_64, Omarchy's own desktop package, and the official OpenAI `.deb` with signed apt updates on Ubuntu 24.04/26.04 and Debian 13; existing conflicting Arch packages are preserved
+- Added SparkFabrik recipe-source configuration for paru, plus opt-in signed binary repository configuration with fingerprint verification and an availability check on activation
 - sf-toolbox now registers writing guards for Claude and Codex; Codex hooks require review and trust through `/hooks`.
 
 - Added Codex CLI to `sf-toolbox`: the `openai-codex` package from `extra` on Arch Linux and the `codex` Homebrew cask on Debian/Ubuntu, both of which ship the zsh completion; a conflicting npm `@openai/codex` is removed first, and Omarchy keeps owning codex through its own mise wrapper

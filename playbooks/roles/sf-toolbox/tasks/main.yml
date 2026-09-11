@@ -2,6 +2,14 @@
 - name: Detect Omarchy-managed tooling
   import_tasks: omarchy-detect.yml
 
+- name: Configure SparkFabrik package sources
+  ansible.builtin.import_role:
+    name: sparkfabrik-repository
+  vars:
+    sparkfabrik_arch_pkgbuilds: "{{ sf_toolbox_arch_pkgbuilds | default(true) }}"
+  when: ansible_facts['architecture'] == 'x86_64'
+  tags: [sf-toolbox, packages, ai, chatgpt-desktop]
+
 - name: Bootstrap Homebrew
   import_tasks: homebrew.yml
 
@@ -22,6 +30,9 @@
 
 - name: Configure AI tools
   import_tasks: ai.yml
+
+- name: Install ChatGPT desktop
+  ansible.builtin.import_tasks: chatgpt-desktop.yml
 
 - name: Install rtk
   import_tasks: rtk.yml

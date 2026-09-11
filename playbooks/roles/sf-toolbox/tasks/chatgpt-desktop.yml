@@ -1,0 +1,35 @@
+---
+- name: Install ChatGPT desktop
+  tags: [sf-toolbox, packages, ai, chatgpt-desktop]
+  when: sf_toolbox_chatgpt_desktop | default(false) | bool
+  block:
+    - name: Install the Omarchy desktop package
+      ansible.builtin.import_tasks: chatgpt-desktop-omarchy.yml
+      when:
+        - omarchy_detected | default(false) | bool
+        - ansible_facts['os_family'] == 'Archlinux'
+        - ansible_facts['architecture'] == 'x86_64'
+
+    - name: Install from the maintained Arch recipe
+      ansible.builtin.import_tasks: chatgpt-desktop-arch.yml
+      when:
+        - not (omarchy_detected | default(false) | bool)
+        - ansible_facts['os_family'] == 'Archlinux'
+        - ansible_facts['architecture'] == 'x86_64'
+
+    - name: Install the official Debian package
+      ansible.builtin.import_tasks: chatgpt-desktop-debian.yml
+      when:
+        - ansible_facts['architecture'] in ['x86_64', 'aarch64']
+        - >-
+          (ansible_facts['distribution'] == 'Ubuntu' and ansible_facts['distribution_version'] in ['24.04', '26.04'])
+          or (ansible_facts['distribution'] == 'Debian' and ansible_facts['distribution_major_version'] == '13')
+
+    - name: Report unsupported desktop platforms
+      ansible.builtin.debug:
+        msg: ChatGPT desktop is skipped on this platform; other sf-toolbox tools are unaffected
+      when: >-
+        not ((ansible_facts['os_family'] == 'Archlinux' and ansible_facts['architecture'] == 'x86_64')
+        or (ansible_facts['architecture'] in ['x86_64', 'aarch64'] and
+        ((ansible_facts['distribution'] == 'Ubuntu' and ansible_facts['distribution_version'] in ['24.04', '26.04'])
+        or (ansible_facts['distribution'] == 'Debian' and ansible_facts['distribution_major_version'] == '13'))))

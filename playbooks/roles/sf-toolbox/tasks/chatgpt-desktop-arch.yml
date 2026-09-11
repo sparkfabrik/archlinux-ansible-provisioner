@@ -1,0 +1,120 @@
+---
+- name: Check for an existing upstream ChatGPT package
+  ansible.builtin.command: pacman -Q chatgpt
+  register: chatgpt_existing_package
+  changed_when: false
+  failed_when: chatgpt_existing_package.rc not in [0, 1]
+
+- name: Preserve an existing ChatGPT installation
+  ansible.builtin.debug:
+    msg: >-
+      Keeping the existing chatgpt package, including on Omarchy. To switch to
+      SparkFabrik's chatgpt-desktop recipe, remove the conflicting package explicitly.
+  when: chatgpt_existing_package.stdout is search('(?m)^chatgpt ')
+
+- name: Build and install the SparkFabrik desktop package
+  when: chatgpt_existing_package.stdout is not search('(?m)^chatgpt ')
+  vars:
+    chatgpt_recipe_root: /var/cache/sf-toolbox/arch-packages
+    chatgpt_recipe_dir: /var/cache/sf-toolbox/arch-packages/packages/chatgpt-desktop
+  block:
+    - name: Install package build tools
+      community.general.pacman:
+        name: [base-devel, git]
+        state: present
+
+    - name: Create the unprivileged package builder
+      ansible.builtin.user:
+        name: sf_package_builder
+        system: true
+        create_home: true
+        home: /var/lib/sf-package-builder
+        shell: /usr/bin/nologin
+
+    - name: Create the recipe cache
+      ansible.builtin.file:
+        path: "{{ chatgpt_recipe_root }}"
+        state: directory
+        owner: sf_package_builder
+        group: sf_package_builder
+        mode: "0755"
+
+    - name: Fetch reviewed package recipes
+      become: true
+      become_user: sf_package_builder
+      ansible.builtin.git:
+        repo: https://github.com/sparkfabrik/arch-packages.git
+        dest: "{{ chatgpt_recipe_root }}"
+        version: "{{ sf_toolbox_arch_packages_revision | default('main') }}"
+        update: true
+
+    - name: Read committed package metadata
+      ansible.builtin.slurp:
+        src: "{{ chatgpt_recipe_dir }}/.SRCINFO"
+      register: chatgpt_srcinfo
+
+    - name: Generate package metadata as the builder
+      become: true
+      become_user: sf_package_builder
+      ansible.builtin.command: makepkg --printsrcinfo
+      args:
+        chdir: "{{ chatgpt_recipe_dir }}"
+      register: chatgpt_generated_srcinfo
+      changed_when: false
+
+    - name: Verify package metadata
+      ansible.builtin.assert:
+        that:
+          - (chatgpt_srcinfo.content | b64decode | trim) == (chatgpt_generated_srcinfo.stdout | trim)
+          - chatgpt_generated_srcinfo.stdout is search('(?m)^pkgname = chatgpt-desktop$')
+
+    - name: Read the recipe version and dependencies
+      ansible.builtin.set_fact:
+        chatgpt_recipe_version: >-
+          {{ (chatgpt_generated_srcinfo.stdout | regex_findall('(?m)^\s*pkgver = (.+)$') | first) ~ '-' ~
+             (chatgpt_generated_srcinfo.stdout | regex_findall('(?m)^\s*pkgrel = (.+)$') | first) }}
+        chatgpt_recipe_dependencies: "{{ chatgpt_generated_srcinfo.stdout | regex_findall('(?m)^\\s*(?:depends|makedepends|checkdepends)(?:_x86_64)? = (.+)$') }}"
+
+    - name: Check the installed desktop version
+      ansible.builtin.command: pacman -Q chatgpt-desktop
+      register: chatgpt_installed
+      changed_when: false
+      failed_when: chatgpt_installed.rc not in [0, 1]
+
+    - name: Compare installed and recipe versions
+      ansible.builtin.command:
+        argv: [vercmp, "{{ chatgpt_installed.stdout.split()[-1] if chatgpt_installed.rc == 0 else '0' }}", "{{ chatgpt_recipe_version }}"]
+      register: chatgpt_version_comparison
+      changed_when: false
+
+    - name: Install a new desktop version
+      when: chatgpt_version_comparison.stdout | int < 0
+      block:
+        - name: Install recipe dependencies
+          community.general.pacman:
+            name: "{{ chatgpt_recipe_dependencies }}"
+            state: present
+
+        - name: Build the desktop package without root privileges
+          become: true
+          become_user: sf_package_builder
+          ansible.builtin.command: makepkg --force --nodeps --noconfirm
+          args:
+            chdir: "{{ chatgpt_recipe_dir }}"
+
+        - name: Locate the built package
+          become: true
+          become_user: sf_package_builder
+          ansible.builtin.command: makepkg --packagelist
+          args:
+            chdir: "{{ chatgpt_recipe_dir }}"
+          register: chatgpt_package_paths
+          changed_when: false
+
+        - name: Require one package artifact
+          ansible.builtin.assert:
+            that: chatgpt_package_paths.stdout_lines | length == 1
+
+        - name: Install the built package with pacman
+          ansible.builtin.command:
+            argv: [pacman, -U, --needed, --noconfirm, --, "{{ chatgpt_package_paths.stdout_lines[0] }}"]
