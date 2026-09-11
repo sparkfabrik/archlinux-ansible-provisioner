@@ -43,8 +43,9 @@ jobs:
           schema = yaml.safe_load(open('config/schemas/configuration.schema.yaml'))
           config = yaml.safe_load(open('config/default.yaml.tpl'))
           jsonschema.validate(config, schema)
-          for value in (False, True):
-              jsonschema.validate({**config, 'sparkfabrik_arch_repo': value}, schema)
+          for option in ('sparkfabrik_arch_repo', 'sparkfabrik_arch_pkgbuilds'):
+              for value in (False, True):
+                  jsonschema.validate({**config, option: value}, schema)
           try:
               jsonschema.validate({**config, 'sparkfabrik_arch_repo': 'true'}, schema)
           except jsonschema.ValidationError:
@@ -66,6 +67,20 @@ jobs:
             exit 1
           fi
           [[ "${before}" == "$(sha256sum /etc/pacman.conf)" ]]
+      - name: Verify recipe access without a binary repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          before=$(sha256sum /etc/pacman.conf)
+          printf '[options]\nMode = repo,aur\n' > /etc/paru.conf
+          ansible-playbook tests/sparkfabrik-repository.yml -e sparkfabrik_arch_pkgbuilds=false
+          if grep -q SPARKFABRIK /etc/paru.conf; then exit 1; fi
+          ansible-playbook tests/sparkfabrik-repository.yml -e sparkfabrik_arch_pkgbuilds=true
+          ansible-playbook tests/sparkfabrik-repository.yml -e sparkfabrik_arch_pkgbuilds=true | tee /tmp/paru-second-run.log
+          grep -Eq 'changed=0 .*failed=0' /tmp/paru-second-run.log
+          grep -Fx 'Mode = repo,aur' /etc/paru.conf
+          grep -Fx 'Url = https://github.com/sparkfabrik/arch-packages.git' /etc/paru.conf
+          [[ "${before}" == "$(sha256sum /etc/pacman.conf)" ]]
       - name: Reject an existing manual repository without changing configuration
         shell: bash
         run: |
@@ -84,7 +99,7 @@ jobs:
         run: |
           mkdir -p /tmp/repository-fixture
           touch /tmp/repository-fixture/sparkfabrik.db
-          python -m http.server 18765 --bind 127.0.0.1 --directory /tmp/repository-fixture > /tmp/repository-http.log 2>&1 &
+          nohup python -m http.server 18765 --bind 127.0.0.1 --directory /tmp/repository-fixture > /tmp/repository-http.log 2>&1 &
           python - <<'PYTHON'
           import time, urllib.request
           for attempt in range(50):

@@ -1,0 +1,10 @@
+---
+- name: Test desktop installation without the rest of sf-toolbox
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  tasks:
+    - name: Install the desktop app
+      ansible.builtin.import_role:
+        name: sf-toolbox
+        tasks_from: chatgpt-desktop.yml

@@ -1,0 +1,19 @@
+---
+- name: Check for another installed desktop package
+  ansible.builtin.command: pacman -Q chatgpt-desktop chatgpt
+  register: chatgpt_omarchy_conflicts
+  changed_when: false
+  failed_when: chatgpt_omarchy_conflicts.rc not in [0, 1]
+
+- name: Preserve an existing non-Omarchy desktop package
+  ansible.builtin.debug:
+    msg: >-
+      Keeping the existing desktop package. Remove chatgpt or chatgpt-desktop
+      explicitly before switching to Omarchy's openai-codex-desktop package.
+  when: chatgpt_omarchy_conflicts.stdout is search('(?m)^(chatgpt|chatgpt-desktop) ')
+
+- name: Install the Omarchy-maintained desktop app
+  community.general.pacman:
+    name: openai-codex-desktop
+    state: present
+  when: chatgpt_omarchy_conflicts.stdout is not search('(?m)^(chatgpt|chatgpt-desktop) ')

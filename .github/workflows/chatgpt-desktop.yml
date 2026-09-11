@@ -1,0 +1,85 @@
+---
+name: Test ChatGPT desktop
+
+on:
+  pull_request:
+    paths:
+      - playbooks/roles/sf-toolbox/tasks/chatgpt-desktop*.yml
+      - playbooks/roles/sf-toolbox/defaults/main.yml
+      - playbooks/roles/sf-toolbox/tasks/main.yml
+      - bin/install.linux
+      - tests/chatgpt-desktop.yml
+      - .github/workflows/chatgpt-desktop.yml
+  push:
+    branches: [main]
+    paths:
+      - playbooks/roles/sf-toolbox/tasks/chatgpt-desktop*.yml
+      - playbooks/roles/sf-toolbox/defaults/main.yml
+      - playbooks/roles/sf-toolbox/tasks/main.yml
+      - bin/install.linux
+      - tests/chatgpt-desktop.yml
+      - .github/workflows/chatgpt-desktop.yml
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: arch
+            image: archlinux:base-devel@sha256:61f7de2dd88cc4ba1fe36c24cfe1a503c3936984492d6405eeab013ce6ac68c5
+          - platform: ubuntu
+            image: ubuntu@sha256:33ceb71981b602c1a7443a53469e4dba065f7503eab3078a2d7a57a2ab987517
+    container:
+      image: ${{ matrix.image }}
+    env:
+      ANSIBLE_ROLES_PATH: ./playbooks/roles
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - name: Install test prerequisites
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          if [ "${PLATFORM}" = arch ]; then
+            pacman-key --init
+            pacman -Syu --noconfirm ansible-core git
+            ansible-galaxy collection install community.general
+          else
+            apt-get update
+            apt-get install -y ansible-core python3-apt ca-certificates git
+          fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Verify opt-out
+        run: |
+          ansible-playbook tests/chatgpt-desktop.yml -e sf_toolbox_chatgpt_desktop=false
+          test ! -e /usr/lib/chatgpt/ChatGPT
+      - name: Install and verify idempotency
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Stable test recipe; production follows reviewed main.
+          recipe=bab4369404a64e25a49a6ec57aefcef634e74ece
+          ansible-playbook tests/chatgpt-desktop.yml -e sf_toolbox_chatgpt_desktop=true -e "sf_toolbox_arch_packages_revision=${recipe}"
+          ansible-playbook tests/chatgpt-desktop.yml -e sf_toolbox_chatgpt_desktop=true -e "sf_toolbox_arch_packages_revision=${recipe}" | tee /tmp/desktop-repeat.log
+          grep -Eq 'changed=0 .*failed=0' /tmp/desktop-repeat.log
+          if grep -q 'Keeping the existing chatgpt package' /tmp/desktop-repeat.log; then exit 1; fi
+          test -x /usr/bin/chatgpt
+          test "$(stat -c %a /usr/lib/chatgpt/ChatGPT)" = 755
+      - name: Verify Omarchy preserves an existing upstream package
+        if: matrix.platform == 'arch'
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Stub only the installed-package probe; any attempted replacement fails.
+          mkdir -p /tmp/omarchy-fixture
+          printf '#!/bin/sh\nif [ "$*" = "-Q chatgpt-desktop chatgpt" ]; then echo "chatgpt 1-1"; else exit 99; fi\n' > /tmp/omarchy-fixture/pacman
+          chmod 755 /tmp/omarchy-fixture/pacman
+          PATH="/tmp/omarchy-fixture:${PATH}" ansible-playbook tests/chatgpt-desktop.yml -e sf_toolbox_chatgpt_desktop=true -e omarchy_detected=true | tee /tmp/omarchy-preserve.log
+          grep -F 'Keeping the existing desktop package' /tmp/omarchy-preserve.log
+          grep -Eq 'changed=0 .*failed=0' /tmp/omarchy-preserve.log

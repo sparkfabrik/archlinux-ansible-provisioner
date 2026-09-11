@@ -79,6 +79,7 @@ toolbox:
     - copilot
     - claude
     - codex
+    - chatgpt
     - gh
     - glab
     - gcloud

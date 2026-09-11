@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added opt-in support for the signed SparkFabrik pacman repository on Arch x86_64 with fingerprint-checked key import and a published-repository availability check; local-only desktop packages use their separate installer
+- Added opt-in ChatGPT desktop installation to sf-toolbox: our reviewed recipe on Arch/CachyOS x86_64, Omarchy's own desktop package, and the official OpenAI `.deb` with signed apt updates on Ubuntu 24.04/26.04 and Debian 13; existing conflicting Arch packages are preserved
+- Added SparkFabrik recipe-source configuration for paru, plus opt-in signed binary repository configuration with fingerprint verification and an availability check on activation
 
 - Added Codex CLI to `sf-toolbox`: the `openai-codex` package from `extra` on Arch Linux and the `codex` Homebrew cask on Debian/Ubuntu, both of which ship the zsh completion; a conflicting npm `@openai/codex` is removed first, and Omarchy keeps owning codex through its own mise wrapper
 - Added a zsh completion for `herdr` on Arch Linux: generated with `herdr completion zsh` during provisioning and installed into `~/.local/share/zsh/site-functions/_herdr`, for both the GitHub-release binary and the Omarchy pacman package (which ships no completion). Skipped on Debian/Ubuntu, where the Homebrew formula ships its own completion

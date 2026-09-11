@@ -1,4 +1,46 @@
 ---
+- name: Configure SparkFabrik recipes for paru
+  tags: [sparkfabrik-pkgbuilds]
+  when:
+    - sparkfabrik_arch_pkgbuilds | default(false) | bool
+    - ansible_os_family == "Archlinux"
+  block:
+    - name: Require a supported recipe architecture
+      ansible.builtin.assert:
+        that: ansible_architecture == "x86_64"
+        fail_msg: The SparkFabrik recipes currently support only x86_64
+
+    - name: Check for existing paru configuration
+      ansible.builtin.stat:
+        path: /etc/paru.conf
+      register: sparkfabrik_paru_config_file
+
+    - name: Read existing paru configuration
+      ansible.builtin.slurp:
+        src: /etc/paru.conf
+      register: sparkfabrik_paru_config
+      when: sparkfabrik_paru_config_file.stat.exists
+
+    - name: Reject an unmanaged SparkFabrik recipe entry
+      ansible.builtin.assert:
+        that:
+          - >-
+            (sparkfabrik_paru_config.content | default('') | b64decode |
+            regex_replace('(?ms)^# BEGIN SPARKFABRIK PKGBUILDS\n.*?^# END SPARKFABRIK PKGBUILDS(?:\n|$)', ''))
+            is not search('(?m)^\s*\[sparkfabrik\]\s*(?:#.*)?$')
+        fail_msg: Remove the manually configured [sparkfabrik] stanza from paru.conf before enabling recipe provisioning
+
+    - name: Register the SparkFabrik PKGBUILD repository
+      ansible.builtin.blockinfile:
+        path: /etc/paru.conf
+        create: true
+        mode: "0644"
+        marker: "# {mark} SPARKFABRIK PKGBUILDS"
+        block: |
+          [sparkfabrik]
+          Url = https://github.com/sparkfabrik/arch-packages.git
+          Path = packages
+
 - name: Configure the signed SparkFabrik pacman repository
   tags: [sparkfabrik-repository]
   when:
@@ -25,6 +67,9 @@
         fail_msg: Remove the manually configured [sparkfabrik] stanza before enabling repository provisioning
 
     - name: Check that the binary repository has been published
+      when: >-
+        (sparkfabrik_repository_config.content | b64decode)
+        is not search('(?m)^Server = ' ~ (sparkfabrik_repository_server | regex_escape) ~ '$')
       ansible.builtin.uri:
         url: "{{ sparkfabrik_repository_server }}/sparkfabrik.db"
         method: HEAD
@@ -34,9 +79,10 @@
       changed_when: false
 
     - name: Require an available binary repository
+      when: not (sparkfabrik_repository_available.skipped | default(false))
       ansible.builtin.assert:
         that: sparkfabrik_repository_available.status | default(-1) == 200
-        fail_msg: The binary repository is not published or reachable. Local-only packages do not require sparkfabrik_arch_repo
+        fail_msg: The binary repository is not published or reachable. Paru recipes only require sparkfabrik_arch_pkgbuilds
 
     - name: Install GnuPG
       community.general.pacman:
