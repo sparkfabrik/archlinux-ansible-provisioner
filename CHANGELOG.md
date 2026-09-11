@@ -72,6 +72,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Detect the invoking user before recipe configuration during full provisioning and create personal paru files as that user
+
+- Configure SparkFabrik paru recipes per user, preserve existing settings, and migrate the previous managed system-wide entry
+
 - Migrate recognized user npm Codex installations, including custom npm prefixes, only after verifying the packaged version, and explain how to recover from stale Arch package databases.
 
 - Keep the `claude-gh-gate` provisioning tag limited to Claude; use `codex-writing-guard` for Codex or `writing-guard` for both.

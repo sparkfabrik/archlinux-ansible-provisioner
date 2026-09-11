@@ -95,7 +95,7 @@
             name: "{{ chatgpt_recipe_dependencies }}"
             state: present
 
-        - name: Build the desktop package without root privileges
+        - name: Build the ChatGPT desktop package without root privileges
           become: true
           become_user: sf_package_builder
           ansible.builtin.command: makepkg --force --nodeps --noconfirm
