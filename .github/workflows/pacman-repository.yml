@@ -80,12 +80,40 @@ jobs:
           grep -F 'Remove the manually configured [sparkfabrik] stanza' /tmp/manual-repository.log
           [[ "${before}" == "$(sha256sum /etc/pacman.conf)" ]]
           cp /tmp/pacman-original.conf /etc/pacman.conf
+      - name: Start a local repository availability fixture
+        run: |
+          mkdir -p /tmp/repository-fixture
+          touch /tmp/repository-fixture/sparkfabrik.db
+          python -m http.server 18765 --bind 127.0.0.1 --directory /tmp/repository-fixture > /tmp/repository-http.log 2>&1 &
+          python - <<'PYTHON'
+          import time, urllib.request
+          for attempt in range(50):
+              try:
+                  urllib.request.urlopen('http://127.0.0.1:18765/sparkfabrik.db').close()
+                  break
+              except OSError:
+                  time.sleep(0.1)
+          else:
+              raise RuntimeError('Repository fixture failed to start')
+          PYTHON
+      - name: Reject an unpublished repository without changing configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          before=$(sha256sum /etc/pacman.conf)
+          if ansible-playbook tests/sparkfabrik-repository.yml -e '{"sparkfabrik_arch_repo": true}' \
+            -e sparkfabrik_repository_server=http://127.0.0.1:18765/missing > /tmp/unpublished-repository.log 2>&1; then
+            echo 'Unpublished repository was enabled'
+            exit 1
+          fi
+          grep -F 'The binary repository is not published or reachable' /tmp/unpublished-repository.log
+          [[ "${before}" == "$(sha256sum /etc/pacman.conf)" ]]
       - name: Verify activation and idempotency
         shell: bash
         run: |
           set -euo pipefail
-          ansible-playbook tests/sparkfabrik-repository.yml -e '{"sparkfabrik_arch_repo": true}'
-          ansible-playbook tests/sparkfabrik-repository.yml -e '{"sparkfabrik_arch_repo": true}' | tee /tmp/second-run.log
+          ansible-playbook tests/sparkfabrik-repository.yml -e '{"sparkfabrik_arch_repo": true}' -e sparkfabrik_repository_server=http://127.0.0.1:18765
+          ansible-playbook tests/sparkfabrik-repository.yml -e '{"sparkfabrik_arch_repo": true}' -e sparkfabrik_repository_server=http://127.0.0.1:18765 | tee /tmp/second-run.log
           grep -Eq 'changed=0 .*failed=0' /tmp/second-run.log
           grep -Fx 'SigLevel = Required TrustedOnly' /etc/pacman.conf
           pacman-key --list-keys CC54D2480F42AB0EE8E63DF91BE396C8C99CB4BE

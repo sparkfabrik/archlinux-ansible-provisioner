@@ -24,6 +24,20 @@
             is not search('(?m)^\s*\[sparkfabrik\]\s*(?:#.*)?$')
         fail_msg: Remove the manually configured [sparkfabrik] stanza before enabling repository provisioning
 
+    - name: Check that the binary repository has been published
+      ansible.builtin.uri:
+        url: "{{ sparkfabrik_repository_server }}/sparkfabrik.db"
+        method: HEAD
+        status_code: 200
+      register: sparkfabrik_repository_available
+      failed_when: false
+      changed_when: false
+
+    - name: Require an available binary repository
+      ansible.builtin.assert:
+        that: sparkfabrik_repository_available.status | default(-1) == 200
+        fail_msg: The binary repository is not published or reachable. Local-only packages do not require sparkfabrik_arch_repo
+
     - name: Install GnuPG
       community.general.pacman:
         name: gnupg
@@ -97,4 +111,4 @@
         block: |
           [sparkfabrik]
           SigLevel = Required TrustedOnly
-          Server = https://github.com/sparkfabrik/arch-packages/releases/download/repo
+          Server = {{ sparkfabrik_repository_server }}
