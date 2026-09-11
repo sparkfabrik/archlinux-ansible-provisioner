@@ -68,7 +68,6 @@ toolbox:
     remove:
       npm:
         - opencode-ai
-        - "@openai/codex"
 
   # ─── Detection ──────────────────────────────────────────────────────────
   # Binary names managed by sf-toolbox. Used by bin/install.linux to show

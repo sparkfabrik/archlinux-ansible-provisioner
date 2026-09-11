@@ -10,6 +10,18 @@ env:
   NONINTERACTIVE: "1"
 
 jobs:
+  codex-migration:
+    name: Codex npm migration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install test prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible python3-yaml
+      - name: Test migration without changing system packages
+        run: /usr/bin/python3 -m unittest discover -s tests -p test_codex_migration.py -v
+
   toolbox-ubuntu-2404:
     name: Ubuntu 24.04
     runs-on: ubuntu-24.04

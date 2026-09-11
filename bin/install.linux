@@ -319,6 +319,12 @@ check_conflicts() {
       continue
     fi
 
+    # Only recognized user npm Codex installs have a safe automatic migration.
+    if [[ "${tool}" == codex ]] && [[ -n "$("${py}" "${REPO_DIR}/bin/common/codex-npm-prefix.py" "${tool_path}" "${HOME}")" ]]; then
+      log_info "The user npm Codex will be migrated after the packaged version is verified."
+      continue
+    fi
+
     local prov
     prov=$(get_provenance "${tool_path}")
     local cmd
