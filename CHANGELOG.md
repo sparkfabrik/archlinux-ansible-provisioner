@@ -70,6 +70,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Keep the `claude-gh-gate` provisioning tag limited to Claude; use `codex-writing-guard` for Codex or `writing-guard` for both.
+
 - Fixed the `sf-toolbox` tasks that invoke sparkdock scripts passing the interpolated path as a free-form command string, which is tokenized on whitespace, so a `sparkdock.path` containing a space resolved to the wrong script and failed the run. The caveman, herdr, rtk and Claude gh-gate tasks now use the `argv` form.
 - Fixed Mission Control costing 40 GitLab API calls and 13.5 seconds per cold refresh. The per-project fan-out (metadata, issues, merge requests, pipelines and a comment feed, times every project) is now a single GraphQL query: 11 calls and about 7 seconds. The query also returns the last note timestamp per item, so ordering by real activity no longer infers it from a project-wide event feed. `SF_GITLAB_MAX_PROJECTS` caps how many projects are enriched, default 6
 - Fixed the Mission Control attention list being mostly its own echo: every issue or merge request an agent writes for the developer carries an "on behalf of @user" header, which GitLab turns into a todo addressed back at them, 76 of 79 mentions on a real account. Self-authored todos are dropped for mentions only, since a self assignment or a failed build on a pipeline the developer started is real signal, and the count is reported as `totals.self_mentions_dropped`
