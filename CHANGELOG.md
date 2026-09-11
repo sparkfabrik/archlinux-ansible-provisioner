@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- sf-toolbox now registers writing guards for Claude and Codex; Codex hooks require review and trust through `/hooks`.
+
 - Added Codex CLI to `sf-toolbox`: the `openai-codex` package from `extra` on Arch Linux and the `codex` Homebrew cask on Debian/Ubuntu, both of which ship the zsh completion; a conflicting npm `@openai/codex` is removed first, and Omarchy keeps owning codex through its own mise wrapper
 - Added a zsh completion for `herdr` on Arch Linux: generated with `herdr completion zsh` during provisioning and installed into `~/.local/share/zsh/site-functions/_herdr`, for both the GitHub-release binary and the Omarchy pacman package (which ships no completion). Skipped on Debian/Ubuntu, where the Homebrew formula ships its own completion
 - Added Upterm to `sf-toolbox`: Arch Linux and Omarchy install pinned checksum-verified upstream release binaries, while Debian/Ubuntu install the upstream Homebrew cask; the shared Sparkdock recipes provide the same workflows through Linux `ajust`

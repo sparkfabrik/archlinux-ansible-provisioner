@@ -1,22 +1,22 @@
 ---
-- name: Configure Claude gh skill gate
-  tags: [sf-toolbox, ai, claude-gh-gate]
+- name: Configure Claude and Codex writing guards
+  tags: [sf-toolbox, ai, claude-gh-gate, writing-guard]
   block:
-    - name: Check if the Claude gh-gate script exists
+    - name: Check if the shared writing guard installer exists
       become: true
       become_user: "{{ system.username | default(current_user) }}"
       ansible.builtin.stat:
-        path: "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/claude-gh-gate.py"
+        path: "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/agent-writing-guard.py"
       register: claude_gh_gate_script
 
-    - name: Enable the Claude gh skill gate
+    - name: Register the Claude and Codex writing guards
       become: true
       become_user: "{{ system.username | default(current_user) }}"
       # argv form so a sparkdock.path containing spaces stays one argument.
       ansible.builtin.command:
         argv:
           - python3
-          - "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/claude-gh-gate.py"
+          - "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/agent-writing-guard.py"
           - enable
       environment:
         HOME: "{{ system.home | default(current_home) }}"
@@ -25,9 +25,14 @@
       when:
         - claude_gh_gate_script.stat.exists
 
-    - name: Warn user to manually enable the Claude gh-gate
+    - name: Warn when the shared writing guard installer is missing
       ansible.builtin.debug:
         msg: >-
-          WARNING: Automatic Claude gh-gate configuration was not possible.
-          Please run `ajust claude-gh-gate-enable` manually to complete the setup.
+          WARNING: Automatic writing guard configuration was not possible.
+          Update Sparkdock and run `ajust writing-guard-enable`.
       when: not claude_gh_gate_script.stat.exists
+
+    - name: Explain the Codex hook trust step
+      ansible.builtin.debug:
+        msg: "Open /hooks in Codex and review/trust new hook definitions. Registration does not grant trust."
+      when: claude_gh_gate_script.stat.exists
