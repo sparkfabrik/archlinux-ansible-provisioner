@@ -57,6 +57,7 @@ jobs:
           persist-credentials: false
       - name: Verify opt-out
         run: |
+          ansible-playbook tests/chatgpt-desktop.yml
           ansible-playbook tests/chatgpt-desktop.yml -e sf_toolbox_chatgpt_desktop=false
           test ! -e /usr/lib/chatgpt/ChatGPT
       - name: Install and verify idempotency
