@@ -58,6 +58,7 @@ jobs:
           set -euo pipefail
           before=$(sha256sum /etc/pacman.conf)
           ansible-playbook tests/sparkfabrik-repository.yml
+          ansible-playbook tests/sparkfabrik-repository.yml -e sparkfabrik_arch_repo=false
           ansible-playbook tests/sparkfabrik-repository.yml -e '{"sparkfabrik_arch_repo": true, "ansible_os_family": "Debian"}'
           [[ "${before}" == "$(sha256sum /etc/pacman.conf)" ]]
           if ansible-playbook tests/sparkfabrik-repository.yml -e '{"sparkfabrik_arch_repo": true, "ansible_architecture": "aarch64"}'; then
@@ -65,6 +66,20 @@ jobs:
             exit 1
           fi
           [[ "${before}" == "$(sha256sum /etc/pacman.conf)" ]]
+      - name: Reject an existing manual repository without changing configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp /etc/pacman.conf /tmp/pacman-original.conf
+          printf '\n[sparkfabrik]\nServer = https://example.invalid/repo\n' >> /etc/pacman.conf
+          before=$(sha256sum /etc/pacman.conf)
+          if ansible-playbook tests/sparkfabrik-repository.yml -e '{"sparkfabrik_arch_repo": true}' > /tmp/manual-repository.log 2>&1; then
+            echo 'Manual repository was duplicated'
+            exit 1
+          fi
+          grep -F 'Remove the manually configured [sparkfabrik] stanza' /tmp/manual-repository.log
+          [[ "${before}" == "$(sha256sum /etc/pacman.conf)" ]]
+          cp /tmp/pacman-original.conf /etc/pacman.conf
       - name: Verify activation and idempotency
         shell: bash
         run: |

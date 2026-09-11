@@ -2,13 +2,27 @@
 - name: Configure the signed SparkFabrik pacman repository
   tags: [sparkfabrik-repository]
   when:
-    - sparkfabrik_arch_repo | default(false)
+    - sparkfabrik_arch_repo | default(false) | bool
     - ansible_os_family == "Archlinux"
   block:
     - name: Require a supported architecture
       ansible.builtin.assert:
         that: ansible_architecture == "x86_64"
         fail_msg: The SparkFabrik package repository currently supports only x86_64
+
+    - name: Read existing pacman configuration
+      ansible.builtin.slurp:
+        src: /etc/pacman.conf
+      register: sparkfabrik_repository_config
+
+    - name: Reject an unmanaged SparkFabrik repository entry
+      ansible.builtin.assert:
+        that:
+          - >-
+            (sparkfabrik_repository_config.content | b64decode |
+            regex_replace('(?ms)^# BEGIN SPARKFABRIK REPOSITORY\n.*?^# END SPARKFABRIK REPOSITORY(?:\n|$)', ''))
+            is not search('(?m)^\s*\[sparkfabrik\]\s*(?:#.*)?$')
+        fail_msg: Remove the manually configured [sparkfabrik] stanza before enabling repository provisioning
 
     - name: Install GnuPG
       community.general.pacman:
