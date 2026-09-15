@@ -72,6 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `sf-toolbox` installs the Node.js runtime its npm packages need instead of failing with `Failed to find required executable "npm"`: distribution packages on Arch, CachyOS and Debian/Ubuntu, and on Omarchy the mise runtime and mise-registered `npm:` packages that `omarchy update` keeps current
+- Read `os_family` and `architecture` through `ansible_facts` in the `sparkfabrik-repository` role, removing the `INJECT_FACTS_AS_VARS` deprecation warnings
 - Detect the invoking user before recipe configuration during full provisioning and create personal paru files as that user
 
 - Configure SparkFabrik paru recipes per user, preserve existing settings, and migrate the previous managed system-wide entry
