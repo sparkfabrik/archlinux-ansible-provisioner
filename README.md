@@ -66,7 +66,9 @@ For direct Ansible use, `sf_toolbox_chatgpt_desktop` defaults to `false` and `sf
 ### Requirements
 
 - Arch Linux, CachyOS, Omarchy, Debian, or Ubuntu
-- `git`, `zsh`, `docker`, `curl`, `python3` (and `node`/`npm` on Arch)
+- `git`, `zsh`, `docker`, `curl`, `python3`
+
+Sf-toolbox installs the Node.js runtime its npm packages need. On Arch, CachyOS and Debian/Ubuntu it comes from the distribution packages and the npm packages are installed system wide. On Omarchy, which ships no Node.js package, it comes from mise, selected with `mise use --global node` exactly as `omarchy install dev-env node` does, and the npm packages are registered with mise as `npm:<package>`, so `omarchy update` keeps them current alongside Omarchy's own tools. That state belongs to the user who runs sf-toolbox: on a machine with several developer accounts, each one runs sf-toolbox to get its own runtime and tools.
 
 ## About This Provisioner
 

@@ -19,6 +19,12 @@ toolbox:
       - openai-codex
       - gopls
       - ripgrep
+    # The npm packages below need a Node.js runtime, which no other package
+    # here pulls in. On vanilla Arch that runtime is a pacman one. On Omarchy
+    # it is not: see the npm runtime block in tasks/packages.yml.
+    npm_runtime:
+      - nodejs
+      - npm
     npm:
       - "@fission-ai/openspec"
       - "@github/copilot"
@@ -35,6 +41,7 @@ toolbox:
   debian:
     apt:
       - libnss3-tools
+    npm_runtime:
       - nodejs
       - npm
     homebrew_taps:
@@ -117,6 +124,3 @@ toolbox:
       - docker
       - curl
       - python3
-    arch:
-      - node
-      - npm
