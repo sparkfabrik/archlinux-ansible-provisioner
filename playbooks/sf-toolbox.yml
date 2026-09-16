@@ -13,8 +13,13 @@
     sparkdock_default_path: "{{ current_home }}/.local/spark/sparkdock"
     sparkfabrik: true
 
+  # The mise shims carry the tools mise provides, which on Omarchy includes the
+  # Node.js runtime and the npm-backed tools this playbook registers. Scripts
+  # run from here look tools up on PATH (caveman's setup.sh needs node,
+  # ai.yml needs openspec), and root's PATH has none of them. Placed after
+  # ~/.local/bin so an Omarchy mise wrapper still wins over its own shim.
   environment:
-    PATH: "{{ current_home | default('') }}/.local/bin:/home/linuxbrew/.linuxbrew/bin:{{ lookup('env', 'PATH') }}"
+    PATH: "{{ current_home | default('') }}/.local/bin:{{ current_home | default('') }}/.local/share/mise/shims:/home/linuxbrew/.linuxbrew/bin:{{ lookup('env', 'PATH') }}"
 
   pre_tasks:
     - name: Auto-detect current user

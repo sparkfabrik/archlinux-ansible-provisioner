@@ -24,6 +24,75 @@
       changed_when: false
       check_mode: false
 
+# ─── npm runtime ────────────────────────────────────────────────────────
+# No other toolbox package pulls in Node.js, so the npm tasks below have no npm
+# to run until this block provides one. Each distribution provides it its own
+# way, and the two must not be mixed.
+#
+# Arch and Debian install it system-wide from the distribution repositories,
+# and npm packages are then installed globally as root.
+#
+# Omarchy ships mise-bin and no Node.js package at all: `omarchy install
+# dev-env node` runs `mise use --global node`, per user. Its PATH appends
+# ~/.local/share/mise/shims *after* the system directories, so a pacman nodejs
+# would shadow the runtime the developer selects with mise, which is exactly
+# what the distribution expects to own.
+- name: Install the npm runtime
+  tags: [sf-toolbox, packages]
+  block:
+    - name: Install the Node.js runtime from pacman (Archlinux without Omarchy)
+      community.general.pacman:
+        name: "{{ toolbox.arch.npm_runtime }}"
+        state: present
+      when:
+        - ansible_facts['os_family'] == "Archlinux"
+        - not (omarchy_detected | default(false) | bool)
+
+    - name: Install the Node.js runtime from apt (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: "{{ toolbox.debian.npm_runtime }}"
+        state: present
+        update_cache: true
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Select the Node.js runtime with mise (Omarchy)
+      when: omarchy_detected | default(false) | bool
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      environment:
+        HOME: "{{ system.home | default(current_home) }}"
+      block:
+        - name: Look for mise
+          ansible.builtin.shell: command -v mise
+          register: sf_toolbox_mise_binary
+          changed_when: false
+          failed_when: false
+          check_mode: false
+
+        - name: Require mise for the Omarchy Node.js runtime
+          ansible.builtin.assert:
+            that: sf_toolbox_mise_binary.rc == 0
+            fail_msg: >-
+              mise is missing on this Omarchy machine. Omarchy installs it as
+              `mise-bin` and manages every language runtime with it. Reinstall
+              it with `sudo pacman -S mise-bin` and run sf-toolbox again.
+
+        - name: Check the global mise Node.js runtime
+          ansible.builtin.command:
+            argv: [mise, which, node]
+          register: sf_toolbox_mise_node
+          changed_when: false
+          failed_when: false
+          check_mode: false
+
+        # Same command as `omarchy install dev-env node`, so the runtime stays
+        # the one Omarchy manages and updates.
+        - name: Select the global Node.js runtime with mise
+          ansible.builtin.command:
+            argv: [mise, use, --global, node]
+          when: sf_toolbox_mise_node.rc != 0
+          changed_when: true
+
 # ─── Package cleanup ───────────────────────────────────────────────────────
 - name: Remove conflicting packages
   tags: [sf-toolbox, packages]
@@ -42,6 +111,19 @@
         state: absent
       loop: "{{ toolbox.common.remove.npm }}"
       ignore_errors: true
+      when: not (omarchy_detected | default(false) | bool)
+
+    - name: Drop obsolete npm packages from the mise configuration (Omarchy)
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.command:
+        argv: [mise, unuse, --global, "npm:{{ item }}"]
+      environment:
+        HOME: "{{ system.home | default(current_home) }}"
+      loop: "{{ toolbox.common.remove.npm }}"
+      when: omarchy_detected | default(false) | bool
+      changed_when: false
+      failed_when: false
 
 # ─── Package installation ──────────────────────────────────────────────────
 - name: Install toolbox packages
@@ -73,7 +155,33 @@
         global: true
         state: latest
       loop: "{{ toolbox.arch.npm | difference(omarchy_shadowed_npm | default([])) }}"
-      when: ansible_facts['os_family'] == "Archlinux"
+      when:
+        - ansible_facts['os_family'] == "Archlinux"
+        - not (omarchy_detected | default(false) | bool)
+
+    # Omarchy installs command-line tools through the mise backends, and
+    # `omarchy update` runs `mise up`: a Node.js upgrade moves the prefix, so
+    # anything put there by `npm install -g` leaves PATH. Registering each
+    # package as `npm:<package>` writes it into the developer's mise
+    # configuration instead, where that same `mise up` keeps it current and
+    # mise maintains the shims. Registration is deliberate: a
+    # `~/.local/bin` wrapper, the other half of what `omarchy-mise-install`
+    # does, would be read back as Omarchy-owned by omarchy-detect.yml.
+    - name: Register npm packages with mise (Omarchy)
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.command:
+        argv: [mise, use, --global, "npm:{{ item }}"]
+      environment:
+        HOME: "{{ system.home | default(current_home) }}"
+        # Omarchy waives the mise release cooldown for the tools it installs.
+        MISE_MINIMUM_RELEASE_AGE: "0"
+      register: sf_toolbox_mise_npm
+      # mise reports an install on stderr and stays silent when the registered
+      # package is already current, so `--quiet` is left off on purpose.
+      changed_when: "'installed' in (sf_toolbox_mise_npm.stderr | default(''))"
+      loop: "{{ toolbox.arch.npm | difference(omarchy_shadowed_npm | default([])) }}"
+      when: omarchy_detected | default(false) | bool
 
     - name: Install apt system packages (Debian/Ubuntu)
       ansible.builtin.apt:

@@ -1,2 +1,10 @@
 ---
 sparkfabrik_repository_server: https://github.com/sparkfabrik/arch-packages/releases/download/repo
+
+# Both default to the discovered facts and exist to be overridden: the tests
+# exercise the non-Arch and unsupported-architecture paths by setting them,
+# which the bare `ansible_os_family` and `ansible_architecture` variables used
+# to allow. Those variables are the injected facts that ansible-core 2.24
+# removes.
+sparkfabrik_repository_os_family: "{{ ansible_facts['os_family'] }}"
+sparkfabrik_repository_architecture: "{{ ansible_facts['architecture'] }}"

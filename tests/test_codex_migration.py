@@ -161,6 +161,11 @@ m.exit_json(changed=False)
             f"#!{sys.executable}\nimport os\nfrom pathlib import Path\np=Path(os.environ['FIXTURE_LOG'])\np.open('a').write('{{\"verify\":true}}\\n')\nraise SystemExit(1 if os.environ['FIXTURE_MODE']=='bad-binary' else 0)\n"
         )
         self.packaged.chmod(0o755)
+        mise = self.bin / "mise"
+        mise.write_text(
+            f"#!{sys.executable}\nimport json,os,sys\nfrom pathlib import Path\nPath(os.environ['FIXTURE_LOG']).open('a').write(json.dumps({{'mise':sys.argv[1:]}})+'\\n')\n"
+        )
+        mise.chmod(0o755)
         npm = self.bin / "npm"
         npm.write_text(
             f"#!{sys.executable}\nimport json,os,sys\nfrom pathlib import Path\np=Path(os.environ['FIXTURE_LOG'])\np.open('a').write(json.dumps({{'npm':sys.argv[1:],'home':os.environ['HOME']}})+'\\n')\nlink=Path(sys.argv[sys.argv.index('--prefix')+1])/'bin/codex'\nlink.rename(link.with_name('migrated-codex'))\n"
@@ -191,11 +196,13 @@ m.exit_json(changed=False)
                     "current_user": getpass.getuser(),
                     "current_home": str(self.home),
                     "sf_toolbox_user_path": self.env["PATH"],
+                    "omarchy_detected": omarchy,
                     "omarchy_mise_tools": ["codex"] if omarchy else [],
                     "omarchy_shadowed_pacman": ["openai-codex"] if omarchy else [],
                 },
                 "environment": {
-                    "PATH": "/usr/bin:/bin",
+                    # Omarchy provides mise; the fixture stands in for it.
+                    "PATH": (str(self.bin) + ":" if omarchy else "") + "/usr/bin:/bin",
                     "HOME": str(self.home),
                     "FIXTURE_LOG": str(self.log),
                     "FIXTURE_MODE": mode,
@@ -220,6 +227,14 @@ m.exit_json(changed=False)
         (self.root / f"{mode}.log").write_text(result.stdout + result.stderr)
         return result
 
+    def npm_calls(self):
+        """The npm invocations the fixture logged, not the packages named npm."""
+        return [
+            call
+            for call in (json.loads(s) for s in self.log.read_text().splitlines())
+            if "npm" in call
+        ]
+
     def test_success_and_repeated_run(self):
         result = self.run_play()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -241,9 +256,7 @@ m.exit_json(changed=False)
         )
         result = self.run_play()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual(
-            sum('"npm"' in s for s in self.log.read_text().splitlines()), 1
-        )
+        self.assertEqual(len(self.npm_calls()), 1)
 
     def test_failures_preserve_npm_copy(self):
         for mode in ("404", "other-error", "bad-binary"):
@@ -251,7 +264,7 @@ m.exit_json(changed=False)
                 result = self.run_play(mode)
                 self.assertNotEqual(result.returncode, 0)
                 self.assertTrue(self.codex.exists())
-                self.assertNotIn('"npm"', self.log.read_text())
+                self.assertEqual(self.npm_calls(), [])
                 if mode == "404":
                     self.assertIn("sudo pacman -Syu", result.stdout)
                 if mode == "other-error":
@@ -262,7 +275,14 @@ m.exit_json(changed=False)
         result = self.run_play(omarchy=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertTrue(self.codex.exists())
-        self.assertNotIn('"npm"', self.log.read_text())
+        self.assertEqual(self.npm_calls(), [])
+        # Omarchy takes its Node.js from mise, never from pacman.
+        packages = [
+            call
+            for call in (json.loads(s) for s in self.log.read_text().splitlines())
+            if call.get("package")
+        ]
+        self.assertNotIn("npm", [p for call in packages for p in call["package"]])
 
 
 if __name__ == "__main__":
