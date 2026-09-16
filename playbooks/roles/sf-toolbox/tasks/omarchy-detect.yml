@@ -43,6 +43,27 @@
     - name: Detect Omarchy mise-managed tools
       when: omarchy_detected
       block:
+        # Every omarchy-* command reads OMARCHY_PATH, which Omarchy exports
+        # from /etc/profile.d and the bash rc chain. Ansible runs neither, so
+        # the tasks that call those commands pass it themselves.
+        # /etc/omarchy.conf holds the override omarchy-dev-link writes; a
+        # packaged install has no such file and lives at the default path.
+        - name: Read the Omarchy path override
+          ansible.builtin.slurp:
+            src: /etc/omarchy.conf
+          register: omarchy_conf
+          failed_when: false
+
+        - name: Record the Omarchy installation path
+          ansible.builtin.set_fact:
+            omarchy_path: "{{ omarchy_conf_path | default('/usr/share/omarchy', true) }}"
+          vars:
+            omarchy_conf_path: >-
+              {{ ((omarchy_conf.content | default('') | b64decode)
+                  | regex_search('(?m)^OMARCHY_PATH=(.+)$', '\1')
+                  | default([], true) | join(''))
+                 | regex_replace('["\x27]', '') | trim }}
+
         - name: List the mise wrappers in the user bin directory
           become: true
           become_user: "{{ system.username | default(current_user) }}"
