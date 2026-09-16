@@ -72,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Runs no longer print the Python interpreter discovery warning on every play: an `ansible.cfg` sets `interpreter_python = auto_silent`, which keeps the discovery and drops the warning
 - The Omarchy bar widget and theme tasks pass `OMARCHY_PATH` to the `omarchy-*` commands they call, which failed with `OMARCHY_PATH is not set` because Ansible runs neither the profile nor the bash rc chain that exports it
 - `sf-toolbox` installs the Node.js runtime its npm packages need instead of failing with `Failed to find required executable "npm"`: distribution packages on Arch, CachyOS and Debian/Ubuntu, and on Omarchy the mise runtime and mise-registered `npm:` packages that `omarchy update` keeps current
 - Read `os_family` and `architecture` through `ansible_facts` in the `sparkfabrik-repository` role, removing the `INJECT_FACTS_AS_VARS` deprecation warnings
