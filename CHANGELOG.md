@@ -72,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed `sf-toolbox` never upgrading Arch toolbox packages such as `openai-codex` and `opencode`: the pacman task now refreshes the package database and installs the latest version
 - Detect the invoking user before recipe configuration during full provisioning and create personal paru files as that user
 
 - Configure SparkFabrik paru recipes per user, preserve existing settings, and migrate the previous managed system-wide entry

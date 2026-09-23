@@ -53,10 +53,11 @@
     - name: Install pacman packages (Archlinux)
       when: ansible_facts['os_family'] == "Archlinux"
       block:
-        - name: Install Arch packages without refreshing the system database
+        - name: Install or upgrade Arch packages to the latest version
           community.general.pacman:
             name: "{{ toolbox.arch.pacman | difference(omarchy_shadowed_pacman | default([])) }}"
-            state: present
+            state: latest
+            update_cache: true
       rescue:
         - name: Report the package installation failure
           ansible.builtin.fail:
