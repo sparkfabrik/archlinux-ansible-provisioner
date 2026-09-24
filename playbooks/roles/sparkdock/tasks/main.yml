@@ -43,9 +43,11 @@
             # Skip the '--' separator itself.
             [[ "${1:-}" == "--" ]] && shift
             "$@"
-          else
+          elif [[ -n "$_REAL_GUM" ]]; then
             "$_REAL_GUM" "$@"
           fi
+          # If gum is not installed, non-spin calls become no-ops (cosmetic only)
+          # instead of executing an empty command (rc 127).
         }
         export -f gum
         {{ sparkdock.path | default(sparkdock_default_path) }}/bin/sparkdock-agents-sync
