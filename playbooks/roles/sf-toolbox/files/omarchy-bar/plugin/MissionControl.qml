@@ -3,6 +3,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 // SparkFabrik Mission Control: a fullscreen overlay answering, in order, what
@@ -37,11 +38,11 @@ Item {
   property var myMrs: []
 
   // Shares the [menu] surface tokens, like the built-in pickers.
-  property color background: Color.menu.background
-  property color foreground: Color.menu.text
-  property var borderSpec: Border.surfaceSpec("menu", "border", Color.menu.border, Math.max(1, Style.space(2)))
-  property color scrim: Color.menu.scrim
-  property color selectedBackground: Color.menu.selectedBackground
+  property color background: Commons.Color.menu.background
+  property color foreground: Commons.Color.menu.text
+  property var borderSpec: Border.surfaceSpec("menu", "border", Commons.Color.menu.border, Math.max(1, Style.space(2)))
+  property color scrim: Commons.Color.menu.scrim
+  property color selectedBackground: Commons.Color.menu.selectedBackground
   property string fontFamily: Style.font.menuFamily
 
   property int cardWidth: Math.floor(panel.width * 0.95)
@@ -49,7 +50,7 @@ Item {
   readonly property url logoSource: Qt.resolvedUrl("sparkfabrik-logo.png")
 
   // SparkFabrik palette as semantic colors: one meaning per hue.
-  readonly property color brand: Color.accent          // theme accent (Spark red)
+  readonly property color brand: Commons.Color.accent          // theme accent (Spark red)
   readonly property color cIssue: "#027aca"            // light blue
   readonly property color cMr: "#40c6cf"               // aquamarine
   readonly property color cReview: "#f7ad2c"           // yellow
@@ -219,7 +220,7 @@ Item {
     if (s === "success") return root.cOk
     if (s === "failed" || s === "canceled") return root.cFail
     if (s === "running" || s === "pending") return root.cLive
-    return Color.muted
+    return Commons.Color.muted
   }
 
   // Text version of the same state: readable on the dark navy surface.
@@ -811,7 +812,7 @@ Item {
                       width: Style.space(7)
                       height: Style.space(7)
                       radius: width / 2
-                      color: modelData.draft ? Color.muted : root.cMr
+                      color: modelData.draft ? Commons.Color.muted : root.cMr
                       anchors.verticalCenter: parent.verticalCenter
                     }
                     Text {

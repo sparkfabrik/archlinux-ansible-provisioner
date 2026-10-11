@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Io
 import qs.Ui
 import qs.Commons
+import qs.Commons as Commons
 
 // SparkFabrik Toolbox bar widget: at-a-glance freshness of the Spark dev stack
 // (toolbox, sparkdock, agent skills, packages, HTTP proxy, Docker, CLI auth)
@@ -25,7 +26,7 @@ Panel {
   property bool stampSeen: false
   // Branding follows the active Omarchy theme: the theme accent when it is
   // set, the Spark red as the fallback.
-  readonly property color brandColor: Color.accent
+  readonly property color brandColor: Commons.Color.accent
 
   readonly property string pluginDir:
     Quickshell.env("HOME") + "/.config/omarchy/plugins/sparkfabrik.toolbox"
@@ -93,10 +94,10 @@ Panel {
   }
 
   function stateColor(state) {
-    if (state === "stale" || state === "stopped" || state === "none") return Color.urgent
+    if (state === "stale" || state === "stopped" || state === "none") return Commons.Color.urgent
     if (state === "fresh" || state === "running" || state === "ok") return "#5fbf6e"
-    if (state === "error") return Color.urgent
-    return Color.muted   // missing / unknown
+    if (state === "error") return Commons.Color.urgent
+    return Commons.Color.muted   // missing / unknown
   }
 
   function stateLabel(state) {
@@ -258,7 +259,7 @@ Panel {
           width: Style.space(6)
           height: Style.space(6)
           radius: width / 2
-          color: Color.urgent
+          color: Commons.Color.urgent
           anchors.right: parent.right
           anchors.top: parent.top
         }
