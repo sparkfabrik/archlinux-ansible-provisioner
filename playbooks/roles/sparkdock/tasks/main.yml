@@ -12,6 +12,32 @@
         update: yes
         force: yes
 
+# Managed Claude Code settings are shared with macOS and load the
+# `sparkfabrik-harness` plugin from `/opt/sparkdock`, so the same path must
+# resolve here. An existing directory at that path is left untouched.
+- name: Link `/opt/sparkdock` to the sparkdock checkout
+  when: sparkfabrik | default(true)
+  tags: [sparkfabrik, sparkdock, claude-mods]
+  become: true
+  block:
+    - name: Check `/opt/sparkdock`
+      ansible.builtin.stat:
+        path: /opt/sparkdock
+      register: opt_sparkdock
+
+    - name: Create the `/opt/sparkdock` symlink
+      ansible.builtin.file:
+        src: "{{ sparkdock.path | default(sparkdock_default_path) }}"
+        dest: /opt/sparkdock
+        state: link
+        force: true
+      when: not opt_sparkdock.stat.exists or opt_sparkdock.stat.islnk
+
+    - name: Warn that `/opt/sparkdock` is not a symlink
+      ansible.builtin.debug:
+        msg: "`/opt/sparkdock` exists and is not a symlink, so the Claude Code `sparkfabrik-harness` plugin may load an outdated copy. Remove it and run `TAGS=claude-mods sf-toolbox`."
+      when: opt_sparkdock.stat.exists and not opt_sparkdock.stat.islnk
+
 - name: Sync AI coding agent resources from upstream repository
   when: sparkfabrik | default(true)
   tags: [sparkfabrik, sparkdock, ai-coding-agents]
