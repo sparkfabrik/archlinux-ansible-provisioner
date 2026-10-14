@@ -1,4 +1,36 @@
 ---
+# Sparkdock owns the install tasks, so both platforms install the same files.
+- name: Install the managed harness config
+  tags: [sf-toolbox, ai, managed-harness, writing-guard]
+  block:
+    - name: Check for the managed harness tasks
+      ansible.builtin.stat:
+        path: "{{ sparkdock.path | default(sparkdock_default_path) }}/ansible/shared/managed-harness.yml"
+      register: managed_harness_tasks
+
+    - name: Install the managed harness config from sparkdock
+      ansible.builtin.include_tasks:
+        file: "{{ managed_harness_tasks.stat.path }}"
+        apply:
+          tags: [sf-toolbox, ai, managed-harness, writing-guard]
+      vars:
+        managed_harness_source: "{{ sparkdock.path | default(sparkdock_default_path) }}"
+        managed_harness_dir: "{{ sf_toolbox_managed_harness_dir }}"
+      when: managed_harness_tasks.stat.exists
+
+# Register the managed copy when it exists, else the checkout copy.
+- name: Find the writing guards to register
+  tags: [sf-toolbox, ai, claude-gh-gate, codex-writing-guard, writing-guard]
+  block:
+    - name: Check for the managed writing guards
+      ansible.builtin.stat:
+        path: "{{ sf_toolbox_managed_harness_dir }}/guards"
+      register: managed_guards
+
+    - name: Choose the writing guards directory
+      ansible.builtin.set_fact:
+        writing_guards_dir: "{{ managed_guards.stat.exists | ternary(sf_toolbox_managed_harness_dir ~ '/guards', (sparkdock.path | default(sparkdock_default_path)) ~ '/sjust/scripts') }}"
+
 - name: Configure the Claude writing guard
   tags: [sf-toolbox, ai, claude-gh-gate, writing-guard]
   block:
@@ -6,7 +38,7 @@
       become: true
       become_user: "{{ system.username | default(current_user) }}"
       ansible.builtin.stat:
-        path: "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/claude-gh-gate.py"
+        path: "{{ writing_guards_dir }}/claude-gh-gate.py"
       register: claude_guard_script
 
     - name: Register the Claude writing guard
@@ -15,7 +47,7 @@
       ansible.builtin.command:
         argv:
           - python3
-          - "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/claude-gh-gate.py"
+          - "{{ writing_guards_dir }}/claude-gh-gate.py"
           - enable
       environment:
         HOME: "{{ system.home | default(current_home) }}"
@@ -35,7 +67,7 @@
       become: true
       become_user: "{{ system.username | default(current_user) }}"
       ansible.builtin.stat:
-        path: "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/codex-writing-guard.py"
+        path: "{{ writing_guards_dir }}/codex-writing-guard.py"
       register: codex_guard_script
 
     - name: Register the Codex writing guard
@@ -44,7 +76,7 @@
       ansible.builtin.command:
         argv:
           - python3
-          - "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/codex-writing-guard.py"
+          - "{{ writing_guards_dir }}/codex-writing-guard.py"
           - enable
       environment:
         HOME: "{{ system.home | default(current_home) }}"
