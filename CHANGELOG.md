@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added a `/opt/sparkdock` symlink to the sparkdock checkout (tag `claude-mods`), so the managed Claude Code settings load the `sparkfabrik-harness` plugin on Linux too ([sparkfabrik/sparkdock#664](https://github.com/sparkfabrik/sparkdock/pull/664))
 - Added claude-usage to `sf-toolbox` (tag `claude-usage`), installed through the shared Sparkdock script with the desktop reader for GNOME, KDE or Waybar
 - Added opt-in ChatGPT desktop installation to sf-toolbox: our reviewed recipe on Arch/CachyOS x86_64, Omarchy's own desktop package, and the official OpenAI `.deb` with signed apt updates on Ubuntu 24.04/26.04 and Debian 13; existing conflicting Arch packages are preserved
 - Added SparkFabrik recipe-source configuration for paru, plus opt-in signed binary repository configuration with fingerprint verification and an availability check on activation
