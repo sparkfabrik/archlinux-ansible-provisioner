@@ -1,0 +1,31 @@
+---
+- name: Install claude-usage
+  tags: [sf-toolbox, ai, claude-usage]
+  block:
+    - name: Check if the claude-usage installer exists
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.stat:
+        path: "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/claude-usage.sh"
+      register: claude_usage_script
+
+    - name: Install or upgrade claude-usage
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      # argv form so a sparkdock.path containing spaces stays one argument.
+      ansible.builtin.command:
+        argv:
+          - /usr/bin/env
+          - bash
+          - "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/claude-usage.sh"
+          - install
+      environment:
+        HOME: "{{ system.home | default(current_home) }}"
+      register: claude_usage_install
+      changed_when: "'installed binaries (' in claude_usage_install.stdout"
+      when: claude_usage_script.stat.exists
+
+    - name: Warn when the claude-usage installer is missing
+      ansible.builtin.debug:
+        msg: "Update Sparkdock and run `ajust claude-usage-install` to install claude-usage."
+      when: not claude_usage_script.stat.exists
