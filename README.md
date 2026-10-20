@@ -59,7 +59,9 @@ Launch it with `chatgpt`. The Codex CLI remains a separate tool. On Omarchy, its
 
 Sf-toolbox registers the SparkFabrik Git recipe source for the selected user in `~/.config/paru/paru.conf`. Existing user settings are preserved. A new user configuration includes `/etc/paru.conf` when that file exists, retaining system defaults. The previous managed SparkFabrik block is removed from `/etc/paru.conf`; other users are not enrolled. If you use a custom `XDG_CONFIG_HOME`, include this file from your active paru configuration. Paru users can update recipes with `paru -Syu --mode repo,pkgbuilds`. Yay consumes the Omarchy desktop package and any configured binary repositories normally. On other Arch systems, yay can build a checked-out recipe with `yay -Bi <directory>`, but sf-toolbox handles updates to our Git-hosted desktop recipe. Sf-toolbox does not require or install either helper.
 
-The binary pacman channel is separate and defaults to disabled. Enable `sparkfabrik_arch_repo: true` only after binary packages are published; initial activation verifies repository availability and the public-key fingerprint. Recipe access does not require that channel.
+Sf-toolbox enables the signed SparkFabrik pacman repository by default on x86_64 Arch Linux and derivatives. The repository is published and includes `voice-strip`. Initial activation verifies repository availability and the public-key fingerprint. Install packages with `sudo pacman -Syu <package>`, for example `sudo pacman -Syu voice-strip`.
+
+Run `SPARKFABRIK_ARCH_REPO=0 sf-toolbox` to skip binary repository configuration; this leaves an already configured repository in place. Direct Ansible callers can set `sf_toolbox_arch_repo: false`. System provisioning and direct role use keep the binary repository disabled by default. Recipe access does not require that channel.
 
 For direct Ansible use, `sf_toolbox_chatgpt_desktop` defaults to `false` and `sf_toolbox_arch_pkgbuilds: false` disables paru configuration. `sf_toolbox_arch_packages_revision` defaults to reviewed `main`; tests or controlled rollouts may pin a commit. Cached downloads and builds remain under `/var/cache/sf-toolbox/`.
 
