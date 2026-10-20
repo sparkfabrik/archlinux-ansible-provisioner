@@ -37,6 +37,7 @@ show_help() {
   printf "    TAGS           Comma-separated list of Ansible tags to run\n"
   printf "    SKIP_TAGS      Comma-separated list of Ansible tags to skip\n"
   printf "    CONFIG         Path to config YAML (default: config/default.yaml)\n"
+  printf "    SPARKFABRIK_ARCH_REPO Set to 0 to skip binary repository configuration (enabled by default)\n"
   printf "    NONINTERACTIVE Set to 1 to skip all interactive prompts\n"
   printf "\n"
   printf "  %sOptions:%s\n" "${BOLD}" "${NC}"
@@ -466,6 +467,7 @@ run_ansible() {
   user_path_vars=$("${py}" -c 'import json, os; print(json.dumps({"sf_toolbox_user_path": os.environ["PATH"]}))')
   local cmd=(sudo ansible-playbook "${REPO_DIR}/playbooks/sf-toolbox.yml" -i "localhost," -c local --extra-vars "${user_path_vars}")
   [[ "${CHATGPT_DESKTOP:-0}" == "1" ]] && cmd+=(--extra-vars sf_toolbox_chatgpt_desktop=true)
+  [[ "${SPARKFABRIK_ARCH_REPO:-1}" == "0" ]] && cmd+=(--extra-vars sf_toolbox_arch_repo=false)
   [[ -n "${TAGS:-}" ]] && cmd+=(--tags "${TAGS}")
   [[ -n "${SKIP_TAGS:-}" ]] && cmd+=(--skip-tags "${SKIP_TAGS}")
   "${cmd[@]}"

@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Enabled the signed SparkFabrik binary repository by default for sf-toolbox on x86_64 Arch Linux, with `SPARKFABRIK_ARCH_REPO=0` to skip configuration
 - `sf-toolbox` now runs `gcloud components update` on every provisioning pass, so an existing Google Cloud SDK in `/opt/google-cloud-sdk` is kept current instead of staying pinned at the version installed on first provision
 - Delegated `*.loc` systemd-resolved configuration to the `spark-http-proxy` CLI and removed the bespoke `docker` role drop-in (`docker-dev-dns.conf`, `172.17.0.1:19322`); the CLI now writes `http-proxy.conf` (`127.0.0.1:19322`). Legacy `~docker`/dnsdock routing is no longer configured
 - Replaced the obsolete Python `yq` package (pacman) with `go-yq`, the mikefarah Go yq v4 (`extra` repo); the old `yq` is now removed first since the two packages conflict
@@ -74,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Initialize the pacman signing key when missing, even if the keyring directory already exists, before trusting the SparkFabrik repository key
 - Fixed `sf-toolbox` never upgrading Arch toolbox packages such as `openai-codex` and `opencode`: the pacman task now refreshes the package database and installs the latest version
 - Detect the invoking user before recipe configuration during full provisioning and create personal paru files as that user
 
