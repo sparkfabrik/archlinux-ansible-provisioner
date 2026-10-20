@@ -75,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Initialize the pacman signing key when missing, even if the keyring directory already exists, before trusting the SparkFabrik repository key
 - Fixed `sf-toolbox` never upgrading Arch toolbox packages such as `openai-codex` and `opencode`: the pacman task now refreshes the package database and installs the latest version
 - Detect the invoking user before recipe configuration during full provisioning and create personal paru files as that user
 

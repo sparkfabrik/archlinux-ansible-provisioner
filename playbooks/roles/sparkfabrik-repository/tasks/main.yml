@@ -125,10 +125,23 @@
         name: gnupg
         state: present
 
+    - name: Inspect the pacman keyring secret keys
+      ansible.builtin.command:
+        argv:
+          - gpg
+          - --homedir
+          - /etc/pacman.d/gnupg
+          - --batch
+          - --no-auto-check-trustdb
+          - --with-colons
+          - --list-secret-keys
+      changed_when: false
+      failed_when: false
+      register: sparkfabrik_repository_secret_keys
+
     - name: Initialize the pacman keyring
       ansible.builtin.command: pacman-key --init
-      args:
-        creates: /etc/pacman.d/gnupg/private-keys-v1.d
+      when: sparkfabrik_repository_secret_keys.stdout is not search('(?m)^sec:')
 
     - name: Install the SparkFabrik public key
       ansible.builtin.copy:
