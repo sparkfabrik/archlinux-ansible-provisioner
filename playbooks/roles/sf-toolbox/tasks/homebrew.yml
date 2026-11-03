@@ -108,14 +108,14 @@
         - "'Broken pipe' not in (homebrew_taps.msg | default(''))"
 
     # Homebrew 7 refuses to load formulae and casks from a tap nobody trusted.
-    # Older releases have no `trust` command and load every tap anyway.
+    # Older releases have no `trust` command and load every tap anyway. The
+    # trust store lives under HOME, so this task keeps the same environment as
+    # the Homebrew install tasks that read it.
     - name: Trust the Homebrew taps
       become: true
       become_user: "{{ system.username | default(current_user) }}"
       ansible.builtin.command:
         argv: [/home/linuxbrew/.linuxbrew/bin/brew, trust, --tap, "{{ item }}"]
-      environment:
-        HOME: "{{ system.home | default(current_home) }}"
       loop: "{{ toolbox.debian.homebrew_taps | default([]) }}"
       register: homebrew_trust
       changed_when: "'Already trusted' not in homebrew_trust.stdout and homebrew_trust.rc == 0"
