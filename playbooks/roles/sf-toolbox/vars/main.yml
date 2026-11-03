@@ -41,13 +41,12 @@ toolbox:
   debian:
     apt:
       - libnss3-tools
-    npm_runtime:
-      - nodejs
-      - npm
     homebrew_taps:
       - anomalyco/tap
       - owenthereal/upterm
     homebrew:
+      # Node.js runtime for the npm packages below; see tasks/packages.yml.
+      - node
       - just
       - gum
       - gh
