@@ -62,9 +62,9 @@ jobs:
           before=$(sha256sum /etc/pacman.conf)
           ansible-playbook tests/sparkfabrik-repository.yml
           ansible-playbook tests/sparkfabrik-repository.yml -e sparkfabrik_arch_repo=false
-          ansible-playbook tests/sparkfabrik-repository.yml -e '{"sparkfabrik_arch_repo": true, "ansible_os_family": "Debian"}'
+          ansible-playbook tests/sparkfabrik-repository.yml -e '{"sparkfabrik_arch_repo": true, "sparkfabrik_repository_os_family": "Debian"}'
           [[ "${before}" == "$(sha256sum /etc/pacman.conf)" ]]
-          if ansible-playbook tests/sparkfabrik-repository.yml -e '{"sparkfabrik_arch_repo": true, "ansible_architecture": "aarch64"}'; then
+          if ansible-playbook tests/sparkfabrik-repository.yml -e '{"sparkfabrik_arch_repo": true, "sparkfabrik_repository_architecture": "aarch64"}'; then
             echo 'Unsupported architecture was accepted'
             exit 1
           fi

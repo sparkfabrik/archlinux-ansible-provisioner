@@ -5,6 +5,8 @@
     theme_repo: "{{ sf_toolbox_omarchy_theme_repo | default('https://github.com/stefanomainardi/spark-omarchy.git') }}"
     theme_name: "{{ sf_toolbox_omarchy_theme_name | default('spark-omarchy') }}"
     theme_dir: "{{ system.home | default(current_home) }}/.config/omarchy/themes/{{ sf_toolbox_omarchy_theme_name | default('spark-omarchy') }}"
+  environment:
+    OMARCHY_PATH: "{{ omarchy_path | default('/usr/share/omarchy') }}"
   block:
     # Omarchy installs extra themes as plain git clones under
     # ~/.config/omarchy/themes and `omarchy theme update` pulls them, so the
