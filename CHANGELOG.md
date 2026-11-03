@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added a `/opt/sparkdock` symlink to the sparkdock checkout (tag `claude-mods`), so the managed Claude Code settings load the `sparkfabrik-harness` plugin on Linux too ([sparkfabrik/sparkdock#664](https://github.com/sparkfabrik/sparkdock/pull/664))
+- Added claude-usage to `sf-toolbox` (tag `claude-usage`), installed through the shared Sparkdock script with the desktop reader for GNOME, KDE or Waybar
 - Added opt-in ChatGPT desktop installation to sf-toolbox: our reviewed recipe on Arch/CachyOS x86_64, Omarchy's own desktop package, and the official OpenAI `.deb` with signed apt updates on Ubuntu 24.04/26.04 and Debian 13; existing conflicting Arch packages are preserved
 - Added SparkFabrik recipe-source configuration for paru, plus opt-in signed binary repository configuration with fingerprint verification and an availability check on activation
 - sf-toolbox now registers writing guards for Claude and Codex; Codex hooks require review and trust through `/hooks`.
@@ -48,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Enabled the signed SparkFabrik binary repository by default for sf-toolbox on x86_64 Arch Linux, with `SPARKFABRIK_ARCH_REPO=0` to skip configuration
 - `sf-toolbox` now runs `gcloud components update` on every provisioning pass, so an existing Google Cloud SDK in `/opt/google-cloud-sdk` is kept current instead of staying pinned at the version installed on first provision
 - Delegated `*.loc` systemd-resolved configuration to the `spark-http-proxy` CLI and removed the bespoke `docker` role drop-in (`docker-dev-dns.conf`, `172.17.0.1:19322`); the CLI now writes `http-proxy.conf` (`127.0.0.1:19322`). Legacy `~docker`/dnsdock routing is no longer configured
 - Replaced the obsolete Python `yq` package (pacman) with `go-yq`, the mikefarah Go yq v4 (`extra` repo); the old `yq` is now removed first since the two packages conflict
@@ -72,10 +75,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Initialize the pacman signing key when missing, even if the keyring directory already exists, before trusting the SparkFabrik repository key
+- Fixed `sf-toolbox` never upgrading Arch toolbox packages such as `openai-codex` and `opencode`: the pacman task now refreshes the package database and installs the latest version
 - Runs no longer print the Python interpreter discovery warning on every play: an `ansible.cfg` sets `interpreter_python = auto_silent`, which keeps the discovery and drops the warning
 - The Omarchy bar widget and theme tasks pass `OMARCHY_PATH` to the `omarchy-*` commands they call, which failed with `OMARCHY_PATH is not set` because Ansible runs neither the profile nor the bash rc chain that exports it
 - `sf-toolbox` installs the Node.js runtime its npm packages need instead of failing with `Failed to find required executable "npm"`: distribution packages on Arch, CachyOS and Debian/Ubuntu, and on Omarchy the mise runtime and mise-registered `npm:` packages that `omarchy update` keeps current
 - Read `os_family` and `architecture` through `ansible_facts` in the `sparkfabrik-repository` role, removing the `INJECT_FACTS_AS_VARS` deprecation warnings
+- On Omarchy, `sf-toolbox` recognizes the tools Omarchy declares in its system mise configuration again, so `@github/copilot` is no longer registered a second time
 - Detect the invoking user before recipe configuration during full provisioning and create personal paru files as that user
 
 - Configure SparkFabrik paru recipes per user, preserve existing settings, and migrate the previous managed system-wide entry

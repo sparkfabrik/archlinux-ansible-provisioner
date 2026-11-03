@@ -68,6 +68,7 @@ Hard-won layout rules:
 - **The root `Panel` must set `implicitWidth`/`implicitHeight` from the button.** Without them the bar gives the widget a zero-width slot and the icon is invisible. This was the first shipping bug.
 - **Never use an `Image`'s `implicitHeight` in layout math.** It is the source PNG's natural size (180px here), not the rendered size. Use `height`. This was the second shipping bug (a giant hero row).
 - **Nerd Font glyphs fail silently.** An invalid codepoint renders as nothing, which looks like a missing widget. Verify any new glyph against a built-in panel before using it.
+- **Always write the theme palette as `Commons.Color`, with `import qs.Commons as Commons`.** Qt 6.12 adds a QtQuick `Color` type that hides a bare `Color`, so every palette value comes back undefined and the widget loses its colors. The Omarchy shell made the same change upstream (omacom/omarchy#14553).
 
 Runtime facts:
 

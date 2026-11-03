@@ -144,11 +144,11 @@ run_ansible
         mock = """from ansible.module_utils.basic import AnsibleModule
 import json, os
 from pathlib import Path
-m = AnsibleModule(argument_spec=dict(name=dict(type='raw'), state=dict(type='str'), global_=dict(type='bool', aliases=['global']), path=dict(type='str')), supports_check_mode=True)
+m = AnsibleModule(argument_spec=dict(name=dict(type='raw'), state=dict(type='str'), global_=dict(type='bool', aliases=['global']), path=dict(type='str'), update_cache=dict(type='bool')), supports_check_mode=True)
 name = m.params['name']
 with open(os.environ['FIXTURE_LOG'], 'a') as f:
     f.write(json.dumps({'package': name, 'state': m.params['state']}) + '\\n')
-if m.params['state'] == 'present' and 'openai-codex' in name:
+if m.params['state'] in ('present', 'latest') and 'openai-codex' in name:
     if os.environ['FIXTURE_MODE'] == '404':
         m.fail_json(msg='Failed to install package(s)', stderr='failed retrieving file codex: 404')
     if os.environ['FIXTURE_MODE'] == 'other-error':
