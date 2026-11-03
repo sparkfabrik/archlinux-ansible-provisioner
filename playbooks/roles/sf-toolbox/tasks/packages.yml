@@ -113,14 +113,16 @@
       ignore_errors: true
       when: not (omarchy_detected | default(false) | bool)
 
-    - name: Drop obsolete npm packages from the mise configuration (Omarchy)
+    # Packages Omarchy now provides itself are dropped too, so an earlier
+    # registration does not leave a second copy beside Omarchy's.
+    - name: Drop obsolete and Omarchy-owned npm packages from the mise configuration (Omarchy)
       become: true
       become_user: "{{ system.username | default(current_user) }}"
       ansible.builtin.command:
         argv: [mise, unuse, --global, "npm:{{ item }}"]
       environment:
         HOME: "{{ system.home | default(current_home) }}"
-      loop: "{{ toolbox.common.remove.npm }}"
+      loop: "{{ toolbox.common.remove.npm + (omarchy_shadowed_npm | default([])) }}"
       when: omarchy_detected | default(false) | bool
       changed_when: false
       failed_when: false
