@@ -153,3 +153,75 @@
           WARNING: Automatic herdr skill installation was not possible.
           Please run `ajust sf-herdr-skill-install` manually to complete the setup.
       when: not herdr_skill_setup_script.stat.exists or not (herdr_skill_setup_script.stat.executable | default(false))
+
+# The Herdr desktop app is a separate program from the TUI above, built on
+# herdr-core; the two keep their own agents and can be installed together.
+# Herdr's own installer puts the app in ~/.local/share/herdr-app with a
+# launcher entry, after checking the download against the release manifest's
+# sha256, and adds herdr-core in ~/.local/bin when there is none. The app
+# updates itself and its core from then on, so the installer runs only once,
+# as the desktop user, the same way Omarchy's `omarchy-install-ai-herdr` does.
+- name: Install the Herdr desktop app
+  tags: [sf-toolbox, packages, herdr, herdr-app]
+  when:
+    - sf_toolbox_herdr_app | default(true) | bool
+    - ansible_facts['architecture'] in ['x86_64', 'aarch64']
+  vars:
+    herdr_app_user: "{{ system.username | default(current_user) }}"
+    herdr_app_home: "{{ system.home | default(current_home) }}"
+  block:
+    # A machine without a desktop session (a server, a container) has no use
+    # for a desktop app.
+    - name: Look for a graphical session
+      ansible.builtin.find:
+        paths: [/usr/share/wayland-sessions, /usr/share/xsessions]
+        patterns: "*.desktop"
+      register: herdr_app_sessions
+
+    - name: Check for an installed Herdr desktop app
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - "{{ herdr_app_home }}/.local/share/herdr-app"
+        - /usr/bin/herdr-app
+      register: herdr_app_installed
+
+    - name: Report the Herdr desktop app skipped without a desktop session
+      ansible.builtin.debug:
+        msg: The Herdr desktop app is skipped because this machine has no graphical session
+      when: herdr_app_sessions.matched == 0
+
+    - name: Run the Herdr desktop app installer
+      when:
+        - herdr_app_sessions.matched > 0
+        - herdr_app_installed.results | selectattr('stat.exists') | list | length == 0
+      block:
+        - name: Create a temporary file for the Herdr installer
+          ansible.builtin.tempfile:
+            state: file
+            suffix: .herdr-app-install.sh
+          register: herdr_app_installer
+
+        # Downloaded whole before it runs, so a dropped connection can never
+        # run half a script.
+        - name: Download the Herdr installer
+          ansible.builtin.get_url:
+            url: https://releases.herdr.dev/app/install.sh
+            dest: "{{ herdr_app_installer.path }}"
+            mode: "0644"
+            force: true
+
+        - name: Install the Herdr desktop app
+          become: true
+          become_user: "{{ herdr_app_user }}"
+          ansible.builtin.command:
+            argv: [sh, "{{ herdr_app_installer.path }}"]
+          environment:
+            HOME: "{{ herdr_app_home }}"
+          changed_when: true
+      always:
+        - name: Remove the Herdr installer
+          ansible.builtin.file:
+            path: "{{ herdr_app_installer.path }}"
+            state: absent
+          when: herdr_app_installer.path is defined

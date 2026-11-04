@@ -87,6 +87,12 @@ jobs:
           useradd -m -s /bin/zsh testuser
           echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
+      - name: Simulate a desktop session
+        run: |
+          # The Herdr desktop app installs only where a desktop session exists.
+          mkdir -p /usr/share/wayland-sessions
+          touch /usr/share/wayland-sessions/ci.desktop
+
       - name: Run sf-toolbox installer
         env:
           SUDO_USER: testuser
@@ -106,6 +112,14 @@ jobs:
           upterm version
           /opt/google-cloud-sdk/bin/gcloud --version
 
+      - name: Verify the Herdr desktop app
+        run: |
+          # The run resolves its user from SUDO_USER, which sudo resets, so
+          # look in whichever home it used.
+          data=$(dirname /home/*/.local/share/herdr-app)
+          test -x "${data}/herdr-app/herdr-app"
+          test -f "${data}/applications/herdr-app.desktop"
+
   toolbox-arch:
     name: Arch Linux
     runs-on: ubuntu-latest
@@ -122,6 +136,12 @@ jobs:
         run: |
           useradd -m -s /bin/zsh testuser
           echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+      - name: Simulate a desktop session
+        run: |
+          # The Herdr desktop app installs only where a desktop session exists.
+          mkdir -p /usr/share/wayland-sessions
+          touch /usr/share/wayland-sessions/ci.desktop
 
       - name: Run sf-toolbox installer
         env:
@@ -140,6 +160,14 @@ jobs:
           glab --version
           upterm version
           /opt/google-cloud-sdk/bin/gcloud --version
+
+      - name: Verify the Herdr desktop app
+        run: |
+          # The run resolves its user from SUDO_USER, which sudo resets, so
+          # look in whichever home it used.
+          data=$(dirname /home/*/.local/share/herdr-app)
+          test -x "${data}/herdr-app/herdr-app"
+          test -f "${data}/applications/herdr-app.desktop"
 
       - name: Verify Upterm idempotency
         env:

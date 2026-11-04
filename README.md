@@ -35,6 +35,7 @@ SKIP_TAGS=gcloud sf-toolbox             # Skip specific tags
 
 - **AI Coding**: opencode, openspec, codex
 - **Desktop AI (opt-in)**: ChatGPT/Codex desktop (`chatgpt`) on supported platforms
+- **Herdr desktop app**: installed once on machines with a desktop session, next to the `herdr` TUI; it updates itself afterwards. Skip it with `HERDR_APP=0 sf-toolbox`
 - **Cloud/DevOps**: gcloud, glab, mkcert, docker (must be pre-installed)
 - **Task Runner**: just, ajust (SparkFabrik wrapper)
 - **Utilities**: gum, Upterm
