@@ -163,9 +163,7 @@
 # as the desktop user, the same way Omarchy's `omarchy-install-ai-herdr` does.
 - name: Install the Herdr desktop app
   tags: [sf-toolbox, packages, herdr, herdr-app]
-  when:
-    - sf_toolbox_herdr_app | default(true) | bool
-    - ansible_facts['architecture'] in ['x86_64', 'aarch64']
+  when: ansible_facts['architecture'] in ['x86_64', 'aarch64']
   vars:
     herdr_app_user: "{{ system.username | default(current_user) }}"
     herdr_app_home: "{{ system.home | default(current_home) }}"
