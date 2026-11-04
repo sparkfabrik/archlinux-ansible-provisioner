@@ -43,12 +43,30 @@
   tags: [sf-toolbox, packages]
   block:
     - name: Install the Node.js runtime from pacman (Archlinux without Omarchy)
-      community.general.pacman:
-        name: "{{ toolbox.arch.npm_runtime }}"
-        state: present
       when:
         - ansible_facts['os_family'] == "Archlinux"
         - not (omarchy_detected | default(false) | bool)
+      block:
+        # `pacman -T` honours provides, so an installed alternative such as
+        # nodejs-lts-krypton already satisfies nodejs; asking pacman for the
+        # nodejs package itself would conflict with it. It exits 127 and lists
+        # what is still missing. Any other failure falls back to the full list.
+        - name: Find the missing Node.js runtime packages
+          ansible.builtin.command:
+            argv: "{{ ['pacman', '-T'] + toolbox.arch.npm_runtime }}"
+          register: sf_toolbox_npm_runtime_check
+          changed_when: false
+          failed_when: false
+          check_mode: false
+
+        - name: Install the missing Node.js runtime packages
+          community.general.pacman:
+            name: >-
+              {{ sf_toolbox_npm_runtime_check.stdout_lines
+                 if sf_toolbox_npm_runtime_check.rc == 127
+                 else toolbox.arch.npm_runtime }}
+            state: present
+          when: sf_toolbox_npm_runtime_check.rc != 0
 
     - name: Select the Node.js runtime with mise (Omarchy)
       when: omarchy_detected | default(false) | bool

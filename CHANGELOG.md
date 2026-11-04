@@ -76,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `sf-toolbox` no longer fails on Arch Linux when an alternative Node.js package such as `nodejs-lts-krypton` is installed: it installs only the runtime packages that are still missing
 - Initialize the pacman signing key when missing, even if the keyring directory already exists, before trusting the SparkFabrik repository key
 - Fixed `sf-toolbox` never upgrading Arch toolbox packages such as `openai-codex` and `opencode`: the pacman task now refreshes the package database and installs the latest version
 - Trust the `sf-toolbox` Homebrew taps on Debian/Ubuntu, which Homebrew 7 otherwise refuses to load formulae and casks from
