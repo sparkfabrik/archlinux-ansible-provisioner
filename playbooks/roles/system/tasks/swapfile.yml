@@ -56,6 +56,10 @@
     - name: Inspect the swapfile
       ansible.builtin.stat:
         path: "{{ swapfile_path }}"
+        # Only the size matters; a checksum would read the whole swapfile.
+        get_checksum: false
+        get_mime: false
+        get_attributes: false
       register: swapfile_stat
 
     - name: List active swap devices
