@@ -263,6 +263,13 @@ properties:
               - 1920x1080x32
               - 1280x720x32
             type: string
+          cmdline_extra:
+            $id: "#/properties/system/grub/properties/cmdline_extra"
+            default: ""
+            description: Extra kernel parameters appended to GRUB_CMDLINE_LINUX_DEFAULT, kept across provisioning runs.
+            examples:
+              - amd_pstate=active
+            type: string
   timeshift:
     $id: "#/properties/timeshift"
     additionalProperties: true
@@ -323,6 +330,14 @@ properties:
         default: false
         title: Configure hibernate to use the swapfile
         description: Use the swapfile for hibernation.
+        examples:
+          - true
+      disable_swap_partitions:
+        $id: "#/properties/swapfile/properties/disable_swap_partitions"
+        type: boolean
+        default: false
+        title: Disable swap partitions
+        description: Turn off swap partitions and comment them out in fstab once the swapfile is active. A swap partition outside the encrypted root stores memory and the hibernation image in clear. The partition is not wiped.
         examples:
           - true
   sparkdock:
