@@ -40,6 +40,14 @@
         mode: 0644
         backup: yes
 
+    - name: Disable the GRUB EFI BootNext menu entries
+      ansible.builtin.lineinfile:
+        dest: /etc/default/grub
+        regexp: "^#?GRUB_DISABLE_BOOTNEXT="
+        line: GRUB_DISABLE_BOOTNEXT=true
+        mode: "0644"
+        backup: true
+
     - name: Remember last choice
       lineinfile:
         dest: /etc/default/grub

@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The GRUB menu no longer lists an "(EFI BootNext)" entry for every firmware boot option: the `system` role sets `GRUB_DISABLE_BOOTNEXT=true`
 - Enabled the signed SparkFabrik binary repository by default for sf-toolbox on x86_64 Arch Linux, with `SPARKFABRIK_ARCH_REPO=0` to skip configuration
 - `sf-toolbox` now runs `gcloud components update` on every provisioning pass, so an existing Google Cloud SDK in `/opt/google-cloud-sdk` is kept current instead of staying pinned at the version installed on first provision
 - Delegated `*.loc` systemd-resolved configuration to the `spark-http-proxy` CLI and removed the bespoke `docker` role drop-in (`docker-dev-dns.conf`, `172.17.0.1:19322`); the CLI now writes `http-proxy.conf` (`127.0.0.1:19322`). Legacy `~docker`/dnsdock routing is no longer configured
@@ -82,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The swapfile role no longer deletes and recreates the swapfile on every run, which changed its offset and broke resume from hibernation; it is recreated only when `swapfile.size` changes
 - Hibernation on a swapfile no longer writes `resume=` lines into `/etc/mkinitcpio.conf` or a `[Service]` block into `/etc/systemd/logind.conf`: the memory check bypass moves to a `systemd-logind.service` drop-in and the stray lines are removed
 - The GRUB task no longer resets `resume=` to the swap partition when hibernation uses the swapfile, and the swapfile role now updates any existing `resume=` and `resume_offset=` instead of only `resume=PARTLABEL=swap`
+- `paru -Syu` no longer fails with `could not find all required packages: sparkfabrik/chatgpt-desktop`: the paru recipe source is renamed to `sparkfabrik-pkgbuilds`, apart from the `sparkfabrik` pacman repository, and existing user configurations are updated on the next run
 - `sf-toolbox` no longer fails on Arch Linux when an alternative Node.js package such as `nodejs-lts-krypton` is installed: it installs only the runtime packages that are still missing
 - Initialize the pacman signing key when missing, even if the keyring directory already exists, before trusting the SparkFabrik repository key
 - Fixed `sf-toolbox` never upgrading Arch toolbox packages such as `openai-codex` and `opencode`: the pacman task now refreshes the package database and installs the latest version
