@@ -94,6 +94,12 @@ jobs:
           cmp /etc/paru.conf /tmp/paru-original.conf
           grep -Fx 'Include = /etc/paru.conf' /home/recipe-user/.config/paru/paru.conf
           grep -Fx 'Url = https://github.com/sparkfabrik/arch-packages.git' /home/recipe-user/.config/paru/paru.conf
+          grep -Fx '[sparkfabrik-pkgbuilds]' /home/recipe-user/.config/paru/paru.conf
+          # A block written under the previous [sparkfabrik] name is renamed.
+          sed -i 's/^\[sparkfabrik-pkgbuilds\]$/[sparkfabrik]/' /home/recipe-user/.config/paru/paru.conf
+          ansible-playbook tests/sparkfabrik-repository.yml "${args[@]}"
+          grep -Fx '[sparkfabrik-pkgbuilds]' /home/recipe-user/.config/paru/paru.conf
+          if grep -Fxq '[sparkfabrik]' /home/recipe-user/.config/paru/paru.conf; then exit 1; fi
           test "$(stat -c %U:%G /home/recipe-user/.config)" = recipe-user:recipe-user
           test "$(stat -c %U:%G /home/recipe-user/.config/paru)" = recipe-user:recipe-user
           test "$(stat -c %U:%G /home/recipe-user/.config/paru/paru.conf)" = recipe-user:recipe-user
@@ -112,7 +118,7 @@ jobs:
             echo 'Unmanaged user recipe was duplicated'
             exit 1
           fi
-          grep -F 'Remove the manually configured [sparkfabrik] stanza' /tmp/manual-recipes.log
+          grep -F 'Remove the manually configured [sparkfabrik] or [sparkfabrik-pkgbuilds] stanza' /tmp/manual-recipes.log
           [[ "${user_before}" == "$(sha256sum /home/existing-user/.config/paru/paru.conf)" ]]
           cmp /etc/paru.conf /tmp/paru-original.conf
       - name: Detect the invoking user before configuring recipes

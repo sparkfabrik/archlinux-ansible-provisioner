@@ -35,8 +35,8 @@
           - >-
             (item.content | b64decode |
             regex_replace('(?ms)^# BEGIN SPARKFABRIK PKGBUILDS\n.*?^# END SPARKFABRIK PKGBUILDS(?:\n|$)', ''))
-            is not search('(?m)^\s*\[sparkfabrik\]\s*(?:#.*)?$')
-        fail_msg: "Remove the manually configured [sparkfabrik] stanza from {{ item.source }} before enabling recipe provisioning"
+            is not search('(?m)^\s*\[sparkfabrik(?:-pkgbuilds)?\]\s*(?:#.*)?$')
+        fail_msg: "Remove the manually configured [sparkfabrik] or [sparkfabrik-pkgbuilds] stanza from {{ item.source }} before enabling recipe provisioning"
       loop: "{{ sparkfabrik_paru_configs.results }}"
       when: not (item.skipped | default(false))
       loop_control:
@@ -59,6 +59,11 @@
         mode: "0644"
         force: false
 
+    # Named apart from the [sparkfabrik] pacman repository: paru resolves a
+    # `repo/package` target against pacman repositories first, so a shared
+    # name made it look for recipe-only packages in the binary repository.
+    # The managed block is rewritten in place, which also renames it in
+    # existing configurations.
     - name: Register the SparkFabrik PKGBUILD repository for the user
       become: true
       become_user: "{{ sparkfabrik_paru_user }}"
@@ -66,7 +71,7 @@
         path: "{{ sparkfabrik_paru_path }}"
         marker: "# {mark} SPARKFABRIK PKGBUILDS"
         block: |
-          [sparkfabrik]
+          [sparkfabrik-pkgbuilds]
           Url = https://github.com/sparkfabrik/arch-packages.git
           Path = packages
 
