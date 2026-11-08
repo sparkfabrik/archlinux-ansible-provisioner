@@ -100,18 +100,26 @@
 
     # A swap partition outside the encrypted root stores memory, and the
     # hibernation image, in clear. Turning it off is safe; wiping it is left to
-    # the operator because it destroys data.
+    # the operator because it destroys data. zram and dm-crypt swap are not
+    # clear-text partitions, so they are left alone.
     - name: Disable swap partitions
       when: swapfile.disable_swap_partitions | default(false)
       block:
+        # GRUB keeps resume on the swap partition unless hibernation moves to
+        # the swapfile, so disabling the partition alone would break resume.
+        - name: Require hibernation on the swapfile
+          ansible.builtin.assert:
+            that: swapfile.configure_hibernate | default(false)
+            fail_msg: "`swapfile.disable_swap_partitions` requires `swapfile.configure_hibernate: true`"
+
         - name: Turn off active swap partitions
           ansible.builtin.command: swapoff "{{ item.split()[0] }}"
-          loop: "{{ active_swaps.stdout_lines | select('search', '\\spartition$') | list }}"
+          loop: "{{ active_swaps.stdout_lines | select('search', '\\spartition$') | reject('search', '^/dev/(zram|dm-|mapper/)') | list }}"
 
         - name: Comment out swap partitions in fstab
           ansible.builtin.replace:
             path: /etc/fstab
-            regexp: '^(?!#)(?!{{ swapfile_path | regex_escape }}\s)(\S+\s+\S+\s+swap\s.*)$'
+            regexp: '^((?:UUID=|PARTUUID=|LABEL=|PARTLABEL=|/dev/(?!zram|dm-|mapper/))\S+\s+\S+\s+swap\s.*)$'
             replace: '# Disabled by the swapfile role: \1'
 
     - name: Configure hibernation to use the swapfile
@@ -145,8 +153,8 @@
         - name: Point the GRUB resume parameters at the swapfile
           ansible.builtin.replace:
             path: /etc/default/grub
-            regexp: 'resume=[^\s"]+(\s+resume_offset=[^\s"]+)?'
-            replace: "resume=UUID={{ swapfile_uuid.stdout }} resume_offset={{ swapfile_offset.stdout }}"
+            regexp: '^(GRUB_CMDLINE_LINUX_DEFAULT=".*?)resume=[^\s"]+(?:\s+resume_offset=[^\s"]+)?'
+            replace: '\1resume=UUID={{ swapfile_uuid.stdout }} resume_offset={{ swapfile_offset.stdout }}'
           register: grub_resume_replaced
 
         - name: Add the GRUB resume parameters when missing

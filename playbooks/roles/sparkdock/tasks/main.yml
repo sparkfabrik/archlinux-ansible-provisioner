@@ -1,21 +1,7 @@
 ---
-# Other roles read scripts from the checkout, so it must exist on every run,
-# but a run limited to unrelated tags must not move it or discard local edits.
-- name: Ensure sparkdock repository is cloned
+- name: Ensure sparkdock repository is cloned and up-to-date
   tags: [always]
-  become: true
-  become_user: "{{ system.username | default(current_user) }}"
-  block:
-    - name: Clone sparkdock when missing
-      ansible.builtin.git:
-        repo: "https://github.com/sparkfabrik/sparkdock.git"
-        dest: "{{ sparkdock.path | default(sparkdock_default_path) }}"
-        version: master
-        update: false
-
-- name: Update the sparkdock checkout
-  tags: [sparkfabrik, sparkdock, sf-toolbox]
-  become: true
+  become: yes
   become_user: "{{ system.username | default(current_user) }}"
   block:
     - name: Git checkout sparkdock
@@ -23,8 +9,8 @@
         repo: "https://github.com/sparkfabrik/sparkdock.git"
         dest: "{{ sparkdock.path | default(sparkdock_default_path) }}"
         version: master
-        update: true
-        force: true
+        update: yes
+        force: yes
 
 # Managed Claude Code settings are shared with macOS and load the
 # `sparkfabrik-harness` plugin from `/opt/sparkdock`, so the same path must
