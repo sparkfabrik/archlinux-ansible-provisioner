@@ -269,6 +269,7 @@ properties:
             description: Extra kernel parameters appended to GRUB_CMDLINE_LINUX_DEFAULT, kept across provisioning runs.
             examples:
               - amd_pstate=active
+            pattern: '^[^"]*$'
             type: string
   timeshift:
     $id: "#/properties/timeshift"

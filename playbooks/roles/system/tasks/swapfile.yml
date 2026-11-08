@@ -6,6 +6,14 @@
     swapfile_path: "{{ swapfile.btrfs_volume_mountpoint }}/{{ swapfile.filename }}"
     swapfile_size_bytes: "{{ swapfile.size | human_to_bytes }}"
   block:
+    # GRUB keeps resume on the swap partition unless hibernation moves to the
+    # swapfile, so disabling the partition alone would break resume.
+    - name: Require hibernation on the swapfile to disable swap partitions
+      when: swapfile.disable_swap_partitions | default(false)
+      ansible.builtin.assert:
+        that: swapfile.configure_hibernate | default(false)
+        fail_msg: "`swapfile.disable_swap_partitions` requires `swapfile.configure_hibernate: true`"
+
     - name: Create a temporary mount point for the btrfs device
       ansible.builtin.file:
         path: "{{ swapfile.btrfs_temporary_mount_point }}"
@@ -98,30 +106,6 @@
         create: true
         mode: "0644"
 
-    # A swap partition outside the encrypted root stores memory, and the
-    # hibernation image, in clear. Turning it off is safe; wiping it is left to
-    # the operator because it destroys data. zram and dm-crypt swap are not
-    # clear-text partitions, so they are left alone.
-    - name: Disable swap partitions
-      when: swapfile.disable_swap_partitions | default(false)
-      block:
-        # GRUB keeps resume on the swap partition unless hibernation moves to
-        # the swapfile, so disabling the partition alone would break resume.
-        - name: Require hibernation on the swapfile
-          ansible.builtin.assert:
-            that: swapfile.configure_hibernate | default(false)
-            fail_msg: "`swapfile.disable_swap_partitions` requires `swapfile.configure_hibernate: true`"
-
-        - name: Turn off active swap partitions
-          ansible.builtin.command: swapoff "{{ item.split()[0] }}"
-          loop: "{{ active_swaps.stdout_lines | select('search', '\\spartition$') | reject('search', '^/dev/(zram|dm-|mapper/)') | list }}"
-
-        - name: Comment out swap partitions in fstab
-          ansible.builtin.replace:
-            path: /etc/fstab
-            regexp: '^((?:UUID=|PARTUUID=|LABEL=|PARTLABEL=|/dev/(?!zram|dm-|mapper/))\S+\s+\S+\s+swap\s.*)$'
-            replace: '# Disabled by the swapfile role: \1'
-
     - name: Configure hibernation to use the swapfile
       when: swapfile.configure_hibernate | default(false)
       block:
@@ -199,3 +183,51 @@
           when: logind_dropin is changed
           ansible.builtin.systemd:
             daemon_reload: true
+
+    # A swap partition outside the encrypted root stores memory, and the
+    # hibernation image, in clear. Runs after resume moved to the swapfile.
+    # Only plain partitions are touched (lsblk TYPE `part`): zram, dm-crypt and
+    # LVM swap are left alone. Wiping the partition is left to the operator.
+    - name: Disable swap partitions
+      when: swapfile.disable_swap_partitions | default(false)
+      block:
+        - name: Find the device type of each active swap
+          ansible.builtin.command: lsblk -ndo TYPE "{{ item }}"
+          loop: "{{ active_swaps.stdout_lines | map('split') | map('first') | reject('equalto', swapfile_path) | list }}"
+          register: active_swap_types
+          changed_when: false
+          failed_when: false
+
+        - name: Turn off active swap partitions
+          ansible.builtin.command: swapoff "{{ item.item }}"
+          loop: "{{ active_swap_types.results | selectattr('stdout', 'equalto', 'part') | list }}"
+          loop_control:
+            label: "{{ item.item }}"
+
+        - name: List swap sources in fstab
+          ansible.builtin.command: awk '$1 !~ /^#/ && $3 == "swap" { print $1 }' /etc/fstab
+          register: fstab_swaps
+          changed_when: false
+
+        - name: Find the device type of each fstab swap source
+          ansible.builtin.shell: |
+            set -o pipefail
+            src={{ item | quote }}
+            case "${src}" in
+              *=*) dev=$(findfs "${src}") ;;
+              *) dev=$(readlink -f "${src}") ;;
+            esac
+            lsblk -ndo TYPE "${dev}"
+          loop: "{{ fstab_swaps.stdout_lines | reject('equalto', swapfile_path) | list }}"
+          register: fstab_swap_types
+          changed_when: false
+          failed_when: false
+
+        - name: Comment out swap partitions in fstab
+          ansible.builtin.replace:
+            path: /etc/fstab
+            regexp: '^({{ item.item | regex_escape }}\s+\S+\s+swap\s.*)$'
+            replace: '# Disabled by the swapfile role: \1'
+          loop: "{{ fstab_swap_types.results | selectattr('stdout', 'equalto', 'part') | list }}"
+          loop_control:
+            label: "{{ item.item }}"
