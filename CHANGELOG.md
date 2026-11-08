@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The GRUB menu no longer lists an "(EFI BootNext)" entry for every firmware boot option: the `system` role sets `GRUB_DISABLE_BOOTNEXT=true`
 - Enabled the signed SparkFabrik binary repository by default for sf-toolbox on x86_64 Arch Linux, with `SPARKFABRIK_ARCH_REPO=0` to skip configuration
 - `sf-toolbox` now runs `gcloud components update` on every provisioning pass, so an existing Google Cloud SDK in `/opt/google-cloud-sdk` is kept current instead of staying pinned at the version installed on first provision
 - Delegated `*.loc` systemd-resolved configuration to the `spark-http-proxy` CLI and removed the bespoke `docker` role drop-in (`docker-dev-dns.conf`, `172.17.0.1:19322`); the CLI now writes `http-proxy.conf` (`127.0.0.1:19322`). Legacy `~docker`/dnsdock routing is no longer configured
