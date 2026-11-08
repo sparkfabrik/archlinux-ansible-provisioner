@@ -11,6 +11,7 @@ system:
     controllerMode: dual
   grub:
     gfxmode: 1920x1080x32
+    cmdline_extra: ""
 timeshift:
   autosnap:
     enabled: true
@@ -24,6 +25,7 @@ swapfile:
   filename: swapfile
   size: 16G
   configure_hibernate: false
+  disable_swap_partitions: false
 packages:
   obs: false
 desktop:

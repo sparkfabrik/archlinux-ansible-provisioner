@@ -5,15 +5,23 @@
     - stat: path=/boot/grub
       register: grubcfg
 
-    # The resume configuration could be changed if swapfile and the hibernation on swapfile is enabled.
-    # See swapfile.yml for more details.
-    - name: "Configuring GRUB to print the OEM logo"
-      lineinfile:
-        dest: /etc/default/grub
-        regexp: "^GRUB_CMDLINE_LINUX_DEFAULT="
-        line: 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet splash resume=PARTLABEL=swap"'
-        mode: 0644
-        backup: yes
+    - name: Read the current GRUB defaults
+      ansible.builtin.slurp:
+        src: /etc/default/grub
+      register: grub_defaults
+
+    # With hibernation on a swapfile, swapfile.yml owns the resume parameters;
+    # keep them instead of pointing resume back at a swap partition.
+    - name: Choose the GRUB resume parameters
+      vars:
+        grub_cmdline_default: "{{ grub_defaults.content | b64decode | regex_search('^GRUB_CMDLINE_LINUX_DEFAULT=.*$', multiline=True) | default('', true) }}"
+        grub_current_resume_dev: "{{ grub_cmdline_default | regex_search('resume=[^\\s\"]+') | default('', true) }}"
+        grub_current_resume_offset: "{{ grub_cmdline_default | regex_search('resume_offset=[^\\s\"]+') | default('', true) }}"
+        grub_current_resume: "{{ ([grub_current_resume_dev, grub_current_resume_offset] | select | join(' ')) if grub_current_resume_dev else '' }}"
+        grub_keep_resume: "{{ (swapfile.enabled | default(false)) and (swapfile.configure_hibernate | default(false)) and (grub_current_resume | length > 0) }}"
+      ansible.builtin.set_fact:
+        grub_resume: "{{ grub_current_resume if grub_keep_resume | bool else 'resume=PARTLABEL=swap' }}"
+        grub_cmdline_extra: "{{ (' ' + system.grub.cmdline_extra) if (system.grub.cmdline_extra | default('')) else '' }}"
 
     - name: Set the GRUB_GFXMODE
       replace:
@@ -65,7 +73,7 @@
       lineinfile:
         dest: /etc/default/grub
         regexp: "^GRUB_CMDLINE_LINUX_DEFAULT="
-        line: 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet splash resume=PARTLABEL=swap"'
+        line: 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet splash {{ grub_resume }}{{ grub_cmdline_extra }}"'
         mode: 0644
         backup: yes
 

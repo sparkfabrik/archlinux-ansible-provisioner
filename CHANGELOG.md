@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `swapfile.disable_swap_partitions`: once the swapfile is active, turns off clear-text swap partitions and comments them out in fstab, without wiping them; requires `swapfile.configure_hibernate`
+- Added `system.grub.cmdline_extra` to append kernel parameters, such as `amd_pstate=active`, that the GRUB task keeps across provisioning runs
 - Added the Herdr desktop app to `sf-toolbox` (tag `herdr-app`): installed once with Herdr's official installer on machines with a desktop session, next to the `herdr` TUI, and updated by the app itself afterwards
 - Added a `/opt/sparkdock` symlink to the sparkdock checkout (tag `claude-mods`), so the managed Claude Code settings load the `sparkfabrik-harness` plugin on Linux too ([sparkfabrik/sparkdock#664](https://github.com/sparkfabrik/sparkdock/pull/664))
 - Added claude-usage to `sf-toolbox` (tag `claude-usage`), installed through the shared Sparkdock script with the desktop reader for GNOME, KDE or Waybar
@@ -77,6 +79,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The swapfile role no longer deletes and recreates the swapfile on every run, which changed its offset and broke resume from hibernation; it is recreated only when `swapfile.size` changes
+- Hibernation on a swapfile no longer writes `resume=` lines into `/etc/mkinitcpio.conf` or a `[Service]` block into `/etc/systemd/logind.conf`: the memory check bypass moves to a `systemd-logind.service` drop-in and the stray lines are removed
+- The GRUB task no longer resets `resume=` to the swap partition when hibernation uses the swapfile, and the swapfile role now updates any existing `resume=` and `resume_offset=` instead of only `resume=PARTLABEL=swap`
 - `paru -Syu` no longer fails with `could not find all required packages: sparkfabrik/chatgpt-desktop`: the paru recipe source is renamed to `sparkfabrik-pkgbuilds`, apart from the `sparkfabrik` pacman repository, and existing user configurations are updated on the next run
 - `sf-toolbox` no longer fails on Arch Linux when an alternative Node.js package such as `nodejs-lts-krypton` is installed: it installs only the runtime packages that are still missing
 - Initialize the pacman signing key when missing, even if the keyring directory already exists, before trusting the SparkFabrik repository key
