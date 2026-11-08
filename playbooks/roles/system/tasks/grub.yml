@@ -14,7 +14,7 @@
     # keep them instead of pointing resume back at a swap partition.
     - name: Choose the GRUB resume parameters
       vars:
-        grub_current_resume: "{{ grub_defaults.content | b64decode | regex_findall('resume=\\S+(?:\\s+resume_offset=\\S+)?') | first | default('') }}"
+        grub_current_resume: "{{ grub_defaults.content | b64decode | regex_findall('resume=[^\\s\"]+(?:\\s+resume_offset=[^\\s\"]+)?') | first | default('') }}"
         grub_keep_resume: "{{ (swapfile.enabled | default(false)) and (swapfile.configure_hibernate | default(false)) and (grub_current_resume | length > 0) }}"
       ansible.builtin.set_fact:
         grub_resume: "{{ grub_current_resume if grub_keep_resume | bool else 'resume=PARTLABEL=swap' }}"

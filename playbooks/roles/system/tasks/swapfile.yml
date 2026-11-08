@@ -141,7 +141,7 @@
         - name: Point the GRUB resume parameters at the swapfile
           ansible.builtin.replace:
             path: /etc/default/grub
-            regexp: 'resume=\S+(\s+resume_offset=\S+)?'
+            regexp: 'resume=[^\s"]+(\s+resume_offset=[^\s"]+)?'
             replace: "resume=UUID={{ swapfile_uuid.stdout }} resume_offset={{ swapfile_offset.stdout }}"
           register: grub_resume_replaced
 
