@@ -338,7 +338,7 @@ properties:
         type: boolean
         default: false
         title: Disable swap partitions
-        description: Turn off swap partitions and comment them out in fstab once the swapfile is active. A swap partition outside the encrypted root stores memory and the hibernation image in clear. zram and dm-crypt swap are left alone, and the partition is not wiped. Requires `configure_hibernate`.
+        description: Turn off swap partitions and comment them out in fstab once the swapfile is active. A swap partition outside the encrypted root stores memory and the hibernation image in clear. zram and dm-crypt swap are left alone, and the partition is not wiped. Requires `configure_hibernate`; turning hibernation off later points resume back at the disabled partition.
         examples:
           - true
   sparkdock:

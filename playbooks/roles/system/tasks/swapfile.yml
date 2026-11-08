@@ -226,7 +226,7 @@
         - name: Comment out swap partitions in fstab
           ansible.builtin.replace:
             path: /etc/fstab
-            regexp: '^({{ item.item | regex_escape }}\s+\S+\s+swap\s.*)$'
+            regexp: '^(\s*{{ item.item | regex_escape }}\s+\S+\s+swap(?:\s.*)?)$'
             replace: '# Disabled by the swapfile role: \1'
           loop: "{{ fstab_swap_types.results | selectattr('stdout', 'equalto', 'part') | list }}"
           loop_control:
