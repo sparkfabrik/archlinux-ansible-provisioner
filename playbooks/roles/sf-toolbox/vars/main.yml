@@ -19,6 +19,9 @@ toolbox:
       - openai-codex
       - gopls
       - ripgrep
+      # PHP CLI for PHP tools such as the Drupal.org CLI. Arch ships iconv
+      # disabled; tasks/php.yml enables it.
+      - php
     # The npm packages below need a Node.js runtime, which no other package
     # here pulls in. On vanilla Arch that runtime is a pacman one. On Omarchy
     # it is not: see the npm runtime block in tasks/packages.yml.
@@ -56,6 +59,8 @@ toolbox:
       - openspec
       - gopls
       - ripgrep
+      # PHP CLI, the same formula sparkdock uses on macOS, with iconv built in.
+      - php
     homebrew_casks:
       - claude-code@latest
       - codex

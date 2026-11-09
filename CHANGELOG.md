@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added PHP to `sf-toolbox`: the `php` package on Arch Linux, CachyOS and Omarchy, with the `iconv` extension enabled when it is not loaded yet, and the Homebrew `php` formula on Debian/Ubuntu
 - Added `swapfile.disable_swap_partitions`: once the swapfile is active, turns off clear-text swap partitions and comments them out in fstab, without wiping them; requires `swapfile.configure_hibernate`
 - Added `system.grub.cmdline_extra` to append kernel parameters, such as `amd_pstate=active`, that the GRUB task keeps across provisioning runs
 - Added the Herdr desktop app to `sf-toolbox` (tag `herdr-app`): installed once with Herdr's official installer on machines with a desktop session, next to the `herdr` TUI, and updated by the app itself afterwards

@@ -17,6 +17,9 @@
 - name: Install toolbox packages
   import_tasks: packages.yml
 
+- name: Configure PHP
+  ansible.builtin.import_tasks: php.yml
+
 - name: Install Google Cloud SDK
   import_tasks: gcloud.yml
 
