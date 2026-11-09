@@ -1,0 +1,29 @@
+---
+# Arch packages PHP with iconv as a shared extension that php.ini leaves
+# commented out. PHP tools such as the Drupal.org CLI phar refuse to start
+# without it. Enable it from conf.d only when it is not loaded yet, so a
+# php.ini that already enables it does not trigger "Module already loaded".
+- name: Enable the PHP `iconv` extension (Archlinux)
+  tags: [sf-toolbox, packages, php]
+  when: ansible_facts['os_family'] == "Archlinux"
+  block:
+    - name: List the loaded PHP modules
+      ansible.builtin.command:
+        argv: [php, -m]
+      register: sf_toolbox_php_modules
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Load `iconv` from the PHP conf.d directory
+      ansible.builtin.copy:
+        dest: /etc/php/conf.d/iconv.ini
+        content: |
+          ; Managed by sf-toolbox: PHP tools such as the Drupal.org CLI need iconv.
+          extension=iconv
+        owner: root
+        group: root
+        mode: "0644"
+      when:
+        - sf_toolbox_php_modules.rc == 0
+        - "'iconv' not in sf_toolbox_php_modules.stdout_lines"
