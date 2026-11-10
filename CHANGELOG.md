@@ -81,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixed `sf-toolbox` breaking Arch packages with a partial upgrade: it now installs missing packages without refreshing the database or upgrading installed ones, and leaves upgrades to `pacman -Syu`
+- Fixed `sf-toolbox` skipping the PHP `iconv` setup silently when `php` does not start; it now prints the error and asks to run `sudo pacman -Syu`
 - The swapfile role no longer deletes and recreates the swapfile on every run, which changed its offset and broke resume from hibernation; it is recreated only when `swapfile.size` changes
 - Hibernation on a swapfile no longer writes `resume=` lines into `/etc/mkinitcpio.conf` or a `[Service]` block into `/etc/systemd/logind.conf`: the memory check bypass moves to a `systemd-logind.service` drop-in and the stray lines are removed
 - The GRUB task no longer resets `resume=` to the swap partition when hibernation uses the swapfile, and the swapfile role now updates any existing `resume=` and `resume_offset=` instead of only `resume=PARTLABEL=swap`
