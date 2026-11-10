@@ -125,35 +125,6 @@
         owner: "{{ system.username | default(current_user) }}"
         group: "{{ system.username | default(current_user) }}"
 
-- name: Configure the herdr agent skill
-  tags: [sf-toolbox, packages, herdr, ai-harness]
-  block:
-    - name: Check if herdr skill setup script exists and is executable
-      become: true
-      become_user: "{{ system.username | default(current_user) }}"
-      ansible.builtin.stat:
-        path: "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/herdr/setup.sh"
-      register: herdr_skill_setup_script
-
-    - name: Run herdr skill setup script
-      become: true
-      become_user: "{{ system.username | default(current_user) }}"
-      # argv form so a sparkdock.path containing spaces stays one argument.
-      ansible.builtin.command:
-        argv:
-          - "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/herdr/setup.sh"
-      when:
-        - herdr_skill_setup_script.stat.exists
-        - herdr_skill_setup_script.stat.executable | default(false)
-      changed_when: true
-
-    - name: Warn user to manually run herdr skill setup
-      ansible.builtin.debug:
-        msg: >-
-          WARNING: Automatic herdr skill installation was not possible.
-          Please run `ajust sf-herdr-skill-install` manually to complete the setup.
-      when: not herdr_skill_setup_script.stat.exists or not (herdr_skill_setup_script.stat.executable | default(false))
-
 # The Herdr desktop app is a separate program from the TUI above, built on
 # herdr-core; the two keep their own agents and can be installed together.
 # Herdr's own installer puts the app in ~/.local/share/herdr-app with a
@@ -223,6 +194,35 @@
             path: "{{ herdr_app_installer.path }}"
             state: absent
           when: herdr_app_installer.path is defined
+
+- name: Configure the herdr agent skill
+  tags: [sf-toolbox, packages, herdr, ai-harness]
+  block:
+    - name: Check if herdr skill setup script exists and is executable
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.stat:
+        path: "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/herdr/setup.sh"
+      register: herdr_skill_setup_script
+
+    - name: Run herdr skill setup script
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      # argv form so a sparkdock.path containing spaces stays one argument.
+      ansible.builtin.command:
+        argv:
+          - "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/herdr/setup.sh"
+      when:
+        - herdr_skill_setup_script.stat.exists
+        - herdr_skill_setup_script.stat.executable | default(false)
+      changed_when: true
+
+    - name: Warn user to manually run herdr skill setup
+      ansible.builtin.debug:
+        msg: >-
+          WARNING: Automatic herdr skill installation was not possible.
+          Please run `ajust sf-herdr-skill-install` manually to complete the setup.
+      when: not herdr_skill_setup_script.stat.exists or not (herdr_skill_setup_script.stat.executable | default(false))
 
 # The SparkFabrik layout for the Herdr desktop app comes from sparkdock, like
 # the herdr skill above: the shared script copies the layout, its light and
