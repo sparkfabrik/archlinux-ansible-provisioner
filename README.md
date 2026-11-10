@@ -31,7 +31,7 @@ TAGS=ai,glab sf-toolbox                 # Run specific tags only
 SKIP_TAGS=gcloud sf-toolbox             # Skip specific tags
 ```
 
-On Arch, CachyOS and Omarchy, sf-toolbox installs missing distribution packages but does not upgrade them: `sudo pacman -Syu` upgrades them together with the rest of the system. Upgrading them alone would be a partial upgrade, which Arch does not support.
+On Arch, CachyOS and Omarchy, sf-toolbox leaves the system alone when every toolbox package is installed; `sudo pacman -Syu` keeps them current. When it must install a package, it upgrades the whole system in the same step, because installing or upgrading packages alone is a partial upgrade, which Arch does not support.
 
 ### What Gets Installed
 

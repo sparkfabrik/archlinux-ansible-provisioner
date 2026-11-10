@@ -152,15 +152,33 @@
     - name: Install pacman packages (Archlinux)
       when: ansible_facts['os_family'] == "Archlinux"
       block:
-        # Install missing packages only. Refreshing the database and upgrading
-        # these packages alone is a partial upgrade: a package rebuilt against
-        # newer libraries than the rest of the system breaks (for example php
-        # needing libssl.so.4 while openssl is still 3.x). `pacman -Syu`
-        # upgrades them together with everything else.
-        - name: Install missing Arch packages
+        # Refreshing the database and then installing or upgrading only these
+        # packages is a partial upgrade, which Arch does not support: a package
+        # built against newer libraries than the rest of the system breaks (php
+        # needing libssl.so.4 while openssl is still 3.x). So nothing runs when
+        # every package is present, and a run that must install one upgrades the
+        # whole system in the same transaction. That refresh also syncs the
+        # databases of repositories sf-toolbox just added, such as SparkFabrik's.
+        # `pacman -T` honours provides and exits 127 listing what is missing.
+        - name: Find the missing Arch packages
+          ansible.builtin.command:
+            argv: "{{ ['pacman', '-T'] + (toolbox.arch.pacman | difference(omarchy_shadowed_pacman | default([]))) }}"
+          register: sf_toolbox_pacman_check
+          changed_when: false
+          failed_when: sf_toolbox_pacman_check.rc not in [0, 127]
+          check_mode: false
+
+        - name: Upgrade the system before installing the missing Arch packages
           community.general.pacman:
-            name: "{{ toolbox.arch.pacman | difference(omarchy_shadowed_pacman | default([])) }}"
+            update_cache: true
+            upgrade: true
+          when: sf_toolbox_pacman_check.rc == 127
+
+        - name: Install the missing Arch packages
+          community.general.pacman:
+            name: "{{ sf_toolbox_pacman_check.stdout_lines }}"
             state: present
+          when: sf_toolbox_pacman_check.rc == 127
       rescue:
         - name: Report the package installation failure
           ansible.builtin.fail:
