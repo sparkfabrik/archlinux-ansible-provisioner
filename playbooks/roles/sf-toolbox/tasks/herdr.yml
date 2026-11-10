@@ -129,8 +129,9 @@
 # herdr-core; the two keep their own agents and can be installed together.
 # Herdr's own installer puts the app in ~/.local/share/herdr-app with a
 # launcher entry, after checking the download against the release manifest's
-# sha256, and adds herdr-core in ~/.local/bin when there is none. The app
-# updates itself and its core from then on, so the installer runs only once,
+# sha256. The app adds herdr-core only on its first launch, so the next block
+# installs it. The app updates itself and its core from then on, so the
+# installer runs only once,
 # as the desktop user, the same way Omarchy's `omarchy-install-ai-herdr` does.
 - name: Install the Herdr desktop app
   tags: [sf-toolbox, packages, herdr, herdr-app]
@@ -194,6 +195,81 @@
             path: "{{ herdr_app_installer.path }}"
             state: absent
           when: herdr_app_installer.path is defined
+
+# The Herdr app installs herdr-core (hc) only on its first launch, so a fresh
+# machine has no hc and the herdr skill setup below writes no hc manual.
+# Install it once with the upstream installer, which checks the sha256.
+# Updates are left to the app and `hc update`.
+- name: Install herdr-core for the Herdr desktop app
+  tags: [sf-toolbox, packages, herdr, herdr-app]
+  vars:
+    herdr_core_user: "{{ system.username | default(current_user) }}"
+    herdr_core_home: "{{ system.home | default(current_home) }}"
+  block:
+    - name: Check whether the Herdr desktop app is installed
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - "{{ herdr_core_home }}/.local/share/herdr-app"
+        - /usr/bin/herdr-app
+      register: herdr_core_app_installed
+
+    - name: Check whether herdr-core is installed
+      become: true
+      become_user: "{{ herdr_core_user }}"
+      ansible.builtin.shell: |
+        for candidate in "$(command -v hc)" "$(command -v herdr-core)" \
+          "${HOME}/.local/bin/hc" "${HOME}/.local/bin/herdr-core"; do
+          if [ -x "${candidate}" ] && "${candidate}" --version 2>/dev/null | grep -q '^hc '; then
+            exit 0
+          fi
+        done
+        exit 1
+      environment:
+        HOME: "{{ herdr_core_home }}"
+      register: herdr_core_installed
+      changed_when: false
+      failed_when: false
+      when: herdr_core_app_installed.results | selectattr('stat.exists') | list | length > 0
+
+    - name: Run the herdr-core installer
+      when:
+        - herdr_core_app_installed.results | selectattr('stat.exists') | list | length > 0
+        - herdr_core_installed.rc != 0
+      block:
+        - name: Create a temporary file for the herdr-core installer
+          ansible.builtin.tempfile:
+            state: file
+            suffix: .herdr-core-install.sh
+          register: herdr_core_installer
+
+        # Downloaded whole before it runs, so a dropped connection can never
+        # run half a script.
+        - name: Download the herdr-core installer
+          ansible.builtin.get_url:
+            url: https://releases.herdr.dev/core/install.sh
+            dest: "{{ herdr_core_installer.path }}"
+            mode: "0644"
+            force: true
+
+        - name: Install herdr-core
+          become: true
+          become_user: "{{ herdr_core_user }}"
+          ansible.builtin.command:
+            argv: [sh, "{{ herdr_core_installer.path }}"]
+          environment:
+            HOME: "{{ herdr_core_home }}"
+          changed_when: true
+      rescue:
+        - name: Report the failed herdr-core install
+          ansible.builtin.debug:
+            msg: Installing herdr-core failed; the herdr skill setup prints how to finish it
+      always:
+        - name: Remove the herdr-core installer
+          ansible.builtin.file:
+            path: "{{ herdr_core_installer.path }}"
+            state: absent
+          when: herdr_core_installer.path is defined
 
 - name: Configure the herdr agent skill
   tags: [sf-toolbox, packages, herdr, herdr-app, ai-harness]
