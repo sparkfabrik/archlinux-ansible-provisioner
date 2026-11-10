@@ -168,6 +168,14 @@
           failed_when: sf_toolbox_pacman_check.rc not in [0, 127]
           check_mode: false
 
+        - name: Announce the full system upgrade
+          ansible.builtin.debug:
+            msg: >-
+              Installing {{ sf_toolbox_pacman_check.stdout_lines | join(', ') }}. To avoid a partial upgrade,
+              sf-toolbox first upgrades the whole system with `pacman -Syu`: this can take a while when the
+              system has not been updated recently.
+          when: sf_toolbox_pacman_check.rc == 127
+
         - name: Upgrade the system before installing the missing Arch packages
           community.general.pacman:
             update_cache: true
