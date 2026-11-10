@@ -131,8 +131,8 @@
 # launcher entry, after checking the download against the release manifest's
 # sha256. The app adds herdr-core only on its first launch, so the next block
 # installs it. The app updates itself and its core from then on, so the
-# installer runs only once,
-# as the desktop user, the same way Omarchy's `omarchy-install-ai-herdr` does.
+# installer runs only once, as the desktop user, the same way Omarchy's
+# `omarchy-install-ai-herdr` does.
 - name: Install the Herdr desktop app
   tags: [sf-toolbox, packages, herdr, herdr-app]
   when: ansible_facts['architecture'] in ['x86_64', 'aarch64']
@@ -260,10 +260,6 @@
           environment:
             HOME: "{{ herdr_core_home }}"
           changed_when: true
-      rescue:
-        - name: Report the failed herdr-core install
-          ansible.builtin.debug:
-            msg: Installing herdr-core failed; the herdr skill setup prints how to finish it
       always:
         - name: Remove the herdr-core installer
           ansible.builtin.file:
@@ -282,10 +278,17 @@
           - python3
           - -c
           - |
-            import json, os, sys, tempfile
+            import json
+            import os
+            import stat
+            import sys
+            import tempfile
+
             path = os.path.expanduser("~/.config/herdr-app/settings.json")
             settings = {}
+            mode = 0o644
             if os.path.exists(path):
+                mode = stat.S_IMODE(os.stat(path).st_mode)
                 try:
                     with open(path) as handle:
                         settings = json.load(handle)
@@ -305,7 +308,7 @@
             with os.fdopen(fd, "w") as handle:
                 json.dump(settings, handle, indent=2)
                 handle.write("\n")
-            os.chmod(tmp, 0o644)
+            os.chmod(tmp, mode)
             os.replace(tmp, path)
             print("changed")
       environment:
