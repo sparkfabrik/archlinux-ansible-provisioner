@@ -283,16 +283,34 @@
           register: herdr_app_settings_file
 
         - name: Read the Herdr app settings
-          ansible.builtin.slurp:
-            path: "{{ herdr_app_settings_path }}"
-          register: herdr_app_settings_raw
           when: herdr_app_settings_file.stat.exists
+          block:
+            - name: Read the existing settings
+              ansible.builtin.slurp:
+                path: "{{ herdr_app_settings_path }}"
+              register: herdr_app_settings_raw
 
-        - name: Parse the Herdr app settings
+            - name: Parse the existing settings
+              ansible.builtin.set_fact:
+                herdr_app_settings: "{{ herdr_app_settings_raw.content | b64decode | from_json }}"
+          rescue:
+            - name: Warn about unreadable Herdr app settings
+              ansible.builtin.debug:
+                msg: "Left {{ herdr_app_settings_path }} unchanged: {{ ansible_failed_result.msg | default('it could not be read') }}"
+
+            - name: Skip invalid Herdr app settings
+              ansible.builtin.set_fact:
+                herdr_app_settings: null
+
+        - name: Use empty Herdr app settings for a new file
           ansible.builtin.set_fact:
-            herdr_app_settings: >-
-              {{ (herdr_app_settings_raw.content | b64decode | from_json)
-                 if herdr_app_settings_file.stat.exists else {} }}
+            herdr_app_settings: {}
+          when: not herdr_app_settings_file.stat.exists
+
+        - name: Warn about non-object Herdr app settings
+          ansible.builtin.debug:
+            msg: "Left {{ herdr_app_settings_path }} unchanged: settings are not a JSON object"
+          when: herdr_app_settings is not none and herdr_app_settings is not mapping
 
         - name: Create the Herdr app settings directory
           ansible.builtin.file:
@@ -309,10 +327,6 @@
           when:
             - herdr_app_settings is mapping
             - herdr_app_settings.telemetry | default(none) is not sameas false
-      rescue:
-        - name: Report unreadable Herdr app settings
-          ansible.builtin.debug:
-            msg: "Left {{ herdr_app_settings_path }} unchanged: {{ ansible_failed_result.msg | default('it could not be read') }}"
 
 - name: Configure the herdr agent skill
   tags: [sf-toolbox, packages, herdr, herdr-app, ai-harness]
