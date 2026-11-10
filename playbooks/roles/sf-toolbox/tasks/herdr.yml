@@ -216,7 +216,7 @@
             url: "{{ herdr_app_release.url }}"
             dest: "{{ herdr_app_download.path }}/herdr-app.tar.gz"
             checksum: "sha256:{{ herdr_app_release.sha256 }}"
-            mode: "0644"
+            mode: "0600"
 
         - name: Remove an unfinished Herdr desktop app folder
           ansible.builtin.file:
@@ -382,6 +382,7 @@
         for candidate in "$(command -v hc)" "$(command -v herdr-core)" \
           "${HOME}/.local/bin/hc" "${HOME}/.local/bin/herdr-core"; do
           if [ -x "${candidate}" ] && "${candidate}" --version 2>/dev/null | grep -q '^hc '; then
+            printf '%s\n' "${candidate}"
             exit 0
           fi
         done
@@ -431,7 +432,7 @@
             url: "{{ herdr_core_release.url }}"
             dest: "{{ herdr_core_download.path }}/herdr-core.tar.gz"
             checksum: "sha256:{{ herdr_core_release.sha256 }}"
-            mode: "0644"
+            mode: "0600"
 
         - name: Unpack herdr-core
           ansible.builtin.unarchive:
@@ -478,9 +479,12 @@
           when: herdr_core_download.path is defined
 
     # Also runs when herdr-core was already there, so a working herdr-core
-    # without `hc` still gets the command. An `hc` that already exists (some
-    # window managers ship one) is left alone, except a dangling link to an
-    # old herdr-core, which is pointed at this one.
+    # without `hc` still gets the command. That can be the one in
+    # ~/.local/bin or one found elsewhere on PATH (a packaged
+    # /usr/bin/herdr-core, for example); no second herdr-core is installed
+    # next to it. An `hc` that already exists (some window managers ship one)
+    # is left alone, except a dangling link to an old herdr-core, which is
+    # pointed at this one.
     - name: Link the hc command to herdr-core
       when: herdr_core_app_present | bool
       become: true
@@ -488,14 +492,37 @@
       environment:
         HOME: "{{ herdr_core_home }}"
       block:
-        - name: Check for herdr-core in the home folder
-          ansible.builtin.stat:
-            path: "{{ herdr_core_bin }}/herdr-core"
-          register: herdr_core_binary
+        # Only a herdr-core that passed a check is linked: the one the install
+        # above just put in place (a failed install fails the run), or the one
+        # the detection accepted. A stale file in ~/.local/bin is not enough.
+        - name: Pick the herdr-core that hc links to
+          vars:
+            herdr_core_found: "{{ herdr_core_installed.stdout | default('') | trim }}"
+          ansible.builtin.set_fact:
+            herdr_core_link_src: >-
+              {{ 'herdr-core'
+                 if (herdr_core_installed.rc != 0
+                     or herdr_core_found == herdr_core_bin ~ '/herdr-core')
+                 else herdr_core_found
+                 if (herdr_core_found | basename) == 'herdr-core'
+                 else '' }}
 
         - name: Link hc when herdr-core is installed
-          when: herdr_core_binary.stat.executable | default(false)
+          when: herdr_core_link_src | length > 0
           block:
+            # Like `mkdir -p`: an existing folder keeps its own mode.
+            - name: Check the folder for the hc link
+              ansible.builtin.stat:
+                path: "{{ herdr_core_bin }}"
+              register: herdr_hc_bin_dir
+
+            - name: Create the folder for the hc link
+              ansible.builtin.file:
+                path: "{{ herdr_core_bin }}"
+                state: directory
+                mode: "0755"
+              when: not herdr_hc_bin_dir.stat.exists
+
             - name: Look for an hc command
               ansible.builtin.shell: command -v hc
               register: herdr_hc_command
@@ -525,7 +552,7 @@
 
             - name: Link hc to herdr-core
               ansible.builtin.file:
-                src: herdr-core
+                src: "{{ herdr_core_link_src }}"
                 dest: "{{ herdr_core_bin }}/hc"
                 state: link
                 force: "{{ herdr_hc_dangling_herdr | bool }}"
