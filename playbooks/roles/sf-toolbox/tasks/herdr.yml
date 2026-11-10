@@ -223,3 +223,41 @@
             path: "{{ herdr_app_installer.path }}"
             state: absent
           when: herdr_app_installer.path is defined
+
+# The SparkFabrik layout for the Herdr desktop app comes from sparkdock, like
+# the herdr skill above: the shared script copies the layout, its light and
+# dark themes and its mods into the app's home, and selects the layout once per
+# machine, so a person who switches back keeps that choice. When the app is
+# installed but was never opened, the script creates its home first; it skips
+# cleanly when the app is not installed.
+- name: Install the SparkFabrik layout for the Herdr desktop app
+  tags: [sf-toolbox, packages, herdr, herdr-app, herdr-layout]
+  block:
+    - name: Check if the herdr-app layout setup script exists and is executable
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.stat:
+        path: "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/herdr-app/setup.sh"
+      register: herdr_layout_setup_script
+
+    - name: Run the herdr-app layout setup script
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      # argv form so a sparkdock.path containing spaces stays one argument.
+      ansible.builtin.command:
+        argv:
+          - "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/herdr-app/setup.sh"
+          # `provision` respects an earlier `ajust herdr-layout-uninstall`.
+          - provision
+      register: herdr_layout_setup
+      when:
+        - herdr_layout_setup_script.stat.exists
+        - herdr_layout_setup_script.stat.executable | default(false)
+      changed_when: "'SparkFabrik layout installed' in (herdr_layout_setup.stdout + herdr_layout_setup.stderr)"
+
+    - name: Warn user to manually install the SparkFabrik herdr-app layout
+      ansible.builtin.debug:
+        msg: >-
+          WARNING: The SparkFabrik layout for the Herdr desktop app could not be installed automatically.
+          Please run `ajust herdr-layout-install` manually once sparkdock includes it.
+      when: not herdr_layout_setup_script.stat.exists or not (herdr_layout_setup_script.stat.executable | default(false))
