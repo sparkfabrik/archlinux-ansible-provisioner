@@ -271,51 +271,48 @@
     # otherwise. Turn it off only when the key is absent, so a user who turns
     # telemetry back on keeps that choice.
     - name: Turn off Herdr app telemetry by default
+      when: herdr_core_app_installed.results | selectattr('stat.exists') | list | length > 0
       become: true
       become_user: "{{ herdr_core_user }}"
-      ansible.builtin.command:
-        argv:
-          - python3
-          - -c
-          - |
-            import json
-            import os
-            import stat
-            import sys
-            import tempfile
+      vars:
+        herdr_app_settings_path: "{{ herdr_core_home }}/.config/herdr-app/settings.json"
+      block:
+        - name: Check the Herdr app settings file
+          ansible.builtin.stat:
+            path: "{{ herdr_app_settings_path }}"
+          register: herdr_app_settings_file
 
-            path = os.path.expanduser("~/.config/herdr-app/settings.json")
-            settings = {}
-            mode = 0o644
-            if os.path.exists(path):
-                mode = stat.S_IMODE(os.stat(path).st_mode)
-                try:
-                    with open(path) as handle:
-                        settings = json.load(handle)
-                except ValueError:
-                    print("skipped: settings.json is not valid JSON")
-                    sys.exit(0)
-                if not isinstance(settings, dict):
-                    print("skipped: settings.json is not a JSON object")
-                    sys.exit(0)
-            if "telemetry" in settings:
-                print("unchanged")
-                sys.exit(0)
-            settings["telemetry"] = False
-            directory = os.path.dirname(path)
-            os.makedirs(directory, exist_ok=True)
-            fd, tmp = tempfile.mkstemp(dir=directory, prefix=".settings.", suffix=".json")
-            with os.fdopen(fd, "w") as handle:
-                json.dump(settings, handle, indent=2)
-                handle.write("\n")
-            os.chmod(tmp, mode)
-            os.replace(tmp, path)
-            print("changed")
-      environment:
-        HOME: "{{ herdr_core_home }}"
-      register: herdr_app_telemetry
-      changed_when: herdr_app_telemetry.stdout == "changed"
-      when: herdr_core_app_installed.results | selectattr('stat.exists') | list | length > 0
+        - name: Read the Herdr app settings
+          ansible.builtin.slurp:
+            path: "{{ herdr_app_settings_path }}"
+          register: herdr_app_settings_raw
+          when: herdr_app_settings_file.stat.exists
+
+        - name: Parse the Herdr app settings
+          ansible.builtin.set_fact:
+            herdr_app_settings: >-
+              {{ (herdr_app_settings_raw.content | b64decode | from_json)
+                 if herdr_app_settings_file.stat.exists else {} }}
+
+        - name: Create the Herdr app settings directory
+          ansible.builtin.file:
+            path: "{{ herdr_app_settings_path | dirname }}"
+            state: directory
+            mode: "0755"
+          when: not herdr_app_settings_file.stat.exists
+
+        - name: Set telemetry to false in the Herdr app settings
+          ansible.builtin.copy:
+            dest: "{{ herdr_app_settings_path }}"
+            content: "{{ herdr_app_settings | combine({'telemetry': false}) | to_nice_json(sort_keys=false) }}\n"
+            mode: "{{ omit if herdr_app_settings_file.stat.exists else '0644' }}"
+          when:
+            - herdr_app_settings is mapping
+            - "'telemetry' not in herdr_app_settings"
+      rescue:
+        - name: Report unreadable Herdr app settings
+          ansible.builtin.debug:
+            msg: "Left {{ herdr_app_settings_path }} unchanged: {{ ansible_failed_result.msg | default('it could not be read') }}"
 
 - name: Configure the herdr agent skill
   tags: [sf-toolbox, packages, herdr, herdr-app, ai-harness]
