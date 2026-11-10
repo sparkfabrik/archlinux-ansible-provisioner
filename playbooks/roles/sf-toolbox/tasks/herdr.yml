@@ -196,7 +196,7 @@
           when: herdr_app_installer.path is defined
 
 - name: Configure the herdr agent skill
-  tags: [sf-toolbox, packages, herdr, ai-harness]
+  tags: [sf-toolbox, packages, herdr, herdr-app, ai-harness]
   block:
     - name: Check if herdr skill setup script exists and is executable
       become: true

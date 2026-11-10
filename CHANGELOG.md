@@ -81,7 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- The `herdr` agent skill setup now runs after the Herdr desktop app install, so a first run also writes the manuals for `hc` (herdr-core) and `herdr-app` ([sparkfabrik/sparkdock#697](https://github.com/sparkfabrik/sparkdock/pull/697))
+- The `herdr` agent skill setup now runs after the Herdr desktop app install and also with the `herdr-app` tag, so a first run also writes the manuals for `hc` (herdr-core) and `herdr-app` ([sparkfabrik/sparkdock#697](https://github.com/sparkfabrik/sparkdock/pull/697))
 - Fixed `sf-toolbox` breaking Arch packages with a partial upgrade: it no longer upgrades its packages alone, does nothing when every package is installed, and runs a full `pacman -Syu` in the same step when it must install one
 - Fixed `sf-toolbox` skipping the PHP `iconv` setup silently when `php` does not start; it now prints the error and asks to run `sudo pacman -Syu`
 - The swapfile role no longer deletes and recreates the swapfile on every run, which changed its offset and broke resume from hibernation; it is recreated only when `swapfile.size` changes
