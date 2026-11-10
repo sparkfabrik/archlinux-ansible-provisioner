@@ -15,6 +15,16 @@
       failed_when: false
       check_mode: false
 
+    - name: Warn that PHP does not start
+      ansible.builtin.debug:
+        msg: >-
+          WARNING: `php` is installed but does not start, so the `iconv` extension was not enabled:
+          {{ (sf_toolbox_php_modules.stderr | default('')).splitlines() | first | default('unknown error') }}
+          Run `sudo pacman -Syu`, then run sf-toolbox again.
+      when:
+        - sf_toolbox_php_modules.rc != 0
+        - "'No such file or directory' not in (sf_toolbox_php_modules.msg | default(''))"
+
     - name: Load `iconv` from the PHP conf.d directory
       ansible.builtin.copy:
         dest: /etc/php/conf.d/iconv.ini

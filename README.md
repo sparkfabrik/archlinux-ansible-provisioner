@@ -31,6 +31,8 @@ TAGS=ai,glab sf-toolbox                 # Run specific tags only
 SKIP_TAGS=gcloud sf-toolbox             # Skip specific tags
 ```
 
+On Arch, CachyOS and Omarchy, sf-toolbox leaves the system alone when every toolbox package is installed; `sudo pacman -Syu` keeps them current. When it must install a package, it upgrades the whole system in the same step, because installing or upgrading packages alone is a partial upgrade, which Arch does not support.
+
 ### What Gets Installed
 
 - **AI Coding**: opencode, openspec, codex

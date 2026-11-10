@@ -144,7 +144,7 @@ run_ansible
         mock = """from ansible.module_utils.basic import AnsibleModule
 import json, os
 from pathlib import Path
-m = AnsibleModule(argument_spec=dict(name=dict(type='raw'), state=dict(type='str'), global_=dict(type='bool', aliases=['global']), path=dict(type='str'), update_cache=dict(type='bool')), supports_check_mode=True)
+m = AnsibleModule(argument_spec=dict(name=dict(type='raw'), state=dict(type='str'), global_=dict(type='bool', aliases=['global']), path=dict(type='str'), update_cache=dict(type='bool'), upgrade=dict(type='bool')), supports_check_mode=True)
 name = m.params['name']
 with open(os.environ['FIXTURE_LOG'], 'a') as f:
     f.write(json.dumps({'package': name, 'state': m.params['state']}) + '\\n')
@@ -161,6 +161,15 @@ m.exit_json(changed=False)
             f"#!{sys.executable}\nimport os\nfrom pathlib import Path\np=Path(os.environ['FIXTURE_LOG'])\np.open('a').write('{{\"verify\":true}}\\n')\nraise SystemExit(1 if os.environ['FIXTURE_MODE']=='bad-binary' else 0)\n"
         )
         self.packaged.chmod(0o755)
+        # `pacman -T` lists missing packages and exits 127: openai-codex is the
+        # one the fixture installs, everything else counts as present.
+        pacman_bin = self.root / "pacman-bin"
+        pacman_bin.mkdir(exist_ok=True)
+        pacman = pacman_bin / "pacman"
+        pacman.write_text(
+            f"#!{sys.executable}\nimport sys\nmissing=[a for a in sys.argv[2:] if a=='openai-codex'] if sys.argv[1:2]==['-T'] else []\nprint('\\n'.join(missing))\nraise SystemExit(127 if missing else 0)\n"
+        )
+        pacman.chmod(0o755)
         mise = self.bin / "mise"
         mise.write_text(
             f"#!{sys.executable}\nimport json,os,sys\nfrom pathlib import Path\nPath(os.environ['FIXTURE_LOG']).open('a').write(json.dumps({{'mise':sys.argv[1:]}})+'\\n')\n"
@@ -202,7 +211,11 @@ m.exit_json(changed=False)
                 },
                 "environment": {
                     # Omarchy provides mise; the fixture stands in for it.
-                    "PATH": (str(self.bin) + ":" if omarchy else "") + "/usr/bin:/bin",
+                    # The fake pacman always comes first, so the host's own is never used.
+                    "PATH": str(self.root / "pacman-bin")
+                    + ":"
+                    + (str(self.bin) + ":" if omarchy else "")
+                    + "/usr/bin:/bin",
                     "HOME": str(self.home),
                     "FIXTURE_LOG": str(self.log),
                     "FIXTURE_MODE": mode,
