@@ -247,7 +247,8 @@
       ansible.builtin.command:
         argv:
           - "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/herdr-app/setup.sh"
-          - install
+          # `provision` respects an earlier `ajust herdr-layout-uninstall`.
+          - provision
       register: herdr_layout_setup
       when:
         - herdr_layout_setup_script.stat.exists
