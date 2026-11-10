@@ -266,15 +266,25 @@
       become: true
       become_user: "{{ herdr_app_user }}"
       block:
-        - name: Create the folders for the Herdr desktop app launcher
-          ansible.builtin.file:
+        # Like `mkdir -p`: an existing folder keeps its own mode.
+        - name: Check the folders for the Herdr desktop app launcher
+          ansible.builtin.stat:
             path: "{{ item }}"
-            state: directory
-            mode: "0755"
           loop:
             - "{{ herdr_app_home }}/.local/bin"
             - "{{ herdr_app_home }}/.local/share/applications"
             - "{{ herdr_app_home }}/.local/share/icons/hicolor/scalable/apps"
+          register: herdr_app_launcher_dirs
+
+        - name: Create the folders for the Herdr desktop app launcher
+          ansible.builtin.file:
+            path: "{{ item.item }}"
+            state: directory
+            mode: "0755"
+          loop: "{{ herdr_app_launcher_dirs.results }}"
+          loop_control:
+            label: "{{ item.item }}"
+          when: not item.stat.exists
 
         - name: Link the herdr-app command
           ansible.builtin.file:
@@ -429,11 +439,18 @@
             dest: "{{ herdr_core_download.path }}"
             remote_src: true
 
+        # Like `mkdir -p`: an existing folder keeps its own mode.
+        - name: Check the herdr-core folder
+          ansible.builtin.stat:
+            path: "{{ herdr_core_bin }}"
+          register: herdr_core_bin_dir
+
         - name: Create the herdr-core folder
           ansible.builtin.file:
             path: "{{ herdr_core_bin }}"
             state: directory
             mode: "0755"
+          when: not herdr_core_bin_dir.stat.exists
 
         - name: Copy herdr-core next to its final place
           ansible.builtin.copy:
@@ -450,7 +467,9 @@
         - name: Check that herdr-core runs
           ansible.builtin.command:
             argv: ["{{ herdr_core_bin }}/herdr-core", --version]
+          register: herdr_core_version
           changed_when: false
+          failed_when: herdr_core_version.rc != 0 or not herdr_core_version.stdout.startswith('hc ')
       always:
         - name: Remove the herdr-core download
           ansible.builtin.file:
@@ -460,7 +479,8 @@
 
     # Also runs when herdr-core was already there, so a working herdr-core
     # without `hc` still gets the command. An `hc` that already exists (some
-    # window managers ship one) is left alone.
+    # window managers ship one) is left alone, except a dangling link to an
+    # old herdr-core, which is pointed at this one.
     - name: Link the hc command to herdr-core
       when: herdr_core_app_present | bool
       become: true
@@ -473,21 +493,69 @@
             path: "{{ herdr_core_bin }}/herdr-core"
           register: herdr_core_binary
 
-        - name: Look for an existing hc command
-          ansible.builtin.shell: command -v hc || test -e "${HOME}/.local/bin/hc" || test -L "${HOME}/.local/bin/hc"
-          register: herdr_core_hc_present
-          changed_when: false
-          failed_when: false
+        - name: Link hc when herdr-core is installed
           when: herdr_core_binary.stat.executable | default(false)
+          block:
+            - name: Look for an hc command
+              ansible.builtin.shell: command -v hc
+              register: herdr_hc_command
+              changed_when: false
+              failed_when: false
 
-        - name: Link hc to herdr-core
-          ansible.builtin.file:
-            src: herdr-core
-            dest: "{{ herdr_core_bin }}/hc"
-            state: link
-          when:
-            - herdr_core_binary.stat.executable | default(false)
-            - herdr_core_hc_present.rc != 0
+            # Ansible's stat follows a symlink only with follow: true.
+            - name: Check the hc file
+              ansible.builtin.stat:
+                path: "{{ herdr_core_bin }}/hc"
+                follow: false
+              register: herdr_hc_link
+
+            - name: Check what the hc file points to
+              ansible.builtin.stat:
+                path: "{{ herdr_core_bin }}/hc"
+                follow: true
+              register: herdr_hc_link_target
+
+            - name: Detect a dangling hc link to an old herdr-core
+              ansible.builtin.set_fact:
+                herdr_hc_dangling_herdr: >-
+                  {{ herdr_hc_link.stat.exists
+                     and herdr_hc_link.stat.islnk
+                     and not herdr_hc_link_target.stat.exists
+                     and (herdr_hc_link.stat.lnk_target | default('') | basename) == 'herdr-core' }}
+
+            - name: Link hc to herdr-core
+              ansible.builtin.file:
+                src: herdr-core
+                dest: "{{ herdr_core_bin }}/hc"
+                state: link
+                force: "{{ herdr_hc_dangling_herdr | bool }}"
+              register: herdr_hc_linked
+              when:
+                - herdr_hc_command.rc != 0
+                - not herdr_hc_link.stat.exists or herdr_hc_dangling_herdr | bool
+
+            # The file itself is checked, not PATH, because the PATH Ansible
+            # runs with may not include ~/.local/bin.
+            - name: Warn about an hc file that does not work
+              ansible.builtin.debug:
+                msg: >-
+                  {{ herdr_core_bin }}/hc exists but is not a working command
+                  (a dangling link or a file that is not executable) and was
+                  left untouched, so hc is not available. Remove it and rerun
+                  the herdr tag to link hc to herdr-core.
+              when:
+                - herdr_hc_command.rc != 0
+                - herdr_hc_link.stat.exists
+                - not herdr_hc_dangling_herdr | bool
+                - not (herdr_hc_link_target.stat.exists and herdr_hc_link_target.stat.executable)
+
+            - name: Check that hc runs
+              ansible.builtin.command:
+                argv: ["{{ herdr_core_bin }}/hc", --version]
+              register: herdr_hc_version
+              changed_when: false
+              failed_when: herdr_hc_version.rc != 0 or not herdr_hc_version.stdout.startswith('hc ')
+              when: herdr_hc_linked is changed
 
     # The Herdr app sends anonymous usage data unless its settings say
     # otherwise. Every run sets "telemetry" to false, also when a user turned
