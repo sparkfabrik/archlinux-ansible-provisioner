@@ -152,11 +152,15 @@
     - name: Install pacman packages (Archlinux)
       when: ansible_facts['os_family'] == "Archlinux"
       block:
-        - name: Install or upgrade Arch packages to the latest version
+        # Install missing packages only. Refreshing the database and upgrading
+        # these packages alone is a partial upgrade: a package rebuilt against
+        # newer libraries than the rest of the system breaks (for example php
+        # needing libssl.so.4 while openssl is still 3.x). `pacman -Syu`
+        # upgrades them together with everything else.
+        - name: Install missing Arch packages
           community.general.pacman:
             name: "{{ toolbox.arch.pacman | difference(omarchy_shadowed_pacman | default([])) }}"
-            state: latest
-            update_cache: true
+            state: present
       rescue:
         - name: Report the package installation failure
           ansible.builtin.fail:
