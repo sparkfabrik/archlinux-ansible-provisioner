@@ -226,9 +226,10 @@
 
 # The SparkFabrik layout for the Herdr desktop app comes from sparkdock, like
 # the herdr skill above: the shared script copies the layout, its light and
-# dark themes and its mods into the app's home, and never selects them. The
-# script skips cleanly until the app has been opened once (no home yet), so a
-# later run adds the layout.
+# dark themes and its mods into the app's home, and selects the layout once per
+# machine, so a person who switches back keeps that choice. The script skips
+# cleanly until the app has been opened once (no home yet), so a later run adds
+# the layout.
 - name: Install the SparkFabrik layout for the Herdr desktop app
   tags: [sf-toolbox, packages, herdr, herdr-app, herdr-layout]
   block:
@@ -257,5 +258,5 @@
       ansible.builtin.debug:
         msg: >-
           WARNING: The SparkFabrik layout for the Herdr desktop app could not be installed automatically.
-          Please run `ajust sf-herdr-layout-install` manually once sparkdock includes it.
+          Please run `ajust herdr-layout-install` manually once sparkdock includes it.
       when: not herdr_layout_setup_script.stat.exists or not (herdr_layout_setup_script.stat.executable | default(false))
