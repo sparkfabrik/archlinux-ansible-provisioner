@@ -268,9 +268,9 @@
           when: herdr_core_installer.path is defined
 
     # The Herdr app sends anonymous usage data unless its settings say
-    # otherwise. Turn it off only when the key is absent, so a user who turns
-    # telemetry back on keeps that choice.
-    - name: Turn off Herdr app telemetry by default
+    # otherwise. Every run sets "telemetry" to false, also when a user turned
+    # it back on.
+    - name: Turn off Herdr app telemetry
       when: herdr_core_app_installed.results | selectattr('stat.exists') | list | length > 0
       become: true
       become_user: "{{ herdr_core_user }}"
@@ -308,7 +308,7 @@
             mode: "{{ omit if herdr_app_settings_file.stat.exists else '0644' }}"
           when:
             - herdr_app_settings is mapping
-            - "'telemetry' not in herdr_app_settings"
+            - herdr_app_settings.telemetry | default(none) is not sameas false
       rescue:
         - name: Report unreadable Herdr app settings
           ansible.builtin.debug:
