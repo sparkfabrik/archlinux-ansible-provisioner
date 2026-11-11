@@ -200,7 +200,7 @@
         - name: Check the Herdr desktop app build in the manifest
           ansible.builtin.assert:
             that:
-              - herdr_app_release.url | default('') | length > 0
+              - herdr_app_release.url | default('') is match('https://releases\\.herdr\\.dev/')
               - herdr_app_release.sha256 | default('') | length > 0
             fail_msg: "The Herdr release manifest has no desktop app build for linux-{{ herdr_app_arch }}"
             quiet: true
@@ -416,7 +416,7 @@
         - name: Check the herdr-core build in the manifest
           ansible.builtin.assert:
             that:
-              - herdr_core_release.url | default('') | length > 0
+              - herdr_core_release.url | default('') is match('https://releases\\.herdr\\.dev/')
               - herdr_core_release.sha256 | default('') | length > 0
             fail_msg: "The herdr-core release manifest has no build for linux-{{ herdr_core_arch }}"
             quiet: true
@@ -639,7 +639,9 @@
         - name: Set telemetry to false in the Herdr app settings
           ansible.builtin.copy:
             dest: "{{ herdr_app_settings_path }}"
-            content: "{{ herdr_app_settings | combine({'telemetry': false}) | to_nice_json(sort_keys=false) }}\n"
+            content: "{{ herdr_app_settings | combine({'telemetry': false}) | to_nice_json(sort_keys=false, ensure_ascii=false) }}\n"
+            # A settings.json symlinked from a dotfiles repo stays a link.
+            follow: true
             mode: "{{ omit if herdr_app_settings_file.stat.exists else '0644' }}"
           when:
             - herdr_app_settings is mapping

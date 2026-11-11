@@ -9,13 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `sf-toolbox` now turns off Herdr desktop app telemetry (tag `herdr-app`): it sets `"telemetry": false` in `~/.config/herdr-app/settings.json`, enforced on every run
-- Added a one-time herdr-core (`hc`) install to `sf-toolbox` (tag `herdr-app`) on machines with the Herdr desktop app and no working `hc`, from Herdr's release manifest with a sha256 check and no installer script
+- `sf-toolbox` now turns off Herdr desktop app telemetry (tag `herdr-app`): it sets `"telemetry": false` in `~/.config/herdr-app/settings.json`, enforced on every run, and a `settings.json` symlinked from a dotfiles repo stays a link
+- Added a one-time herdr-core (`hc`) install to `sf-toolbox` (tag `herdr-app`) on machines with the Herdr desktop app and no working `hc`, from Herdr's release manifest with a `releases.herdr.dev` URL check, a sha256 check and no installer script
 - Added the SparkFabrik layout for the Herdr desktop app to `sf-toolbox` (tag `herdr-layout`), installed with sparkdock's shared script and selected once on each machine
 - Added PHP to `sf-toolbox`: the `php` package on Arch Linux, CachyOS and Omarchy, with the `iconv` extension enabled when it is not loaded yet, and the Homebrew `php` formula on Debian/Ubuntu
 - Added `swapfile.disable_swap_partitions`: once the swapfile is active, turns off clear-text swap partitions and comments them out in fstab, without wiping them; requires `swapfile.configure_hibernate`
 - Added `system.grub.cmdline_extra` to append kernel parameters, such as `amd_pstate=active`, that the GRUB task keeps across provisioning runs
-- Added the Herdr desktop app to `sf-toolbox` (tag `herdr-app`): installed once from Herdr's release manifest with a sha256 check and no installer script, on machines with a desktop session, next to the `herdr` TUI, and updated by the app itself afterwards; a leftover app folder without its binary is installed again
+- Added the Herdr desktop app to `sf-toolbox` (tag `herdr-app`): installed once from Herdr's release manifest with a `releases.herdr.dev` URL check, a sha256 check and no installer script, on machines with a desktop session, next to the `herdr` TUI, and updated by the app itself afterwards; a leftover app folder without its binary is installed again
 - Added a `/opt/sparkdock` symlink to the sparkdock checkout (tag `claude-mods`), so the managed Claude Code settings load the `sparkfabrik-harness` plugin on Linux too ([sparkfabrik/sparkdock#664](https://github.com/sparkfabrik/sparkdock/pull/664))
 - Added claude-usage to `sf-toolbox` (tag `claude-usage`), installed through the shared Sparkdock script with the desktop reader for GNOME, KDE or Waybar
 - Added opt-in ChatGPT desktop installation to sf-toolbox: our reviewed recipe on Arch/CachyOS x86_64, Omarchy's own desktop package, and the official OpenAI `.deb` with signed apt updates on Ubuntu 24.04/26.04 and Debian 13; existing conflicting Arch packages are preserved
