@@ -125,8 +125,509 @@
         owner: "{{ system.username | default(current_user) }}"
         group: "{{ system.username | default(current_user) }}"
 
+# The Herdr desktop app is a separate program from the TUI above, built on
+# herdr-core; the two keep their own agents and can be installed together.
+# The app is installed once, as the desktop user, from the archive listed in
+# Herdr's release manifest (latest.json), checked against the manifest's
+# sha256. The same files and layout as Herdr's own installer, without running
+# a remote script. The app updates itself and its core from then on. It adds
+# herdr-core only on its first launch, so the next block installs it.
+- name: Install the Herdr desktop app
+  tags: [sf-toolbox, packages, herdr, herdr-app]
+  when: herdr_app_arch in ['x86_64', 'aarch64']
+  vars:
+    herdr_app_user: "{{ system.username | default(current_user) }}"
+    herdr_app_home: "{{ system.home | default(current_home) }}"
+    herdr_app_dir: "{{ herdr_app_home }}/.local/share/herdr-app"
+    herdr_app_arch: "{{ 'aarch64' if ansible_facts['architecture'] in ['aarch64', 'arm64'] else ansible_facts['architecture'] }}"
+  block:
+    # A machine without a desktop session (a server, a container) has no use
+    # for a desktop app.
+    - name: Look for a graphical session
+      ansible.builtin.find:
+        paths: [/usr/share/wayland-sessions, /usr/share/xsessions]
+        patterns: "*.desktop"
+      register: herdr_app_sessions
+
+    # The app counts as installed only when its binary is there: a leftover
+    # folder without it is installed again.
+    - name: Check for an installed Herdr desktop app
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - "{{ herdr_app_dir }}/herdr-app"
+        - /usr/bin/herdr-app
+      register: herdr_app_installed
+
+    - name: Report the Herdr desktop app skipped without a desktop session
+      ansible.builtin.debug:
+        msg: The Herdr desktop app is skipped because this machine has no graphical session
+      when: herdr_app_sessions.matched == 0
+
+    - name: Install the Herdr desktop app from its release archive
+      when:
+        - herdr_app_sessions.matched > 0
+        - not (herdr_app_installed.results[0].stat.executable | default(false))
+        - not herdr_app_installed.results[1].stat.exists
+      become: true
+      become_user: "{{ herdr_app_user }}"
+      environment:
+        HOME: "{{ herdr_app_home }}"
+      block:
+        # The install replaces a folder under this home, so a wrong home
+        # must never reach that step.
+        - name: Check the home folder of the Herdr desktop app user
+          ansible.builtin.assert:
+            that:
+              - herdr_app_home | length > 0
+              - herdr_app_home is abs
+              - herdr_app_home != '/'
+              - herdr_app_home == '/root' or herdr_app_home is match('/home/[^/]+')
+              - herdr_app_home is not search('(^|/)\.\.?(/|$)')
+            fail_msg: "Refusing to install the Herdr desktop app into home folder '{{ herdr_app_home }}': it must be /root or a folder under /home/"
+            quiet: true
+
+        - name: Read the Herdr desktop app release manifest
+          ansible.builtin.uri:
+            url: https://releases.herdr.dev/app/latest.json
+            return_content: true
+          register: herdr_app_manifest
+
+        - name: Pick the Herdr desktop app build for this machine
+          ansible.builtin.set_fact:
+            herdr_app_release: "{{ (herdr_app_manifest.content | from_json).targets['linux-' ~ herdr_app_arch] | default({}) }}"
+
+        - name: Check the Herdr desktop app build in the manifest
+          ansible.builtin.assert:
+            that:
+              - herdr_app_release.url | default('') is match('https://releases\\.herdr\\.dev/')
+              - herdr_app_release.sha256 | default('') | length > 0
+            fail_msg: "The Herdr release manifest has no desktop app build for linux-{{ herdr_app_arch }}"
+            quiet: true
+
+        - name: Create a temporary folder for the Herdr desktop app download
+          ansible.builtin.tempfile:
+            state: directory
+            suffix: .herdr-app
+          register: herdr_app_download
+
+        - name: Download the Herdr desktop app
+          ansible.builtin.get_url:
+            url: "{{ herdr_app_release.url }}"
+            dest: "{{ herdr_app_download.path }}/herdr-app.tar.gz"
+            checksum: "sha256:{{ herdr_app_release.sha256 }}"
+            mode: "0600"
+
+        - name: Remove an unfinished Herdr desktop app folder
+          ansible.builtin.file:
+            path: "{{ herdr_app_dir }}.new"
+            state: absent
+
+        - name: Create the new Herdr desktop app folder
+          ansible.builtin.file:
+            path: "{{ herdr_app_dir }}.new"
+            state: directory
+            mode: "0755"
+
+        - name: Unpack the Herdr desktop app
+          ansible.builtin.unarchive:
+            src: "{{ herdr_app_download.path }}/herdr-app.tar.gz"
+            dest: "{{ herdr_app_dir }}.new"
+            remote_src: true
+            extra_opts: [--strip-components=1]
+
+        - name: Remove the previous Herdr desktop app folder
+          ansible.builtin.file:
+            path: "{{ herdr_app_dir }}"
+            state: absent
+
+        - name: Move the Herdr desktop app into place
+          ansible.builtin.command:
+            argv: [mv, "{{ herdr_app_dir }}.new", "{{ herdr_app_dir }}"]
+          changed_when: true
+      always:
+        - name: Remove the Herdr desktop app download
+          ansible.builtin.file:
+            path: "{{ herdr_app_download.path }}"
+            state: absent
+          when: herdr_app_download.path is defined
+
+    # Runs on every run, not only right after an install, so a rerun repairs
+    # a command link, icon or launcher entry an earlier run left unfinished.
+    - name: Check for the Herdr desktop app in the home folder
+      ansible.builtin.stat:
+        path: "{{ herdr_app_dir }}/herdr-app"
+      register: herdr_app_binary
+
+    - name: Add the Herdr desktop app command and launcher
+      when:
+        - herdr_app_sessions.matched > 0
+        - herdr_app_binary.stat.executable | default(false)
+      become: true
+      become_user: "{{ herdr_app_user }}"
+      block:
+        # Like `mkdir -p`: an existing folder keeps its own mode.
+        - name: Check the folders for the Herdr desktop app launcher
+          ansible.builtin.stat:
+            path: "{{ item }}"
+          loop:
+            - "{{ herdr_app_home }}/.local/bin"
+            - "{{ herdr_app_home }}/.local/share/applications"
+            - "{{ herdr_app_home }}/.local/share/icons/hicolor/scalable/apps"
+          register: herdr_app_launcher_dirs
+
+        - name: Create the folders for the Herdr desktop app launcher
+          ansible.builtin.file:
+            path: "{{ item.item }}"
+            state: directory
+            mode: "0755"
+          loop: "{{ herdr_app_launcher_dirs.results }}"
+          loop_control:
+            label: "{{ item.item }}"
+          when: not item.stat.exists
+
+        - name: Link the herdr-app command
+          ansible.builtin.file:
+            src: "{{ herdr_app_dir }}/herdr-app"
+            dest: "{{ herdr_app_home }}/.local/bin/herdr-app"
+            state: link
+            force: true
+
+        - name: Install the Herdr desktop app icon
+          ansible.builtin.copy:
+            src: "{{ herdr_app_dir }}/herdr-app.svg"
+            dest: "{{ herdr_app_home }}/.local/share/icons/hicolor/scalable/apps/herdr-app.svg"
+            remote_src: true
+            mode: "0644"
+          register: herdr_app_icon
+
+        # Only a user icon theme that already has a cache needs it rebuilt,
+        # the same as Herdr's own installer.
+        - name: Check for a user icon theme cache
+          ansible.builtin.stat:
+            path: "{{ herdr_app_home }}/.local/share/icons/hicolor/icon-theme.cache"
+          register: herdr_app_icon_cache
+          when: herdr_app_icon.changed
+
+        - name: Refresh the user icon theme cache
+          ansible.builtin.command:
+            argv: [gtk-update-icon-cache, -f, -t, "{{ herdr_app_home }}/.local/share/icons/hicolor"]
+          when:
+            - herdr_app_icon.changed
+            - herdr_app_icon_cache.stat.exists
+          changed_when: true
+          failed_when: false
+
+        - name: Install the Herdr desktop app launcher entry
+          ansible.builtin.copy:
+            dest: "{{ herdr_app_home }}/.local/share/applications/herdr-app.desktop"
+            mode: "0644"
+            content: |
+              [Desktop Entry]
+              Type=Application
+              Name=Herdr
+              Comment=Terminals and coding agents that keep running
+              Exec={{ herdr_app_home }}/.local/bin/herdr-app
+              Icon=herdr-app
+              Terminal=false
+              Categories=Development;
+              StartupWMClass=herdr-app
+
+# The Herdr app installs herdr-core (hc) only on its first launch, so a fresh
+# machine has no hc and the herdr skill setup below writes no hc manual.
+# Install it once from Herdr's core release manifest, checked against its
+# sha256, the way Herdr's own core installer does on a first install.
+# Updates are left to the app and `hc update`.
+- name: Set up herdr-core and telemetry for the Herdr desktop app
+  tags: [sf-toolbox, packages, herdr, herdr-app]
+  vars:
+    herdr_core_user: "{{ system.username | default(current_user) }}"
+    herdr_core_home: "{{ system.home | default(current_home) }}"
+    herdr_core_bin: "{{ herdr_core_home }}/.local/bin"
+    herdr_core_arch: "{{ 'aarch64' if ansible_facts['architecture'] in ['aarch64', 'arm64'] else ansible_facts['architecture'] }}"
+    herdr_core_app_present: >-
+      {{ (herdr_core_app_installed.results[0].stat.executable | default(false))
+         or herdr_core_app_installed.results[1].stat.exists }}
+  block:
+    # The same check as the app install above: the app binary, not its folder.
+    - name: Check whether the Herdr desktop app is installed
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - "{{ herdr_core_home }}/.local/share/herdr-app/herdr-app"
+        - /usr/bin/herdr-app
+      register: herdr_core_app_installed
+
+    - name: Check whether herdr-core is installed
+      become: true
+      become_user: "{{ herdr_core_user }}"
+      ansible.builtin.shell: |
+        for candidate in "$(command -v hc)" "$(command -v herdr-core)" \
+          "${HOME}/.local/bin/hc" "${HOME}/.local/bin/herdr-core"; do
+          if [ -x "${candidate}" ] && "${candidate}" --version 2>/dev/null | grep -q '^hc '; then
+            printf '%s\n' "${candidate}"
+            exit 0
+          fi
+        done
+        exit 1
+      environment:
+        HOME: "{{ herdr_core_home }}"
+      register: herdr_core_installed
+      changed_when: false
+      failed_when: false
+      when: herdr_core_app_present | bool
+
+    - name: Install herdr-core from its release archive
+      when:
+        - herdr_core_app_present | bool
+        - herdr_core_installed.rc != 0
+      become: true
+      become_user: "{{ herdr_core_user }}"
+      environment:
+        HOME: "{{ herdr_core_home }}"
+      block:
+        - name: Read the herdr-core release manifest
+          ansible.builtin.uri:
+            url: https://releases.herdr.dev/core/latest.json
+            return_content: true
+          register: herdr_core_manifest
+
+        - name: Pick the herdr-core build for this machine
+          ansible.builtin.set_fact:
+            herdr_core_release: "{{ (herdr_core_manifest.content | from_json).targets['linux-' ~ herdr_core_arch] | default({}) }}"
+
+        - name: Check the herdr-core build in the manifest
+          ansible.builtin.assert:
+            that:
+              - herdr_core_release.url | default('') is match('https://releases\\.herdr\\.dev/')
+              - herdr_core_release.sha256 | default('') | length > 0
+            fail_msg: "The herdr-core release manifest has no build for linux-{{ herdr_core_arch }}"
+            quiet: true
+
+        - name: Create a temporary folder for the herdr-core download
+          ansible.builtin.tempfile:
+            state: directory
+            suffix: .herdr-core
+          register: herdr_core_download
+
+        - name: Download herdr-core
+          ansible.builtin.get_url:
+            url: "{{ herdr_core_release.url }}"
+            dest: "{{ herdr_core_download.path }}/herdr-core.tar.gz"
+            checksum: "sha256:{{ herdr_core_release.sha256 }}"
+            mode: "0600"
+
+        - name: Unpack herdr-core
+          ansible.builtin.unarchive:
+            src: "{{ herdr_core_download.path }}/herdr-core.tar.gz"
+            dest: "{{ herdr_core_download.path }}"
+            remote_src: true
+
+        # Like `mkdir -p`: an existing folder keeps its own mode.
+        - name: Check the herdr-core folder
+          ansible.builtin.stat:
+            path: "{{ herdr_core_bin }}"
+          register: herdr_core_bin_dir
+
+        - name: Create the herdr-core folder
+          ansible.builtin.file:
+            path: "{{ herdr_core_bin }}"
+            state: directory
+            mode: "0755"
+          when: not herdr_core_bin_dir.stat.exists
+
+        # copy writes a temporary file and renames it into place.
+        - name: Install herdr-core
+          ansible.builtin.copy:
+            src: "{{ herdr_core_download.path }}/herdr-core"
+            dest: "{{ herdr_core_bin }}/herdr-core"
+            remote_src: true
+            mode: "0755"
+
+        - name: Check that herdr-core runs
+          ansible.builtin.command:
+            argv: ["{{ herdr_core_bin }}/herdr-core", --version]
+          register: herdr_core_version
+          changed_when: false
+          failed_when: herdr_core_version.rc != 0 or not herdr_core_version.stdout.startswith('hc ')
+      always:
+        - name: Remove the herdr-core download
+          ansible.builtin.file:
+            path: "{{ herdr_core_download.path }}"
+            state: absent
+          when: herdr_core_download.path is defined
+
+    # Also runs when herdr-core was already there, so a working herdr-core
+    # without `hc` still gets the command. That can be the one in
+    # ~/.local/bin or one found elsewhere on PATH (a packaged
+    # /usr/bin/herdr-core, for example); no second herdr-core is installed
+    # next to it. An `hc` that already exists (some window managers ship one)
+    # is left alone, except a dangling link to an old herdr-core, which is
+    # pointed at this one.
+    - name: Link the hc command to herdr-core
+      when: herdr_core_app_present | bool
+      become: true
+      become_user: "{{ herdr_core_user }}"
+      environment:
+        HOME: "{{ herdr_core_home }}"
+      block:
+        # Only a herdr-core that passed a check is linked: the one the install
+        # above just put in place (a failed install fails the run), or the one
+        # the detection accepted. A stale file in ~/.local/bin is not enough.
+        - name: Pick the herdr-core that hc links to
+          vars:
+            herdr_core_found: "{{ herdr_core_installed.stdout | default('') | trim }}"
+          ansible.builtin.set_fact:
+            herdr_core_link_src: >-
+              {{ 'herdr-core'
+                 if (herdr_core_installed.rc != 0
+                     or herdr_core_found == herdr_core_bin ~ '/herdr-core')
+                 else herdr_core_found
+                 if (herdr_core_found | basename) == 'herdr-core'
+                 else '' }}
+
+        - name: Link hc when herdr-core is installed
+          when: herdr_core_link_src | length > 0
+          block:
+            # Like `mkdir -p`: an existing folder keeps its own mode.
+            - name: Check the folder for the hc link
+              ansible.builtin.stat:
+                path: "{{ herdr_core_bin }}"
+              register: herdr_hc_bin_dir
+
+            - name: Create the folder for the hc link
+              ansible.builtin.file:
+                path: "{{ herdr_core_bin }}"
+                state: directory
+                mode: "0755"
+              when: not herdr_hc_bin_dir.stat.exists
+
+            - name: Look for an hc command
+              ansible.builtin.shell: command -v hc
+              register: herdr_hc_command
+              changed_when: false
+              failed_when: false
+
+            # Ansible's stat follows a symlink only with follow: true.
+            - name: Check the hc file
+              ansible.builtin.stat:
+                path: "{{ herdr_core_bin }}/hc"
+                follow: false
+              register: herdr_hc_link
+
+            - name: Check what the hc file points to
+              ansible.builtin.stat:
+                path: "{{ herdr_core_bin }}/hc"
+                follow: true
+              register: herdr_hc_link_target
+
+            - name: Detect a dangling hc link to an old herdr-core
+              ansible.builtin.set_fact:
+                herdr_hc_dangling_herdr: >-
+                  {{ herdr_hc_link.stat.exists
+                     and herdr_hc_link.stat.islnk
+                     and not herdr_hc_link_target.stat.exists
+                     and (herdr_hc_link.stat.lnk_target | default('') | basename) == 'herdr-core' }}
+
+            - name: Link hc to herdr-core
+              ansible.builtin.file:
+                src: "{{ herdr_core_link_src }}"
+                dest: "{{ herdr_core_bin }}/hc"
+                state: link
+                force: "{{ herdr_hc_dangling_herdr | bool }}"
+              register: herdr_hc_linked
+              when:
+                - herdr_hc_command.rc != 0
+                - not herdr_hc_link.stat.exists or herdr_hc_dangling_herdr | bool
+
+            # The file itself is checked, not PATH, because the PATH Ansible
+            # runs with may not include ~/.local/bin.
+            - name: Warn about an hc file that does not work
+              ansible.builtin.debug:
+                msg: >-
+                  {{ herdr_core_bin }}/hc exists but is not a working command
+                  (a dangling link or a file that is not executable) and was
+                  left untouched, so hc is not available. Remove it and rerun
+                  the herdr tag to link hc to herdr-core.
+              when:
+                - herdr_hc_command.rc != 0
+                - herdr_hc_link.stat.exists
+                - not herdr_hc_dangling_herdr | bool
+                - not (herdr_hc_link_target.stat.exists and herdr_hc_link_target.stat.executable)
+
+            - name: Check that hc runs
+              ansible.builtin.command:
+                argv: ["{{ herdr_core_bin }}/hc", --version]
+              register: herdr_hc_version
+              changed_when: false
+              failed_when: herdr_hc_version.rc != 0 or not herdr_hc_version.stdout.startswith('hc ')
+              when: herdr_hc_linked is changed
+
+    # The Herdr app sends anonymous usage data unless its settings say
+    # otherwise. Every run sets "telemetry" to false, also when a user turned
+    # it back on.
+    - name: Turn off Herdr app telemetry
+      when: herdr_core_app_present | bool
+      become: true
+      become_user: "{{ herdr_core_user }}"
+      vars:
+        herdr_app_settings_path: "{{ herdr_core_home }}/.config/herdr-app/settings.json"
+      block:
+        - name: Check the Herdr app settings file
+          ansible.builtin.stat:
+            path: "{{ herdr_app_settings_path }}"
+          register: herdr_app_settings_file
+
+        - name: Read the Herdr app settings
+          when: herdr_app_settings_file.stat.exists
+          block:
+            - name: Read the existing settings
+              ansible.builtin.slurp:
+                path: "{{ herdr_app_settings_path }}"
+              register: herdr_app_settings_raw
+
+            - name: Parse the existing settings
+              ansible.builtin.set_fact:
+                herdr_app_settings: "{{ herdr_app_settings_raw.content | b64decode | from_json }}"
+          rescue:
+            - name: Warn about unreadable Herdr app settings
+              ansible.builtin.debug:
+                msg: "Left {{ herdr_app_settings_path }} unchanged: {{ ansible_failed_result.msg | default('it could not be read') }}"
+
+            - name: Skip invalid Herdr app settings
+              ansible.builtin.set_fact:
+                herdr_app_settings: null
+
+        - name: Use empty Herdr app settings for a new file
+          ansible.builtin.set_fact:
+            herdr_app_settings: {}
+          when: not herdr_app_settings_file.stat.exists
+
+        - name: Warn about non-object Herdr app settings
+          ansible.builtin.debug:
+            msg: "Left {{ herdr_app_settings_path }} unchanged: settings are not a JSON object"
+          when: herdr_app_settings is not none and herdr_app_settings is not mapping
+
+        - name: Create the Herdr app settings directory
+          ansible.builtin.file:
+            path: "{{ herdr_app_settings_path | dirname }}"
+            state: directory
+            mode: "0755"
+          when: not herdr_app_settings_file.stat.exists
+
+        - name: Set telemetry to false in the Herdr app settings
+          ansible.builtin.copy:
+            dest: "{{ herdr_app_settings_path }}"
+            content: "{{ herdr_app_settings | combine({'telemetry': false}) | to_nice_json(sort_keys=false, ensure_ascii=false) }}\n"
+            # A settings.json symlinked from a dotfiles repo stays a link.
+            follow: true
+            mode: "{{ omit if herdr_app_settings_file.stat.exists else '0644' }}"
+          when:
+            - herdr_app_settings is mapping
+            - herdr_app_settings.telemetry | default(none) is not sameas false
+
 - name: Configure the herdr agent skill
-  tags: [sf-toolbox, packages, herdr, ai-harness]
+  tags: [sf-toolbox, packages, herdr, herdr-app, ai-harness]
   block:
     - name: Check if herdr skill setup script exists and is executable
       become: true
@@ -153,76 +654,6 @@
           WARNING: Automatic herdr skill installation was not possible.
           Please run `ajust sf-herdr-skill-install` manually to complete the setup.
       when: not herdr_skill_setup_script.stat.exists or not (herdr_skill_setup_script.stat.executable | default(false))
-
-# The Herdr desktop app is a separate program from the TUI above, built on
-# herdr-core; the two keep their own agents and can be installed together.
-# Herdr's own installer puts the app in ~/.local/share/herdr-app with a
-# launcher entry, after checking the download against the release manifest's
-# sha256, and adds herdr-core in ~/.local/bin when there is none. The app
-# updates itself and its core from then on, so the installer runs only once,
-# as the desktop user, the same way Omarchy's `omarchy-install-ai-herdr` does.
-- name: Install the Herdr desktop app
-  tags: [sf-toolbox, packages, herdr, herdr-app]
-  when: ansible_facts['architecture'] in ['x86_64', 'aarch64']
-  vars:
-    herdr_app_user: "{{ system.username | default(current_user) }}"
-    herdr_app_home: "{{ system.home | default(current_home) }}"
-  block:
-    # A machine without a desktop session (a server, a container) has no use
-    # for a desktop app.
-    - name: Look for a graphical session
-      ansible.builtin.find:
-        paths: [/usr/share/wayland-sessions, /usr/share/xsessions]
-        patterns: "*.desktop"
-      register: herdr_app_sessions
-
-    - name: Check for an installed Herdr desktop app
-      ansible.builtin.stat:
-        path: "{{ item }}"
-      loop:
-        - "{{ herdr_app_home }}/.local/share/herdr-app"
-        - /usr/bin/herdr-app
-      register: herdr_app_installed
-
-    - name: Report the Herdr desktop app skipped without a desktop session
-      ansible.builtin.debug:
-        msg: The Herdr desktop app is skipped because this machine has no graphical session
-      when: herdr_app_sessions.matched == 0
-
-    - name: Run the Herdr desktop app installer
-      when:
-        - herdr_app_sessions.matched > 0
-        - herdr_app_installed.results | selectattr('stat.exists') | list | length == 0
-      block:
-        - name: Create a temporary file for the Herdr installer
-          ansible.builtin.tempfile:
-            state: file
-            suffix: .herdr-app-install.sh
-          register: herdr_app_installer
-
-        # Downloaded whole before it runs, so a dropped connection can never
-        # run half a script.
-        - name: Download the Herdr installer
-          ansible.builtin.get_url:
-            url: https://releases.herdr.dev/app/install.sh
-            dest: "{{ herdr_app_installer.path }}"
-            mode: "0644"
-            force: true
-
-        - name: Install the Herdr desktop app
-          become: true
-          become_user: "{{ herdr_app_user }}"
-          ansible.builtin.command:
-            argv: [sh, "{{ herdr_app_installer.path }}"]
-          environment:
-            HOME: "{{ herdr_app_home }}"
-          changed_when: true
-      always:
-        - name: Remove the Herdr installer
-          ansible.builtin.file:
-            path: "{{ herdr_app_installer.path }}"
-            state: absent
-          when: herdr_app_installer.path is defined
 
 # The SparkFabrik layout for the Herdr desktop app comes from sparkdock, like
 # the herdr skill above: the shared script copies the layout, its light and
