@@ -332,23 +332,6 @@
               Terminal=false
               Categories=Development;
               StartupWMClass=herdr-app
-          register: herdr_app_desktop_entry
-
-        - name: Check for update-desktop-database
-          ansible.builtin.shell: command -v update-desktop-database
-          register: herdr_app_update_desktop_database
-          changed_when: false
-          failed_when: false
-          when: herdr_app_desktop_entry.changed
-
-        - name: Refresh the launcher entries
-          ansible.builtin.command:
-            argv: [update-desktop-database, "{{ herdr_app_home }}/.local/share/applications"]
-          when:
-            - herdr_app_desktop_entry.changed
-            - herdr_app_update_desktop_database.rc == 0
-          changed_when: true
-          failed_when: false
 
 # The Herdr app installs herdr-core (hc) only on its first launch, so a fresh
 # machine has no hc and the herdr skill setup below writes no hc manual.
@@ -453,17 +436,13 @@
             mode: "0755"
           when: not herdr_core_bin_dir.stat.exists
 
-        - name: Copy herdr-core next to its final place
+        # copy writes a temporary file and renames it into place.
+        - name: Install herdr-core
           ansible.builtin.copy:
             src: "{{ herdr_core_download.path }}/herdr-core"
-            dest: "{{ herdr_core_bin }}/herdr-core.new"
+            dest: "{{ herdr_core_bin }}/herdr-core"
             remote_src: true
             mode: "0755"
-
-        - name: Move herdr-core into place
-          ansible.builtin.command:
-            argv: [mv, -f, "{{ herdr_core_bin }}/herdr-core.new", "{{ herdr_core_bin }}/herdr-core"]
-          changed_when: true
 
         - name: Check that herdr-core runs
           ansible.builtin.command:
