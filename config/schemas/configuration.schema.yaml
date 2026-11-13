@@ -35,15 +35,11 @@ properties:
   sf_toolbox_chatgpt_desktop:
     type: boolean
     default: false
-    description: Install and update the desktop app during sf-toolbox runs
+    description: Install and update the desktop app; installed legacy Arch desktop packages migrate even when false
   sf_toolbox_arch_pkgbuilds:
     type: boolean
     default: true
     description: Configure SparkFabrik recipes for paru during sf-toolbox runs
-  sf_toolbox_arch_packages_revision:
-    type: string
-    default: main
-    description: Reviewed package-recipe revision used by sf-toolbox
   sparkfabrik_arch_pkgbuilds:
     type: boolean
     default: false

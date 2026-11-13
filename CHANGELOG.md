@@ -57,6 +57,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Switched ChatGPT desktop on Arch, CachyOS and Omarchy to OpenAI’s signed pacman repository; installed legacy desktop packages migrate automatically, while new installations remain opt-in
+
 - The GRUB menu no longer lists an "(EFI BootNext)" entry for every firmware boot option: the `system` role sets `GRUB_DISABLE_BOOTNEXT=true`
 - Enabled the signed SparkFabrik binary repository by default for sf-toolbox on x86_64 Arch Linux, with `SPARKFABRIK_ARCH_REPO=0` to skip configuration
 - `sf-toolbox` now runs `gcloud components update` on every provisioning pass, so an existing Google Cloud SDK in `/opt/google-cloud-sdk` is kept current instead of staying pinned at the version installed on first provision

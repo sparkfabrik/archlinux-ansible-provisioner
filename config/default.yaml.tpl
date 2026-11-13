@@ -63,7 +63,7 @@ sparkdock: {}
 sparkfabrik: true
 sparkfabrik_arch_repo: false
 sparkfabrik_arch_pkgbuilds: false
+# Existing legacy Arch desktop packages migrate even when this is false.
 sf_toolbox_chatgpt_desktop: false
 sf_toolbox_arch_pkgbuilds: true
-sf_toolbox_arch_packages_revision: main
 qemu_for_buildx: true
