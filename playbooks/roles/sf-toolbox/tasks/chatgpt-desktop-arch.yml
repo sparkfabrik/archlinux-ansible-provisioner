@@ -1,120 +1,84 @@
 ---
-- name: Check for an existing upstream ChatGPT package
-  ansible.builtin.command: pacman -Q chatgpt
-  register: chatgpt_existing_package
+- name: Read pacman configuration before enabling OpenAI
+  ansible.builtin.slurp:
+    src: /etc/pacman.conf
+  register: chatgpt_pacman_configuration
+
+- name: List configured pacman repositories
+  ansible.builtin.command: pacman-conf --repo-list
+  register: chatgpt_pacman_repositories
   changed_when: false
-  failed_when: chatgpt_existing_package.rc not in [0, 1]
 
-- name: Preserve an existing ChatGPT installation
-  ansible.builtin.debug:
-    msg: >-
-      Keeping the existing chatgpt package, including on Omarchy. To switch to
-      SparkFabrik's chatgpt-desktop recipe, remove the conflicting package explicitly.
-  when: chatgpt_existing_package.stdout is search('(?m)^chatgpt ')
+- name: Reject a conflicting OpenAI repository definition
+  ansible.builtin.assert:
+    that:
+      - >-
+        'openai-chatgpt' not in chatgpt_pacman_repositories.stdout_lines
+        or (chatgpt_pacman_configuration.content | b64decode) is search('(?m)^Include = /etc/pacman.d/openai-chatgpt.conf$')
+      - (chatgpt_pacman_configuration.content | b64decode) is not search('(?m)^\s*\[openai-chatgpt\]')
+    fail_msg: Move the existing OpenAI repository definition to /etc/pacman.d/openai-chatgpt.conf before retrying
 
-- name: Build and install the SparkFabrik desktop package
-  when: chatgpt_existing_package.stdout is not search('(?m)^chatgpt ')
-  vars:
-    chatgpt_recipe_root: /var/cache/sf-toolbox/arch-packages
-    chatgpt_recipe_dir: /var/cache/sf-toolbox/arch-packages/packages/chatgpt-desktop
-  block:
-    - name: Install package build tools
-      community.general.pacman:
-        name: [base-devel, git]
-        state: present
+- name: Install the pinned OpenAI public key
+  ansible.builtin.copy:
+    src: openai-chatgpt.asc
+    dest: /usr/share/pacman/keyrings/openai-chatgpt.asc
+    mode: "0644"
+  register: chatgpt_repository_key
 
-    - name: Create the unprivileged package builder
-      ansible.builtin.user:
-        name: sf_package_builder
-        system: true
-        create_home: true
-        home: /var/lib/sf-package-builder
-        shell: /usr/bin/nologin
+- name: Check whether the OpenAI key is imported
+  ansible.builtin.command: pacman-key --list-keys 3BFA0E4AE8B8CC16A2D9BA684A3B4A566C4660E4
+  register: chatgpt_repository_imported
+  changed_when: false
+  failed_when: false
 
-    - name: Create the recipe cache
-      ansible.builtin.file:
-        path: "{{ chatgpt_recipe_root }}"
-        state: directory
-        owner: sf_package_builder
-        group: sf_package_builder
-        mode: "0755"
+- name: Import the pinned OpenAI key
+  ansible.builtin.command: pacman-key --add /usr/share/pacman/keyrings/openai-chatgpt.asc
+  when: chatgpt_repository_key.changed or chatgpt_repository_imported.rc != 0
 
-    - name: Fetch reviewed package recipes
-      become: true
-      become_user: sf_package_builder
-      ansible.builtin.git:
-        repo: https://github.com/sparkfabrik/arch-packages.git
-        dest: "{{ chatgpt_recipe_root }}"
-        version: "{{ sf_toolbox_arch_packages_revision | default('main') }}"
-        update: true
+- name: Inspect OpenAI key validity
+  ansible.builtin.command:
+    argv: [gpg, --homedir, /etc/pacman.d/gnupg, --batch, --with-colons, --list-keys, 3BFA0E4AE8B8CC16A2D9BA684A3B4A566C4660E4]
+  register: chatgpt_repository_validity
+  changed_when: false
 
-    - name: Read committed package metadata
-      ansible.builtin.slurp:
-        src: "{{ chatgpt_recipe_dir }}/.SRCINFO"
-      register: chatgpt_srcinfo
+- name: Locally trust the pinned OpenAI key
+  ansible.builtin.command: pacman-key --lsign-key 3BFA0E4AE8B8CC16A2D9BA684A3B4A566C4660E4
+  when: chatgpt_repository_validity.stdout is not search('(?m)^pub:[fu]:')
 
-    - name: Generate package metadata as the builder
-      become: true
-      become_user: sf_package_builder
-      ansible.builtin.command: makepkg --printsrcinfo
-      args:
-        chdir: "{{ chatgpt_recipe_dir }}"
-      register: chatgpt_generated_srcinfo
-      changed_when: false
+- name: Configure the official OpenAI Arch repository
+  ansible.builtin.copy:
+    dest: /etc/pacman.d/openai-chatgpt.conf
+    mode: "0644"
+    content: |
+      ### THIS FILE IS AUTOMATICALLY CONFIGURED ###
+      # Remove it and its Include line to opt out of automatic package updates.
+      [openai-chatgpt]
+      SigLevel = Required DatabaseRequired TrustedOnly
+      Server = https://persistent.oaistatic.com/codex-app-prod/linux/arch/$arch
 
-    - name: Verify package metadata
-      ansible.builtin.assert:
-        that:
-          - (chatgpt_srcinfo.content | b64decode | trim) == (chatgpt_generated_srcinfo.stdout | trim)
-          - chatgpt_generated_srcinfo.stdout is search('(?m)^pkgname = chatgpt-desktop$')
+- name: Enable the official OpenAI Arch repository
+  ansible.builtin.lineinfile:
+    path: /etc/pacman.conf
+    line: Include = /etc/pacman.d/openai-chatgpt.conf
 
-    - name: Read the recipe version and dependencies
-      ansible.builtin.set_fact:
-        chatgpt_recipe_version: >-
-          {{ (chatgpt_generated_srcinfo.stdout | regex_findall('(?m)^\s*pkgver = (.+)$') | first) ~ '-' ~
-             (chatgpt_generated_srcinfo.stdout | regex_findall('(?m)^\s*pkgrel = (.+)$') | first) }}
-        chatgpt_recipe_dependencies: "{{ chatgpt_generated_srcinfo.stdout | regex_findall('(?m)^\\s*(?:depends|makedepends|checkdepends)(?:_x86_64)? = (.+)$') }}"
+- name: Fully upgrade Arch before installing ChatGPT desktop
+  community.general.pacman:
+    update_cache: true
+    upgrade: true
+  register: chatgpt_system_upgrade
+  changed_when: chatgpt_system_upgrade.packages | default([]) | length > 0
 
-    - name: Check the installed desktop version
-      ansible.builtin.command: pacman -Q chatgpt-desktop
-      register: chatgpt_installed
-      changed_when: false
-      failed_when: chatgpt_installed.rc not in [0, 1]
+- name: Install the official desktop and replace conflicting legacy packages
+  community.general.pacman:
+    name: openai-chatgpt/chatgpt-bin
+    state: present
+    # ALPM_QUESTION_CONFLICT_PKG: let pacman replace the detected legacy provider.
+    extra_args: "{{ '--ask=4' if chatgpt_legacy_packages.stdout_lines | intersect(['chatgpt-desktop', 'chatgpt', 'openai-codex-desktop']) | length > 0 else '' }}"
 
-    - name: Compare installed and recipe versions
-      ansible.builtin.command:
-        argv: [vercmp, "{{ chatgpt_installed.stdout.split()[-1] if chatgpt_installed.rc == 0 else '0' }}", "{{ chatgpt_recipe_version }}"]
-      register: chatgpt_version_comparison
-      changed_when: false
-
-    - name: Install a new desktop version
-      when: chatgpt_version_comparison.stdout | int < 0
-      block:
-        - name: Install recipe dependencies
-          community.general.pacman:
-            name: "{{ chatgpt_recipe_dependencies }}"
-            state: present
-
-        - name: Build the ChatGPT desktop package without root privileges
-          become: true
-          become_user: sf_package_builder
-          ansible.builtin.command: makepkg --force --nodeps --noconfirm
-          args:
-            chdir: "{{ chatgpt_recipe_dir }}"
-
-        - name: Locate the built package
-          become: true
-          become_user: sf_package_builder
-          ansible.builtin.command: makepkg --packagelist
-          args:
-            chdir: "{{ chatgpt_recipe_dir }}"
-          register: chatgpt_package_paths
-          changed_when: false
-
-        - name: Require one package artifact
-          ansible.builtin.assert:
-            that: chatgpt_package_paths.stdout_lines | length == 1
-
-        - name: Install the built package with pacman
-          ansible.builtin.command:
-            argv: [pacman, -U, --needed, --noconfirm, --, "{{ chatgpt_package_paths.stdout_lines[0] }}"]
+- name: Verify legacy desktop packages were replaced
+  ansible.builtin.command: pacman -Qq
+  register: chatgpt_remaining_legacy
+  changed_when: false
+  failed_when: >-
+    chatgpt_remaining_legacy.rc != 0
+    or chatgpt_remaining_legacy.stdout_lines | intersect(['chatgpt-desktop', 'chatgpt', 'openai-codex-desktop']) | length > 0
