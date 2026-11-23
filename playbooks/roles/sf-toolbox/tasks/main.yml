@@ -17,6 +17,46 @@
 - name: Install toolbox packages
   import_tasks: packages.yml
 
+- name: Update the running Codex daemon to the public stable release
+  tags: [sf-toolbox, packages]
+  become: true
+  become_user: "{{ system.username | default(current_user) }}"
+  vars:
+    codex_daemon_cli: "{{ '/usr/bin/codex' if ansible_facts['os_family'] == 'Archlinux' else '/home/linuxbrew/.linuxbrew/bin/codex' }}"
+  environment:
+    HOME: "{{ system.home | default(current_home) }}"
+  when:
+    - not ansible_check_mode
+    - "'codex' not in (omarchy_mise_tools | default([]))"
+  block:
+    - name: Check the Codex daemon version
+      ansible.builtin.command:
+        argv: ["{{ codex_daemon_cli }}", app-server, daemon, version]
+      register: codex_daemon_version
+      changed_when: false
+      failed_when: false
+
+    - name: Update the Codex daemon
+      ansible.builtin.command:
+        argv: ["{{ codex_daemon_cli }}", app-server, daemon, update]
+      register: codex_daemon_update
+      vars:
+        codex_daemon_result: "{{ codex_daemon_update.stdout | from_json }}"
+        codex_daemon_status: "{{ codex_daemon_version.stdout | from_json }}"
+      changed_when: codex_daemon_update.rc == 0 and codex_daemon_result.status == 'updated'
+      failed_when: codex_daemon_update.rc != 0 or codex_daemon_result.status == 'unsupported'
+      when:
+        - codex_daemon_version.rc == 0
+        - codex_daemon_status.status == 'running'
+        - codex_daemon_status.managedCodexVersion | default(none) is not none
+        - codex_daemon_status.appServerVersion is version(codex_daemon_status.cliVersion, '<', version_type='semver')
+  rescue:
+    - name: Report the Codex daemon update failure
+      ansible.builtin.debug:
+        msg: >-
+          Could not update the Codex daemon. Check the failed task output
+          and run `codex app-server daemon update` after active Codex work finishes.
+
 - name: Configure PHP
   ansible.builtin.import_tasks: php.yml
 
