@@ -18,7 +18,7 @@
   import_tasks: packages.yml
 
 - name: Update the running Codex daemon to the public stable release
-  tags: [never, codex-daemon-update]
+  tags: [sf-toolbox, packages]
   become: true
   become_user: "{{ system.username | default(current_user) }}"
   environment:
@@ -31,6 +31,7 @@
         argv: [codex, app-server, daemon, version]
       register: codex_daemon_version
       changed_when: false
+      failed_when: false
 
     - name: Install the public stable Codex daemon and verify the running version
       ansible.builtin.command:
@@ -38,6 +39,7 @@
       register: codex_daemon_update
       vars:
         codex_daemon_result: "{{ codex_daemon_update.stdout | from_json }}"
+        codex_daemon_status: "{{ codex_daemon_version.stdout | from_json }}"
       changed_when: codex_daemon_update.rc == 0 and codex_daemon_result.status == 'updated'
       failed_when: >-
         codex_daemon_update.rc != 0
@@ -45,8 +47,11 @@
         or not codex_daemon_result.runningVersion
         or codex_daemon_result.runningVersion != codex_daemon_result.installedVersion
       when:
-        - (codex_daemon_version.stdout | from_json).status == 'running'
-        - (codex_daemon_version.stdout | from_json).managedCodexVersion | default(none) is not none
+        - codex_daemon_version.rc == 0
+        - codex_daemon_status.status == 'running'
+        - codex_daemon_status.managedCodexVersion | default(none) is not none
+        - codex_daemon_status.cliVersion is version('0.171.0', '>=', version_type='semver')
+        - codex_daemon_status.appServerVersion is version(codex_daemon_status.cliVersion, '<', version_type='semver')
 
 - name: Configure PHP
   ansible.builtin.import_tasks: php.yml
