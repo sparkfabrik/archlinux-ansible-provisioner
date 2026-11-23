@@ -47,15 +47,11 @@
       failed_when: >-
         codex_daemon_update.rc != 0
         or codex_daemon_result.status not in ['updated', 'noUpdate']
-        or not (codex_daemon_result.runningVersion | default(none))
         or codex_daemon_result.runningVersion != codex_daemon_result.installedVersion
       when:
         - codex_daemon_version.rc == 0
         - codex_daemon_status.status == 'running'
         - codex_daemon_status.managedCodexVersion | default(none) is not none
-        - codex_daemon_status.cliVersion | default(none) is not none
-        - codex_daemon_status.appServerVersion | default(none) is not none
-        - codex_daemon_status.cliVersion is version('0.171.0', '>=', version_type='semver')
         - codex_daemon_status.appServerVersion is version(codex_daemon_status.cliVersion, '<', version_type='semver')
   rescue:
     - name: Report the Codex daemon update failure
