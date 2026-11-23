@@ -21,21 +21,24 @@
   tags: [sf-toolbox, packages]
   become: true
   become_user: "{{ system.username | default(current_user) }}"
+  vars:
+    codex_daemon_cli: "{{ '/usr/bin/codex' if ansible_facts['os_family'] == 'Archlinux' else '/home/linuxbrew/.linuxbrew/bin/codex' }}"
   environment:
     HOME: "{{ system.home | default(current_home) }}"
-    PATH: "{{ sf_toolbox_user_path | default(ansible_facts['env']['PATH']) }}"
-  when: not ansible_check_mode
+  when:
+    - not ansible_check_mode
+    - "'codex' not in (omarchy_mise_tools | default([]))"
   block:
     - name: Check the Codex daemon version
       ansible.builtin.command:
-        argv: [codex, app-server, daemon, version]
+        argv: ["{{ codex_daemon_cli }}", app-server, daemon, version]
       register: codex_daemon_version
       changed_when: false
       failed_when: false
 
     - name: Install the public stable Codex daemon and verify the running version
       ansible.builtin.command:
-        argv: [codex, app-server, daemon, update]
+        argv: ["{{ codex_daemon_cli }}", app-server, daemon, update]
       register: codex_daemon_update
       vars:
         codex_daemon_result: "{{ codex_daemon_update.stdout | from_json }}"
@@ -44,14 +47,22 @@
       failed_when: >-
         codex_daemon_update.rc != 0
         or codex_daemon_result.status not in ['updated', 'noUpdate']
-        or not codex_daemon_result.runningVersion
+        or not (codex_daemon_result.runningVersion | default(none))
         or codex_daemon_result.runningVersion != codex_daemon_result.installedVersion
       when:
         - codex_daemon_version.rc == 0
         - codex_daemon_status.status == 'running'
         - codex_daemon_status.managedCodexVersion | default(none) is not none
+        - codex_daemon_status.cliVersion | default(none) is not none
+        - codex_daemon_status.appServerVersion | default(none) is not none
         - codex_daemon_status.cliVersion is version('0.171.0', '>=', version_type='semver')
         - codex_daemon_status.appServerVersion is version(codex_daemon_status.cliVersion, '<', version_type='semver')
+  rescue:
+    - name: Report the Codex daemon update failure
+      ansible.builtin.debug:
+        msg: >-
+          Could not verify the Codex daemon update. Check the failed task output
+          and run `codex app-server daemon update` after active Codex work finishes.
 
 - name: Configure PHP
   ansible.builtin.import_tasks: php.yml
