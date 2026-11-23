@@ -17,6 +17,37 @@
 - name: Install toolbox packages
   import_tasks: packages.yml
 
+- name: Update the running Codex daemon to the public stable release
+  tags: [never, codex-daemon-update]
+  become: true
+  become_user: "{{ system.username | default(current_user) }}"
+  environment:
+    HOME: "{{ system.home | default(current_home) }}"
+    PATH: "{{ sf_toolbox_user_path | default(ansible_facts['env']['PATH']) }}"
+  when: not ansible_check_mode
+  block:
+    - name: Check the Codex daemon version
+      ansible.builtin.command:
+        argv: [codex, app-server, daemon, version]
+      register: codex_daemon_version
+      changed_when: false
+
+    - name: Install the public stable Codex daemon and verify the running version
+      ansible.builtin.command:
+        argv: [codex, app-server, daemon, update]
+      register: codex_daemon_update
+      vars:
+        codex_daemon_result: "{{ codex_daemon_update.stdout | from_json }}"
+      changed_when: codex_daemon_update.rc == 0 and codex_daemon_result.status == 'updated'
+      failed_when: >-
+        codex_daemon_update.rc != 0
+        or codex_daemon_result.status not in ['updated', 'noUpdate']
+        or not codex_daemon_result.runningVersion
+        or codex_daemon_result.runningVersion != codex_daemon_result.installedVersion
+      when:
+        - (codex_daemon_version.stdout | from_json).status == 'running'
+        - (codex_daemon_version.stdout | from_json).managedCodexVersion | default(none) is not none
+
 - name: Configure PHP
   ansible.builtin.import_tasks: php.yml
 
