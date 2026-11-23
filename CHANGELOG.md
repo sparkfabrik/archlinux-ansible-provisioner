@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Provisioning updates an older running Codex daemon to the public stable release after package setup and reports update failures.
+
 - `sf-toolbox` now turns off Herdr desktop app telemetry (tag `herdr-app`): it sets `"telemetry": false` in `~/.config/herdr-app/settings.json`, enforced on every run, and a `settings.json` symlinked from a dotfiles repo stays a link
 - Added a one-time herdr-core (`hc`) install to `sf-toolbox` (tag `herdr-app`) on machines with the Herdr desktop app and no working `hc`, from Herdr's release manifest with a `releases.herdr.dev` URL check, a sha256 check and no installer script
 - Added the SparkFabrik layout for the Herdr desktop app to `sf-toolbox` (tag `herdr-layout`), installed with sparkdock's shared script and selected once on each machine
