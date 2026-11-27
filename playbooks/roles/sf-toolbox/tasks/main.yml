@@ -99,6 +99,9 @@
 - name: Configure the default Claude Code output style
   import_tasks: claude-output-style.yml
 
+- name: Remove the legacy sparkfabrik-plugins Claude Code marketplace
+  import_tasks: claude-plugin-cleanup.yml
+
 - name: Install the Omarchy bar widget
   import_tasks: omarchy-bar.yml
 

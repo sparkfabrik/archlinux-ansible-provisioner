@@ -1,0 +1,24 @@
+---
+# The sparkfabrik Claude Code plugins come from the claude.ai organization
+# sync; remove the legacy marketplace, which clones a private repository.
+- name: Remove the legacy sparkfabrik-plugins Claude Code marketplace
+  tags: [sf-toolbox, ai, claude-plugin-cleanup]
+  block:
+    - name: Check if the legacy marketplace cleanup script exists
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.stat:
+        path: "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/claude/remove-legacy-marketplace.sh"
+      register: claude_legacy_marketplace_script
+
+    - name: Run the legacy marketplace cleanup script
+      become: true
+      become_user: "{{ system.username | default(current_user) }}"
+      ansible.builtin.command:
+        argv:
+          - "{{ sparkdock.path | default(sparkdock_default_path) }}/sjust/scripts/claude/remove-legacy-marketplace.sh"
+      environment:
+        HOME: "{{ system.home | default(current_home) }}"
+      register: claude_legacy_marketplace
+      changed_when: "'Uninstalled' in claude_legacy_marketplace.stdout or 'Removed' in claude_legacy_marketplace.stdout"
+      when: claude_legacy_marketplace_script.stat.exists
