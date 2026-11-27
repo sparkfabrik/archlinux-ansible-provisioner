@@ -20,5 +20,5 @@
       environment:
         HOME: "{{ system.home | default(current_home) }}"
       register: claude_legacy_marketplace
-      changed_when: "'Uninstalling' in claude_legacy_marketplace.stdout or 'Removing' in claude_legacy_marketplace.stdout"
+      changed_when: "'Uninstalled' in claude_legacy_marketplace.stdout or 'Removed' in claude_legacy_marketplace.stdout"
       when: claude_legacy_marketplace_script.stat.exists
